@@ -1,0 +1,13 @@
+version: '3'
+services:
+  mongo:
+    image: mongo:4.4
+    container_name: database
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=booking
+    volumes:
+      - ${V_DB}:/data/db
+    ports:
+      - "27017:27017"  

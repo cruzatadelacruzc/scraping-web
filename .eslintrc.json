@@ -1,0 +1,11 @@
+{
+  "extends": ["plugin:@typescript-eslint/recommended", "prettier"],
+  "plugins": ["@typescript-eslint", "prettier"],
+  "rules": {
+    "prettier/prettier": "error",
+    "no-constructor-return": "error",
+    "no-implicit-coercion": "error",
+    "prefer-regex-literals": "error",
+    "no-dupe-else-if": "error"
+  }
+}

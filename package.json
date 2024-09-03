@@ -1,0 +1,47 @@
+{
+  "name": "web-booking-scraping",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest",
+    "capture:snapshot": "ts-node src/__tests__/captureSnapshot.ts",
+    "test:snapshot": "npm run capture:snapshot && npm test",
+    "start": "node ./dist/app.js",
+    "build": "tsc --watch",
+    "dev": "tsc --watch & node --watch ./dist/app.js",
+    "format": "prettier -uw --cache src/**/*.{js,ts,json,yaml}",
+    "lint": "eslint --cache --fix --ext.ts,.js src/**/*"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@shelf/jest-mongodb": "^4.3.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "eslint": "^9.9.1",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.0.0",
+    "prettier": "^3.3.3",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "module-alias": "^2.2.3",
+    "mongoose": "^8.6.0",
+    "puppeteer": "^23.2.1"
+  },
+  "_moduleAliases": {
+    "@": "dist"
+  }
+}
