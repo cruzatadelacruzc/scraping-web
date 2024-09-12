@@ -1,15 +1,23 @@
-import 'dotenv/config';
-import 'module-alias/register';
 import express from 'express';
+import { InversifyExpressServer } from 'inversify-express-utils';
+import { DBContext } from '@config/db-config';
+import { container } from '@shared/container';
 import cors from 'cors';
-import { router } from '@/routes';
-import dbConnect from '@/config/db-config';
 const PORT = process.env.PORT || 3000;
 
-dbConnect();
-const app = express();
+export class App {
+  async setup() {
+    const _db = container.get(DBContext);
 
-app.use(cors());
-app.use(router);
+    _db.dbConnect();
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+    const server = new InversifyExpressServer(container);
+    server
+      .setConfig(app => {
+        app.use(express.json());
+        app.use(cors());
+      })
+      .build()
+      .listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+  }
+}
