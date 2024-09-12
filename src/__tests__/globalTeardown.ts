@@ -2,6 +2,13 @@ import mongoose from 'mongoose';
 
 module.exports = async () => {
   const instance = (global as any).__MONGOINSTANCE;
-  await mongoose.disconnect();
-  await instance.stop();
+
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+
+  if (instance) {
+    await instance.stop();
+  }
 };
+

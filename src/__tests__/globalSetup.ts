@@ -12,6 +12,6 @@ module.exports = async () => {
   const connection = await mongoose.connect(`${process.env.DB_URI}/jest`);
   if (connection?.connection?.db) {
     await connection.connection.db.dropDatabase();
-    await mongoose.disconnect();
   }
+  await mongoose.disconnect();
 };
