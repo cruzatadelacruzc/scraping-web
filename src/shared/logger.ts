@@ -17,19 +17,61 @@ export class Logger implements ILogger {
     }
   }
 
-  debug(message: string, object?: any): void {
-    this.debugMode && console.log(`Debug: ${message}`, JSON.stringify(object));
+  /**
+   * Serializa un objeto a JSON, manejando posibles errores de serialización.
+   * @param object - El objeto que será serializado.
+   * @returns Una cadena JSON serializada o un mensaje de error si la serialización falla.
+   */
+  safeSerialize(object: unknown): string {
+    if (object === undefined) return '';
+    try {
+      return JSON.stringify(object, null, 2);
+    } catch (error) {
+      console.warn('Failed to serialize object to JSON:', error);
+      return '[Unserializable object]';
+    }
   }
 
-  info(message: string, object?: any): void {
-    console.info(`Info: ${message}`, JSON.stringify(object));
+  /**
+   * Valida que el mensaje sea de tipo string y retorna un mensaje formateado.
+   * @param message - El mensaje a validar.
+   * @returns El mensaje validado, o un mensaje de advertencia si no es un string.
+   */
+  validateMessage(message: unknown): string {
+    if (typeof message !== 'string') {
+      console.warn('Invalid message type. Expected a string.');
+      return '[Invalid message type]';
+    }
+    return message;
   }
 
-  warn(message: string, object?: any): void {
-    console.warn(`Warn: ${message}`, JSON.stringify(object));
+  debug(message: string, object?: unknown): void {
+    if (!this.debugMode) return;
+
+    const validatedMessage = this.validateMessage(message);
+    const serializedObject = this.safeSerialize(object);
+
+    console.log(`Debug: ${validatedMessage}`, serializedObject);
+  }
+
+  info(message: string, object?: unknown): void {
+    const validatedMessage = this.validateMessage(message);
+    const serializedObject = this.safeSerialize(object);
+
+    console.info(`Info: ${validatedMessage}`, serializedObject);
+  }
+
+  warn(message: string, object?: unknown): void {
+    const validatedMessage = this.validateMessage(message);
+    const serializedObject = this.safeSerialize(object);
+
+    console.warn(`Warn: ${validatedMessage}`, serializedObject);
   }
 
   error(message: string, object?: any): void {
-    console.error(`Error: ${message}`, JSON.stringify(object));
+    const validatedMessage = this.validateMessage(message);
+    const serializedObject = this.safeSerialize(object);
+
+    console.error(`Error: ${validatedMessage}`, serializedObject);
   }
 }
