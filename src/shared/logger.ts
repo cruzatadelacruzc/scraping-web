@@ -4,9 +4,15 @@ import { ILogger } from '@shared/logger.interfaces';
 @injectable()
 export class Logger implements ILogger {
   private debugMode: boolean = false;
+  private _className: string;
 
   constructor() {
     this.debugMode = process.env.NODE_ENV === 'development';
+    this._className = 'Logger';
+  }
+
+  set context(context: string) {
+    this._className = context;
   }
 
   log(message: string, object?: any) {
@@ -51,27 +57,27 @@ export class Logger implements ILogger {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
 
-    console.log(`Debug: ${validatedMessage}`, serializedObject);
+    console.log(`Debug: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   info(message: string, object?: unknown): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
 
-    console.info(`Info: ${validatedMessage}`, serializedObject);
+    console.info(`Info: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   warn(message: string, object?: unknown): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
 
-    console.warn(`Warn: ${validatedMessage}`, serializedObject);
+    console.warn(`Warn: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   error(message: string, object?: any): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
 
-    console.error(`Error: ${validatedMessage}`, serializedObject);
+    console.error(`Error: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 }
