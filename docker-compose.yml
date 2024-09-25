@@ -8,6 +8,6 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MONGO_INITDB_DATABASE=${DB_NAME}
     volumes:
-      - ${V_DB}:/data/db
+      - ${VOL_DIR}/scraper:/data/db
     ports:
       - '27017:27017'
