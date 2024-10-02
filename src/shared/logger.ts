@@ -66,33 +66,45 @@ export class Logger implements ILogger {
     return message;
   }
 
+  /**
+   * Generates a string with the current date and time in ISO 8601 format with milliseconds.
+   * @returns {string} - A string with the current date and time including milliseconds.
+   */
+  currentDateTime(): string {
+    return new Date().toISOString();
+  }
+
   debug(message: string, object?: unknown): void {
     if (!this.debugMode) return;
 
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
+    const timestamp = this.currentDateTime();
 
-    console.log(`Debug: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.log(`[${timestamp}] Debug: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   info(message: string, object?: unknown): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
+    const timestamp = this.currentDateTime();
 
-    console.info(`Info: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.info(`[${timestamp}] Info: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   warn(message: string, object?: unknown): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
+    const timestamp = this.currentDateTime();
 
-    console.warn(`Warn: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.warn(`[${timestamp}] Warn: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   error(message: string, object?: any): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
+    const timestamp = this.currentDateTime();
 
-    console.error(`Error: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.error(`[${timestamp}] Error: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 }
