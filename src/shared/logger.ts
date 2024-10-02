@@ -30,6 +30,21 @@ export class Logger implements ILogger {
    */
   safeSerialize(object: unknown): string {
     if (object === undefined) return '';
+    
+    if (typeof object !== 'object') return object.toString();
+
+    if (object instanceof Error) {
+      return JSON.stringify(
+        {
+          message: object?.message,
+          stack: object?.stack,
+          name: object?.name,
+        },
+        null,
+        2,
+      );
+    }
+    
     try {
       return JSON.stringify(object, null, 2);
     } catch (error) {
