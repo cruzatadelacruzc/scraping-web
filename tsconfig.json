@@ -1,20 +1,21 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es2019",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "module": "commonjs",
-    "baseUrl": ".",
+    "baseUrl": "src",
+    "rootDir": "src",
     "paths": {
-      "@scrapers/*": ["src/scrapers/*"],
-      "@shared/*": ["src/shared/*"],
-      "@cron/*": ["src/cron/*"],
-      "@utils/*": ["src/utils/*"],
-      "@config/*": ["src/config/*"]
+      "@scrapers/*": ["main/scrapers/*"],
+      "@shared/*": ["main/shared/*"],
+      "@cron/*": ["main/cron/*"],
+      "@utils/*": ["main/utils/*"],
+      "@config/*": ["main/config/*"]
     },
     "types": ["reflect-metadata", "jest"],
-    "outDir": "./dist",    
-    "noEmitOnError": true,    
+    "outDir": "./dist",
+    "noEmitOnError": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -23,10 +24,10 @@
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
     "strictPropertyInitialization": false,
-    "noImplicitThis": true,    
+    "noImplicitThis": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,    
+    "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
-  "exclude": ["**/__tests__/**"]
+  "include": ["src/main/**/*", "src/__tests__/**/*"]
 }

@@ -10,8 +10,7 @@ module.exports = {
     modulePaths: [compilerOptions.baseUrl],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
     setupFilesAfterEnv: [
-        "<rootDir>/src/setupTests.ts",
-        '<rootDir>/src/__tests__/jest.setup.ts'
+        "<rootDir>/src/__tests__/setupTests.ts",
     ],
     coverageProvider: "v8"    
 }
