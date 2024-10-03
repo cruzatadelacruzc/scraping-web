@@ -6,7 +6,7 @@ import puppeteer from 'puppeteer';
 
 jest.mock('puppeteer');
 
-describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
+describe('RevolicoFetchDataService - fetchProductDetails', () => {
   let service: IFetchProductData;
   let browserMock: {
     newPage: jest.Mock;
@@ -36,7 +36,7 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
     await expect(service.fetchProductInfoByCategory('', 'subcategory', 1)).rejects.toThrow(new InvalidParameterError('category'));
   });
 
-    it('should correctly call puppeteer and return product data', async () => {
+  it('should correctly call puppeteer and return product data', async () => {
     browserMock.newPage.mockResolvedValue({
       goto: jest.fn().mockResolvedValue({
         status: jest.fn().mockReturnValue(200),
@@ -96,7 +96,7 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
     const expectedProducts: any[] = [];
 
     browserMock.newPage.mockResolvedValue({
-      goto: jest.fn().mockImplementation(url => {        
+      goto: jest.fn().mockImplementation(url => {
         pageCounter++; // Increment the counter after processing the page
         if (url.includes('page=2')) {
           return { status: jest.fn().mockReturnValue(500) };

@@ -1,9 +1,16 @@
 import { model, Schema } from 'mongoose';
+import { container } from '@shared/container';
+import { DBContext } from '@config/db-config';
 
 describe('MongoDB Integration Tests', () => {
+  let _dbContext: DBContext;
+  beforeAll(() => {
+    _dbContext = container.get<DBContext>(DBContext);
+  });
+
   it('should save a document to MongoDB', async () => {
-    const mockSchema = new Schema({ name: { type: String, required: true } }, );
-    const MockModel = model('Mock', mockSchema);
+    const mockSchema = new Schema({ name: { type: String, required: true } });
+    const MockModel = _dbContext.db.model('mock', mockSchema);
     expect(MockModel).toBeDefined();
 
     const document = new MockModel({ name: 'test' });
