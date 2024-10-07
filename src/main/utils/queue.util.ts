@@ -12,7 +12,11 @@
       return 0;
     }
 
-    const progress = ((total - remaining + 1) / total) * 100;
+    if (total === remaining) {
+      return 0;
+    }
+
+     const progress = Math.round(((total - remaining + 1) / total) * 100);
 
     // Ensure the progress is within the range 0-100
     return Math.min(Math.max(progress, 0), 100);
