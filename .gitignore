@@ -2,6 +2,7 @@ node_modules
 npm-debug.log.*
 .env
 dist
+coverage
 
 ######################
 # folders to store test snapshot
@@ -11,8 +12,3 @@ tmp/
 # ESLint
 ######################
 .eslintcache
-
-######################
-# Visual Studio Code
-######################
-.vscode/
