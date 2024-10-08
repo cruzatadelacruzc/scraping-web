@@ -12,3 +12,8 @@ tmp/
 # ESLint
 ######################
 .eslintcache
+
+######################
+# Visual Studio Code
+######################
+.vscode/settings.*
