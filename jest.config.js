@@ -6,6 +6,7 @@ module.exports = {
     globalSetup: '<rootDir>/src/__tests__/globalSetup.ts',
     globalTeardown: "<rootDir>/src/__tests__/globalTeardown.ts",
     testMatch: ['**/__tests__/**/*.test.ts'],
+    moduleDirectories: ["node_modules", "src/main"],
     testEnvironment: 'node',
     modulePaths: [compilerOptions.baseUrl],
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
