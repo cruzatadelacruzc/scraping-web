@@ -7,6 +7,7 @@ import { IRevolicoProduct } from '../models/product.model';
 import { ProductRepository } from '../repositories/product.repository';
 import { QUEUE_NAME } from '../queues';
 import { ScrapingProductService } from './scraping-product.service';
+import { InvalidProductInfoError } from '../errors/invalid-product-data.error';
 
 
 @injectable()
@@ -52,7 +53,7 @@ export class ProductService {
         },
         error => {
           Object.values(error.errors).forEach((err: any) => err && err.message && errors.push(err.message));
-          this._log.error(`Failed to process product with URL: ${product.url}`, errors);
+          this._log.warn(`Failed to process product with URL: ${product.url}`);
           invalidProductInfo.push(product);
         },
       ),
@@ -80,14 +81,12 @@ export class ProductService {
       const result = await this.bulkAddOrEditUrls(data);
       
       if (result.errors.length > 0) {
-        job.log(`
-                ERROR:
-                ${result.errors.map(e => e.message).join(' || ')}
-              `);
+        const errorLogs = result.errors.map(err => job.log(err.toString()));
+        await Promise.allSettled(errorLogs);
       }
 
-      if (!result.urls.length) {
-        throw new Error('No product was processed');
+      if (result.invalidProductInfo.length > 0) {
+        throw new InvalidProductInfoError(result.invalidProductInfo);
       }
 
       job.log(`Successfully saved ${result.urls.length} products to database`);
@@ -95,8 +94,8 @@ export class ProductService {
 
       return result.urls.map(url => ({ url }));
     } catch (error) {
-      this._log.error(`Failed to process job with id: ${job.id}`, error);
-      job.log('Failed to save data to database');
+      job.log('🔥 Failed to save data to database 🔥');
+      error instanceof InvalidProductInfoError && job.update(error.invalidProductsInfo);            
       throw error;
     }
   }
