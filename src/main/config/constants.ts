@@ -1,3 +1,3 @@
 export const CONFIG = {
-  bull_board_url: process.env.BULL_BOARD_URL || '/admin/queues',
+  bull_arena_url: process.env.BULL_AREANA_URL || '/arena'
 };

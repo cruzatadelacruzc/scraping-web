@@ -1,44 +1,66 @@
 import { QContext } from '@config/queue.config';
-import { BullBoardService } from '@shared/bull-board';
 import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { Job, JobId } from 'bull';
 import { inject, injectable } from 'inversify';
 import { IRevolicoProduct } from '../models/product.model';
-import { CustomInsertManyResult, ProductRepository } from '../repositories/product.repository';
-import { QUEUE_NAME } from '../utils/constants';
+import { ProductRepository } from '../repositories/product.repository';
+import { QUEUE_NAME } from '../queues';
 import { ScrapingProductService } from './scraping-product.service';
-import { ScrapingProductType } from './dto';
+
 
 @injectable()
 export class ProductService {
   constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(QContext) private readonly _qContext: QContext,
-    @inject(BullBoardService) private readonly _bullBoardService: BullBoardService,
     @inject(ProductRepository) private readonly _repository: ProductRepository,
-    @inject(ScrapingProductService) private readonly _scrapingproductService: ScrapingProductService,
+    @inject(TYPES.ScrapingOneProduct) private readonly _scrapingproductService: ScrapingProductService,
   ) {
     this._log.context = ProductService.name;
   }
 
   /**
+   * Inserts or updates a list of products in the database. The list contains
+   * product objects with their respective information. The method returns
+   * an object with three properties: urls (an array of strings containing
+   * the URLs of the products that were successfully inserted or updated),
+   * invalidProductInfo (an array of product objects containing the products
+   * that were not inserted or updated due to invalid product information),
+   * and errors (an array of strings containing the error messages for the
+   * products that were not inserted or updated).
    *
-   * @returns
+   * @param {IRevolicoProduct[]} batchProducts - An array of product objects
+   * containing the products to be inserted or updated in the database.
+   * @returns {Promise<{ urls: string[]; invalidProductInfo: IRevolicoProduct[]; errors: Error[] }>}
    */
-  public async getAll(): Promise<string[]> {
-    this._log.debug('Request to get all products');
-    return ['Product 1', 'Product 2'];
-  }
+  async bulkAddOrEditUrls(
+    batchProducts: IRevolicoProduct[],
+  ): Promise<{ urls: string[]; errors: Error[]; invalidProductInfo: IRevolicoProduct[] }> {
+    this._log.debug(`Bulk insert or update request for ${batchProducts.length} products`);
 
-  public async getById(id: string): Promise<string> {
-    this._log.debug(`Request to get product by id: ${id}`);
-    return `Product ${id}`;
-  }
+    const processedUrls: string[] = [];
+    const errors: Error[] = [];
+    const invalidProductInfo: IRevolicoProduct[] = [];
 
-  public async search(id: string): Promise<string> {
-    this._log.debug(`Request to get product by id: ${id}`);
-    return `Product ${id}`;
+    const productsPromises = batchProducts.map(product =>
+      this._repository.bulkInsertOrUpdate(product, ['url']).then(
+        result => {
+          if (result?.url) {
+            processedUrls.push(result.url);
+          }
+        },
+        error => {
+          Object.values(error.errors).forEach((err: any) => err && err.message && errors.push(err.message));
+          this._log.error(`Failed to process product with URL: ${product.url}`, errors);
+          invalidProductInfo.push(product);
+        },
+      ),
+    );
+
+    await Promise.allSettled(productsPromises);
+
+    return { urls: processedUrls, invalidProductInfo, errors };
   }
 
   /**
@@ -47,19 +69,31 @@ export class ProductService {
    * and logs the result.
    *
    * @param {Job<IRevolicoProduct[]>} job - The job object containing an array of products to be processed.
-   * @returns {Promise<IRevolicoProduct[]>} - The result of saving the products to the database.
+   * @returns {Promise<{ id: string }[]>} - The result of saving the products Id to the database.
    * @throws {Error} - Throws an error if the job processing fails.
    */
-  async processStorageJobs(job: Job<IRevolicoProduct[]>): Promise<Array<string>> {
+  async processor(job: Job<IRevolicoProduct[]>): Promise<{ url: string }[]> {
     this._log.debug(`Processing scraping job ID(${job.id})`);
 
     try {
       const { data } = job;
-      const result = await this.createMany(data);
-      this._log.info(`Successfully saved ${result.length} products to database`);
-      job.log(`Successfully saved ${result.length} products to database`);
-      job.progress(100);
-      return result;
+      const result = await this.bulkAddOrEditUrls(data);
+      
+      if (result.errors.length > 0) {
+        job.log(`
+                ERROR:
+                ${result.errors.map(e => e.message).join(' || ')}
+              `);
+      }
+
+      if (!result.urls.length) {
+        throw new Error('No product was processed');
+      }
+
+      job.log(`Successfully saved ${result.urls.length} products to database`);
+      job.progress(100);     
+
+      return result.urls.map(url => ({ url }));
     } catch (error) {
       this._log.error(`Failed to process job with id: ${job.id}`, error);
       job.log('Failed to save data to database');
@@ -75,11 +109,8 @@ export class ProductService {
    * @throws {Error} If the job cannot be added to the queue.
    */
   async addStorageDataJob(data: IRevolicoProduct[], queueName: string): Promise<JobId> {
-    this._log.debug('Request to add a product data storage job.');
-    await this._qContext.QCreate(queueName, this.processStorageJobs.bind(this));
     try {
       this.setupQueueListeners();
-      this._bullBoardService.addQueueForMonitoring(queueName);
 
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
         attempts: 3,
@@ -95,45 +126,17 @@ export class ProductService {
     }
   }
 
-  /**
-   * Saves multiple products to the database using the repository.
-   * Logs the outcome and handles any errors during the operation.
-   *
-   * @param {IRevolicoProduct[]} products - Array of products to be saved.
-   * @returns {Promise<IRevolicoProduct[]>} - The array of saved products returned from the database.
-   * @throws {Error} - Throws an error if the saving process fails.
-   */
-  async createMany(products: IRevolicoProduct[], rawResult: boolean = true): Promise<Array<string>> {
-    try {
-      this._log.debug('Request to create many product documents.');
-      const result = await this._repository.createMany(products, { rawResult });
-      if ('acknowledged' in result && result.acknowledged && result.insertedIds) {
-        return Object.values(result.insertedIds);
-      }
-      return (result as IRevolicoProduct[]).map((product: IRevolicoProduct) => product._id?.toString()).filter((id): id is string => !!id);
-    } catch (error) {
-      this._log.error('Failed to save products to database', error);
-      throw error;
-    }
-  }
-
   private setupQueueListeners() {
     const storageQueue = this._qContext.getQueue(QUEUE_NAME.product_storage);
-    storageQueue.on('completed', async (job: Job<IRevolicoProduct[]>, result: IRevolicoProduct[]) => {
-      this._log.debug(`Scheduling batches of product detail retrieval`);
+    storageQueue.on('completed', async (job: Job<IRevolicoProduct[]>, result: { url: string }[]) => {
+      const batchSize = Number(process.env.PRODUCT_URLS_BATCHSIZE) || 30;
 
-      const productData = result.map(product => ({ id: product._id, url: product.url }) as ScrapingProductType);
-
-      const batchSize = Number(process.env.BATCHSIZE_PRODUCT_URLS) || 20;
-      let batchNumber = 0;
-      for (let i = 0; i < productData.length; i += batchSize) {
-        const batch = productData.slice(i, i + batchSize);
+      for (let i = 0; i < result.length; i += batchSize) {
+        const batch = result.slice(i, i + batchSize);
 
         await this._scrapingproductService.addScrapingJob(batch, QUEUE_NAME.product_scraping);
-        this._log.info(`Scheduled batch of ${batch.length} product URLs for scraping`);
-        batchNumber++;
+        this._log.debug(`Scheduled batch of ${batch.length} product URLs for scraping`);
       }
-      this._log.info(`Created ${batchNumber} batches of product URLs for scraping`);
     });
   }
 }

@@ -2,5 +2,8 @@ export const TYPES = {
   RevolicoData: Symbol('RevolicoFetchProductData'),
   Logger: Symbol('Logger'),
   RevolicoScraping: Symbol('RevolicoScraping'),
-  BullBoardAuth: Symbol('BullBoardAuthService'),
+  RevolicoQueues: Symbol('RevolicoQueues'),
+  ScrapingOneProduct: Symbol('ScrapingOneProduct'),
+  ScrapingManyProduct: Symbol('ScrapingManyProduct'),
+  ProductService: Symbol('ProductService'),
 };

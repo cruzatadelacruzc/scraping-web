@@ -38,5 +38,5 @@ export interface IFetchProductData {
    * @param job The Job in progress
    * @returns {Promise<IProductDetails>} A promise that resolves the product details.
    */
-  fetchProductDetails(url: string, job: Job<Array<ScrapingProductType>>): Promise<IProductDetails>;
+  fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails>;
 }

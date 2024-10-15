@@ -3,31 +3,33 @@ import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { injectable, inject } from 'inversify';
 import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
-import { BullBoardService } from '@shared/bull-board';
 import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
 import { Job, JobId } from 'bull';
 import { ProductService } from './product.service';
-import { QUEUE_NAME } from '../utils/constants';
+import { QUEUE_NAME } from '../queues';
 import { IRevolicoProduct } from '@scrapers/revolico/models/product.model';
 
 @injectable()
 export class ScrapingProductsService {
   constructor(
     @inject(QContext) private _qContext: QContext,
-    @inject(BullBoardService) private _bullBoardService: BullBoardService,
-    @inject(ProductService) private _productService: ProductService,
+    @inject(TYPES.ProductService) private _productService: ProductService,
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.RevolicoData) private readonly _revolicoProductData: IFetchProductData,
   ) {
-    this._log.context = ScrapingProductsService.name;
+    this._log.context = ScrapingProductsService.name;    
   }
 
   /**
+   * Processes the scraping job by fetching products data from Revolico.
+   * It extracts the product data from the job, passes it to the IFetchProductData,
+   * and logs the result.
    *
-   * @param job
-   * @returns
+   * @param {Job<ScrapingProductsType>} job - The job object containing an array of products to be processed.
+   * @returns {Promise<IRevolicoProduct[]>} - The result of fetching the products data from Revolico.
+   * @throws {Error} - Throws an error if the job processing fails.
    */
-  async processJobs(job: Job<ScrapingProductsType>) {
+  async processor(job: Job<ScrapingProductsType>): Promise<IRevolicoProduct[]> {
     this._log.debug(`Processing scraping job ID(${job.id}) with data: `, job.data);
     const { category, subcategory, pageNumber, totalPages } = job.data;
     try {
@@ -37,12 +39,10 @@ export class ScrapingProductsService {
         pageNumber,
         totalPages,
         job,
-      );
-      const processedAmount = data.length;
-      const logMsg = `Processed products qty: ${processedAmount}`;
+      );      
+      const logMsg = `Processed products qty: ${data.length}`;
       this._log.debug(logMsg);
-      job.log(logMsg);
-      data.length && (await this._productService.addStorageDataJob(data, QUEUE_NAME.product_storage));
+      job.log(logMsg);            
       return data;
     } catch (error) {
       this._log.error(`Failed to process job with id: ${job.id}`, error);
@@ -58,10 +58,9 @@ export class ScrapingProductsService {
    * @returns {Promise<JobId>} A promise that resolves with the job ID.
    * @throws {Error} If the job cannot be added to the queue.
    */
-  async addScrapingJob(data: ScrapingProductsType, queueName: string): Promise<JobId> {
-    await this._qContext.QCreate(queueName, this.processJobs.bind(this));
+  async addScrapingJob(data: ScrapingProductsType, queueName: string): Promise<JobId> {    
     try {
-      this._bullBoardService.addQueueForMonitoring(queueName);
+      this.setupQueueListeners();
 
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
         attempts: 2, // Retry twice if it fails
@@ -76,5 +75,26 @@ export class ScrapingProductsService {
       this._log.error(message);
       throw error;
     }
+  }
+
+  /**
+   * Listens for the completed event on the products scraping queue.
+   * When a job is completed, it schedules a job to store the product data.
+   */
+  private setupQueueListeners() {
+    const manyProductQueue = this._qContext.getQueue(QUEUE_NAME.products_scraping);
+    manyProductQueue.on('completed', async (job: Job<IRevolicoProduct[]>, result: IRevolicoProduct[]) => {
+      
+      const batchSize = Number(process.env.PRODUCT_STORAGE_BATCHSIZE) || 50;
+      const totalBatches = Math.ceil(result.length / batchSize);
+
+      for (let i = 0; i < totalBatches; i++) {
+        const batch = result.slice(i * batchSize, (i + 1) * batchSize);
+
+        await this._productService.addStorageDataJob(batch, QUEUE_NAME.product_storage);
+
+        this._log.debug(`Scheduled batch of ${batch.length} products for storage`);
+      }
+    });
   }
 }

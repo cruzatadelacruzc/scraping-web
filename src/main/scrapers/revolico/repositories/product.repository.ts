@@ -1,7 +1,7 @@
 import { DBContext } from '@config/db-config';
 import { inject, injectable } from 'inversify';
 import productModel, { IRevolicoProduct } from '../models/product.model';
-import { InsertManyOptions, InsertManyResult, Model } from 'mongoose';
+import { InsertManyOptions, InsertManyResult, Model, MongooseBulkWriteOptions, RootFilterQuery } from 'mongoose';
 
 export interface CustomInsertManyOptions extends InsertManyOptions {
   // Otras configuraciones personalizadas que desees agregar
@@ -12,37 +12,43 @@ export interface CustomInsertManyResult {
   insertedIds?: Record<number, any>;
   errors?: Error[];
 }
+
+export interface BulkWriteResultWithErrors {
+  insertedIds: Record<number, any>;
+  upsertedIds: Record<number, any>;
+  nInserted: number;
+  nUpserted: number;
+  nModified: number;
+  nMatched: number;
+  urls: string[];
+  errors: Error[];
+}
 @injectable()
 export class ProductRepository {
   private readonly _model: Model<IRevolicoProduct>;
 
   constructor(@inject(DBContext) private readonly _dbContext: DBContext) {
-    // this._model = _dbContext.db.model<IRevolicoProduct>('Product', productModel);
-    // this._model = _dbContext.product;
     this._model = productModel;
   }
 
   /**
-   * Creates a new product in the database.
-   * @param entity Partial entity of IRevolicoProduct
-   * @returns The created product document
+   * Removes all products from the database.
+   * @returns A promise that resolves once all products have been removed.
    */
-  async create(entity: Partial<IRevolicoProduct>) {
-    return this._model.create(entity);
+  async clearAll() {
+    return this._model.deleteMany({});
   }
 
   /**
-   *Finds a product by its ID.
-   *@param {string} id - The ID of the product to retrieve.
-   *@returns {Promise<IRevolicoProduct | null>} - Returns the found product or null if not found.
+   * Finds a product by its id.
+   * @param {string} id - The ID of the product to retrieve.
+   * @returns {Promise<IRevolicoProduct | null>} - Returns the found product or null if not found.
    */
-  async findOne(id: IRevolicoProduct['_id']): Promise<IRevolicoProduct | null> {
-    return this._model
-      .findById(id)
-      .then(entity => entity)
-      .catch(() => {
-        return null;
-      });
+  async findOne(
+    filter: RootFilterQuery<IRevolicoProduct>,
+    projection?: Partial<Record<keyof IRevolicoProduct, 1 | 0>>,
+  ): Promise<IRevolicoProduct | null> {
+    return this._model.findOne(filter, projection).lean().exec();
   }
 
   /**
@@ -55,39 +61,77 @@ export class ProductRepository {
   }
 
   /**
-   * Insert many products in the database.
-   * @param options Additional options for the insertMany operation
+   * Retrieves a list of products from the database.
+   * @param {number} skip - The number of products to skip from the beginning.
+   * @param {number} limit - The maximum number of products to retrieve.
+   * @param {{ field: string; order: 'asc' | 'desc' }} [sort={ field: 'updatedAt', order: 'desc' }] - The field to sort by and the order.
+   * @param {RootFilterQuery<IRevolicoProduct>} [filter] - A filter to apply to the query.
+   * @returns {Promise<IRevolicoProduct[]>} - A promise that resolves with an array of products.
    */
-  async createMany(data: IRevolicoProduct[], options: CustomInsertManyOptions = {}): Promise<CustomInsertManyResult | IRevolicoProduct[]> {
-    const insertOptions: CustomInsertManyOptions = {
-      ordered: false,
-      ...options,
-    };
-    try {
-      const result = (await this._model.insertMany(data, insertOptions)) as IRevolicoProduct[] | InsertManyResult<IRevolicoProduct>;
+  async find(
+    skip: number,
+    limit: number,
+    sort: { field: string; order: 'asc' | 'desc' } = { field: 'createdAt', order: 'asc' },
+    filter?: RootFilterQuery<IRevolicoProduct>,
+    projection?: Partial<Record<keyof IRevolicoProduct, 1 | 0>>,
+  ): Promise<IRevolicoProduct[]> {
+    const query = this._model.find(filter || {}, projection || {});
 
-      if (insertOptions.rawResult) {
-        if (insertOptions.rawResult && 'acknowledged' in result) {
-          const insertResult = result as InsertManyResult<IRevolicoProduct>;
-          return {
-            acknowledged: insertResult.acknowledged,
-            insertedCount: insertResult.insertedCount,
-            insertedIds: insertResult.insertedIds,
-            errors: insertResult.mongoose?.validationErrors,
-          };
-        }
+    query.sort({ [sort.field]: sort.order === 'asc' ? 1 : -1 });
+
+    return query.lean().skip(skip).limit(limit).exec();
+  }
+
+  /**
+   * Returns the count of products in the database that match the given filter.
+   * If no filter is provided, returns the total count of products.
+   * @param {RootFilterQuery<IRevolicoProduct>} [filter] - The filter to apply on the count query.
+   * @returns {Promise<number>} - The count of products that match the filter.
+   */
+  async count(filter?: RootFilterQuery<IRevolicoProduct>): Promise<number> {
+    return this._model.countDocuments(filter || {}).exec();
+  }
+
+  async bulkInsertOrUpdate(product: IRevolicoProduct, filterFields: (keyof IRevolicoProduct)[] = ['ID']): Promise<IRevolicoProduct | null> {
+    const filter: Partial<Record<keyof IRevolicoProduct, any>> = {};
+    
+    filterFields.forEach(field => {
+      if (product[field]) {
+        filter[field] = product[field];
       }
-      return result as IRevolicoProduct[];
-    } catch (error) {
-      if (insertOptions.rawResult) {
-        return {
-          acknowledged: false,
-          insertedCount: 0,
-          insertedIds: {},
-          errors: [error as Error],
-        };
-      }
-      throw error;
-    }
+    });
+
+    const update = {
+      $set: {
+        ID: product.ID,
+        category: product.category,
+        subcategory: product.subcategory,
+        url: product.url,
+        cost: product.cost,
+        price: product.price,
+        currency: product.currency,
+        description: product.description,
+        isOutstanding: product.isOutstanding,
+        imageURL: product.imageURL,
+        location: product.location,
+        views: product.views,
+        seller: product.seller,
+      },
+      $push: {
+        ...(product.price ? { priceHistory: { value: product.price, updatedAt: new Date() } } : {}),
+        ...(product.location
+          ? {
+              locationHistory: {
+                location: { state: product.location.state, municipality: `${product.location.municipality}` },
+                updatedAt: new Date(),
+              },
+            }
+          : {}),
+        ...(product.views ? { viewsHistory: { value: product.views, updatedAt: new Date() } } : {}),
+        ...(product.isOutstanding !== undefined ? { isOutstandingHistory: { value: product.isOutstanding, updatedAt: new Date() } } : {}),
+      },
+    };   
+    
+    return this._model.findOneAndUpdate(filter, update, { upsert: true, new: true, lean: true, runValidators: true }).exec();
   }
 }

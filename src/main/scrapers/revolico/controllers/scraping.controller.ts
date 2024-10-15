@@ -7,13 +7,13 @@ import { ScrapingProductsService } from '@scrapers/revolico/services/scraping-pr
 import { ResponseHandler } from '@shared/response-handler';
 import { ScrapingProductsDTO } from '@scrapers/revolico/services/dto';
 import { ValidateRequestMiddleware } from './middleware/validate-request.middleware';
-import { QUEUE_NAME } from '../utils/constants';
+import { QUEUE_NAME } from '../queues';
 
 @controller('/api/revolicos/scraping')
 export class ScrapingController {
   constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(ScrapingProductsService) private scrapingJob: ScrapingProductsService,
+    @inject(TYPES.ScrapingManyProduct) private scrapingJob: ScrapingProductsService,
   ) {
     this._log.context = ScrapingController.name;
   }
@@ -22,7 +22,7 @@ export class ScrapingController {
   async addNewJob(req: Request, res: Response) {
     const request = ScrapingProductsDTO.from(req.body);
     this._log.debug('Request to add a new Job', request);
-    //const createdJobID = await this.scrapingJob.addScrapingJob(request, QUEUE_NAME.products_scraping.toString());
-    ResponseHandler.created(res, `http:created`, { jobId: `createdJobID` });
+    const createdJobID = await this.scrapingJob.addScrapingJob(request, QUEUE_NAME.products_scraping.toString());
+    ResponseHandler.created(res, `http:created`, { jobId: createdJobID });
   }
 }

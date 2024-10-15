@@ -1,5 +1,4 @@
 import { QContext } from '@config/queue.config';
-import { BullBoardService } from '@shared/bull-board';
 import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { Job, JobId } from 'bull';
@@ -13,8 +12,7 @@ import { progressCalculate } from '@utils/queue.util';
 @injectable()
 export class ScrapingProductService {
   constructor(
-    @inject(QContext) private _qContext: QContext,
-    @inject(BullBoardService) private _bullBoardService: BullBoardService,
+    @inject(QContext) private readonly _qContext: QContext,
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(ProductRepository) private readonly _repository: ProductRepository,
     @inject(TYPES.RevolicoData) private readonly _revolicoProductData: IFetchProductData,
@@ -26,31 +24,30 @@ export class ScrapingProductService {
    * Processes a job containing product IDs, retrieves additional product details,
    * and updates each product with the fetched information.
    *
-   * @param {Job<Array<ScrapingProductType>>} job - Bull job containing an array of product IDs for scraping.
+   * @param {Job<{id: string}[]>} job - Bull job containing an array of product IDs for scraping.
    * @returns {Promise<string>} - A message indicating how many product URLs were processed.
    * @throws Will throw an error if scraping or updating a product fails.
    */
-  async processJob(job: Job<Array<ScrapingProductType>>): Promise<string> {
+  async processor(job: Job<{ url: string }[]>): Promise<string> {
     const productsData = job.data;
     this._log.debug(`Processing scraping job for ${productsData?.length} product URLs`);
     let url;
     let remaining = productsData.length;
-    for (const { id } of productsData) {
+    for (const { url } of productsData) {
       try {
-        const product = await this._repository.findOne(id);
+        const product = await this._repository.findOne({ url }, { _id: 1 });
 
-        if (!product) {
-          const warnMessage = `Product with ID ${id} not found`;
+        if (!product?._id) {
+          const warnMessage = `Product with URL ${url} not found`;
           this._log.warn(warnMessage);
           await job.log(warnMessage);
           continue;
         }
 
-        url = product.url;
         const productDetails = await this._revolicoProductData.fetchProductDetails(url, job);
 
-        await this._repository.update(id, productDetails);
-        job.log(`Successfully scraped and updated product(${id}) at URL: ${url}`);
+        await this._repository.update(product._id, productDetails);
+        job.log(`Successfully scraped and updated product(${product._id}) at URL: ${url}`);
 
         remaining--;
         await job.progress(progressCalculate(productsData.length, remaining));
@@ -70,15 +67,12 @@ export class ScrapingProductService {
   /**
    * Adds a new product info scraping job to the queue.
    *
-   * @param {Array<ScrapingProductType>} data - The data for the product scraping job.
+   * @param {Array<{id: string}[]>} data - The data for the product scraping job.
    * @returns {Promise<JobId>} A promise that resolves with the job ID.
    * @throws {Error} If the job cannot be added to the queue.
    */
-  async addScrapingJob(data: ScrapingProductType[], queueName: string): Promise<JobId> {
-    await this._qContext.QCreate(queueName, this.processJob.bind(this));
+  async addScrapingJob(data: { url: string }[], queueName: string): Promise<JobId> {
     try {
-      this._bullBoardService.addQueueForMonitoring(queueName);
-
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
         attempts: 2,
         backoff: 5000,

@@ -2,7 +2,7 @@ import { BaseMiddleware } from '@shared/base-middleware';
 import { ResponseHandler } from '@shared/response-handler';
 import { Request, Response, NextFunction } from 'express';
 
-export class BullBoardAuthMiddleware extends BaseMiddleware {
+export class QueueDashboardAuthMiddleware extends BaseMiddleware {
   constructor() {
     super();
   }
@@ -31,7 +31,7 @@ export class BullBoardAuthMiddleware extends BaseMiddleware {
    */
   static authenticate() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const middleware = new BullBoardAuthMiddleware();
+      const middleware = new QueueDashboardAuthMiddleware();
       middleware.execute(req, res, next);
     };
   }
