@@ -19,22 +19,23 @@ export const extractDataFromUrl = (url: string, type: 'productId' | 'phoneNumber
   const numbers = segments.map(segment => segment.replace(/\D/g, '')).filter(segment => segment);
 
   // Check if there are enough numbers to extract
-  if (numbers.length < 2) {
+  if (!numbers.length) {
     return null;
   }
 
   switch (type) {
-    case 'productId':
+    case 'productId': {
       // The last number is always considered the product ID
       return numbers[numbers.length - 1];
-
-    case 'phoneNumber':
+    }
+    case 'phoneNumber': {
       /**
        *  The phone number is the second to last, but should have at least 6 digits to avoid confusion
        *  Example: 21385989, 385989(without province code)
        */
       const phoneNumberCandidate = numbers[numbers.length - 2];
       return phoneNumberCandidate.length >= 6 ? phoneNumberCandidate : null;
+    }
 
     default:
       return null;
