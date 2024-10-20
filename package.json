@@ -7,8 +7,6 @@
     "test": "NODE_ENV=test jest --verbose",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:cov": "NODE_ENV=test jest --verbose --collectCoverage",
-    "capture:snapshot": "ts-node-dev src/__tests__/captureSnapshot.ts",
-    "test:snapshot": "npm run capture:snapshot && npm test",
     "start": "node ./dist/main/bootstrap.js",
     "clean": "rimraf ./dist",
     "build": "npm run clean && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
