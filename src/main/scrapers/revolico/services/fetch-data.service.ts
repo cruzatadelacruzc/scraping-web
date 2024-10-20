@@ -7,23 +7,23 @@ import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
 import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { buildFullUrl, parseCost, parseLocation, parseViews } from '@utils/normalize-data.util';
-
 import { Job } from 'bull';
-import { ScrapingProductsType, ScrapingProductType } from './dto';
+import { ScrapingProductsType } from './dto';
 import { PageLoadError } from '../errors/page-load.error';
 import { progressCalculate } from '@utils/queue.util';
 import { extractDataFromUrl } from '../utils/extract-data.util';
+import { IProductDetails } from '@shared/product-base.interfaces';
 
 @injectable()
 export class RevolicoFetchDataService implements IFetchProductData {
   private _baseURL: string;
 
-  constructor(@inject(TYPES.Logger) private readonly _log: ILogger) {
+  public constructor(@inject(TYPES.Logger) private readonly _log: ILogger) {
     this._baseURL = 'https://www.revolico.com';
     this._log.context = RevolicoFetchDataService.name;
   }
 
-  buildURL(category: string, subcategory: string, pageNumber: number): string {
+  public buildURL(category: string, subcategory: string, pageNumber: number): string {
     const params = [`category=${category}`, subcategory && `subcategory=${subcategory}`, pageNumber && `page=${pageNumber}`]
       .filter(Boolean)
       .join('&');
@@ -45,6 +45,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
     if (!category) throw new InvalidParameterError('category');
 
     const productsInfo: IRevolicoProduct[] = [];
+    const productsInfoSet = new Set<string>();
     const buildURL = this.buildURL.bind(this);
     const log = this._log;
 
@@ -58,12 +59,11 @@ export class RevolicoFetchDataService implements IFetchProductData {
       page.setDefaultTimeout(TIME_OUT);
       page.setViewport(VIEW_PORT);
 
-      async function scrapperOnly(currentPage: number, remainingPages: number, data: IRevolicoProduct[] = []): Promise<IRevolicoProduct[]> {
+      async function scrapperOnly(currentPage: number, remainingPages: number): Promise<IRevolicoProduct[]> {
         let productQtyPage = 0;
         if (remainingPages <= 0) {
           await job.progress(100);
-          await browser.close();
-          return Promise.resolve(data);
+          return productsInfo;
         }
 
         const url = buildURL(category, subcategory, currentPage);
@@ -112,10 +112,11 @@ export class RevolicoFetchDataService implements IFetchProductData {
 
                   const ID = pathItemProduct ? extractDataFromUrl(pathItemProduct, 'productId') : null;
 
-                  if (ID && category && productURL && cost && imageURL !== null) {
+                  if (ID && category && productURL && cost && imageURL && !productsInfoSet.has(productURL)) {
                     const { currency, value } = parseCost(cost);
                     productQtyPage++;
 
+                    productsInfoSet.add(productURL);
                     productsInfo.push({
                       ID,
                       category,
@@ -142,17 +143,16 @@ export class RevolicoFetchDataService implements IFetchProductData {
           const isNextDisabled = await nextButton?.evaluate(el => el.classList.contains('disabled'));
 
           if (!isNextDisabled && remainingPages > 1) {
-            return scrapperOnly(currentPage + 1, remainingPages - 1, productsInfo);
+            return scrapperOnly(currentPage + 1, remainingPages - 1);
           }
         } catch (error) {
-          const errorMessage = `Error on page ${currentPage}: ${error}`;
-          log.debug(errorMessage);
-          job.log(errorMessage);
+          log.debug(`Error on page ${currentPage}`, error);
+          job.log(`Error on page ${currentPage}: ${error}`);
           job.progress(progressCalculate(totalPages, remainingPages));
           return scrapperOnly(currentPage + 1, remainingPages - 1);
         }
         await job.progress(100);
-        await browser.close();
+
         return Promise.resolve(productsInfo);
       }
 
@@ -161,12 +161,13 @@ export class RevolicoFetchDataService implements IFetchProductData {
       const errorMessage = `Error initializing scraping: ${error}`;
       this._log.error(errorMessage);
       job.log(errorMessage);
-      await browser.close();
       return Promise.reject(error);
+    } finally {
+      await browser.close();
     }
   }
 
-  async fetchProductDetails(url: string, job: Job<{ url: string }[]>) {
+  public async fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails> {
     this._log.debug(`Fetching product deatail at URL: ${url}`);
 
     if (!url) throw new InvalidParameterError('url');
@@ -236,14 +237,14 @@ export class RevolicoFetchDataService implements IFetchProductData {
         seller = { name: rawSellerName.trim(), email: rawEmail.trim(), whatsapp: rawWhatsapp.trim(), phone: rawPhone.trim() };
       }
 
-      await browser.close();
       return { views, location, seller };
     } catch (error) {
       const errorMessage = `Error initializing scraping: ${error}`;
       this._log.error(errorMessage);
       job.log(errorMessage);
-      await browser.close();
       return Promise.reject(error);
+    } finally {
+      await browser.close();
     }
   }
 }
