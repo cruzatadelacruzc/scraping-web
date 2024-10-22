@@ -14,27 +14,26 @@ export const QUEUE_NAME = {
 };
 @injectable()
 export class RevolicoQueues implements IQueueModule {
-  constructor(
+  public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.ScrapingManyProduct) private readonly _scrapingProductsService: ScrapingProductsService,
-    @inject(TYPES.ScrapingOneProduct) private readonly _scrapingproductService: ScrapingProductService,
+    @inject(TYPES.ScrapingOneProduct) private readonly _scrapingProductService: ScrapingProductService,
     @inject(TYPES.ProductService) private readonly _productService: ProductService,
   ) {
     this._log.context = RevolicoQueues.name;
   }
 
-
-  getModuleNmame(): string {
+  public getModuleNmame(): string {
     return 'REVOLICO';
   }
 
-  getProcessor(queueName: string): (job: Job) => Promise<any> {
+  public getProcessor(queueName: string): (job: Job) => Promise<any> {
     switch (queueName) {
       case QUEUE_NAME.products_scraping:
         return this._scrapingProductsService.processor.bind(this._scrapingProductsService);
 
       case QUEUE_NAME.product_scraping:
-        return this._scrapingproductService.processor.bind(this._scrapingproductService);
+        return this._scrapingProductService.processor.bind(this._scrapingProductService);
 
       case QUEUE_NAME.product_storage:
         return this._productService.processor.bind(this._productService);
@@ -44,7 +43,12 @@ export class RevolicoQueues implements IQueueModule {
     }
   }
 
-  getQueuesToInitialize(): string[] {
+  public getQueuesToInitialize(): string[] {
     return [QUEUE_NAME.products_scraping, QUEUE_NAME.product_storage, QUEUE_NAME.product_scraping];
+  }
+
+  public setupQueueListeners(): void {
+    this._scrapingProductsService.setupQueueListeners();
+    this._productService.setupQueueListeners();
   }
 }

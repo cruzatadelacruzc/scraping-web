@@ -9,10 +9,9 @@ import { QUEUE_NAME } from '../queues';
 import { ScrapingProductService } from './scraping-product.service';
 import { InvalidProductInfoError } from '../errors/invalid-product-data.error';
 
-
 @injectable()
 export class ProductService {
-  constructor(
+  public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(QContext) private readonly _qContext: QContext,
     @inject(ProductRepository) private readonly _repository: ProductRepository,
@@ -35,7 +34,7 @@ export class ProductService {
    * containing the products to be inserted or updated in the database.
    * @returns {Promise<{ urls: string[]; invalidProductInfo: IRevolicoProduct[]; errors: Error[] }>}
    */
-  async bulkAddOrEditUrls(
+  public async bulkAddOrEditUrls(
     batchProducts: IRevolicoProduct[],
   ): Promise<{ urls: string[]; errors: Error[]; invalidProductInfo: IRevolicoProduct[] }> {
     this._log.debug(`Bulk insert or update request for ${batchProducts.length} products`);
@@ -73,13 +72,13 @@ export class ProductService {
    * @returns {Promise<{ id: string }[]>} - The result of saving the products Id to the database.
    * @throws {Error} - Throws an error if the job processing fails.
    */
-  async processor(job: Job<IRevolicoProduct[]>): Promise<{ url: string }[]> {
+  public async processor(job: Job<IRevolicoProduct[]>): Promise<{ url: string }[]> {
     this._log.debug(`Processing scraping job ID(${job.id})`);
 
     try {
       const { data } = job;
       const result = await this.bulkAddOrEditUrls(data);
-      
+
       if (result.errors.length > 0) {
         const errorLogs = result.errors.map(err => job.log(err.toString()));
         await Promise.allSettled(errorLogs);
@@ -90,12 +89,14 @@ export class ProductService {
       }
 
       job.log(`Successfully saved ${result.urls.length} products to database`);
-      job.progress(100);     
+      job.progress(100);
 
       return result.urls.map(url => ({ url }));
     } catch (error) {
       job.log('🔥 Failed to save data to database 🔥');
-      error instanceof InvalidProductInfoError && job.update(error.invalidProductsInfo);            
+      if (error instanceof InvalidProductInfoError) {
+        job.update(error.invalidProductsInfo);
+      }
       throw error;
     }
   }
@@ -107,10 +108,8 @@ export class ProductService {
    * @returns {Promise<JobId>} A promise that resolves with the job ID.
    * @throws {Error} If the job cannot be added to the queue.
    */
-  async addStorageDataJob(data: IRevolicoProduct[], queueName: string): Promise<JobId> {
+  public async addStorageDataJob(data: IRevolicoProduct[], queueName: string): Promise<JobId> {
     try {
-      this.setupQueueListeners();
-
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
         attempts: 3,
         backoff: 5000,
@@ -125,9 +124,15 @@ export class ProductService {
     }
   }
 
-  private setupQueueListeners() {
+  /**
+   * Listens for the completed event on the product storage queue.
+   * When a job is completed, it schedules a job to scrape each product URL.
+   */
+  public setupQueueListeners(): void {
     const storageQueue = this._qContext.getQueue(QUEUE_NAME.product_storage);
     storageQueue.on('completed', async (job: Job<IRevolicoProduct[]>, result: { url: string }[]) => {
+      this._log.debug(`Job ${job.id} completed: ${result.length} products stored. Scheduling scraping jobs.`);
+
       const batchSize = Number(process.env.PRODUCT_URLS_BATCHSIZE) || 30;
 
       for (let i = 0; i < result.length; i += batchSize) {

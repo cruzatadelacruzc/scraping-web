@@ -11,13 +11,13 @@ import { IRevolicoProduct } from '@scrapers/revolico/models/product.model';
 
 @injectable()
 export class ScrapingProductsService {
-  constructor(
+  public constructor(
     @inject(QContext) private _qContext: QContext,
     @inject(TYPES.ProductService) private _productService: ProductService,
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.RevolicoData) private readonly _revolicoProductData: IFetchProductData,
   ) {
-    this._log.context = ScrapingProductsService.name;    
+    this._log.context = ScrapingProductsService.name;
   }
 
   /**
@@ -29,7 +29,7 @@ export class ScrapingProductsService {
    * @returns {Promise<IRevolicoProduct[]>} - The result of fetching the products data from Revolico.
    * @throws {Error} - Throws an error if the job processing fails.
    */
-  async processor(job: Job<ScrapingProductsType>): Promise<IRevolicoProduct[]> {
+  public async processor(job: Job<ScrapingProductsType>): Promise<IRevolicoProduct[]> {
     this._log.debug(`Processing scraping job ID(${job.id}) with data: `, job.data);
     const { category, subcategory, pageNumber, totalPages } = job.data;
     try {
@@ -39,10 +39,10 @@ export class ScrapingProductsService {
         pageNumber,
         totalPages,
         job,
-      );      
+      );
       const logMsg = `Processed products qty: ${data.length}`;
       this._log.debug(logMsg);
-      job.log(logMsg);            
+      job.log(logMsg);
       return data;
     } catch (error) {
       this._log.error(`Failed to process job with id: ${job.id}`, error);
@@ -58,10 +58,8 @@ export class ScrapingProductsService {
    * @returns {Promise<JobId>} A promise that resolves with the job ID.
    * @throws {Error} If the job cannot be added to the queue.
    */
-  async addScrapingJob(data: ScrapingProductsType, queueName: string): Promise<JobId> {    
+  public async addScrapingJob(data: ScrapingProductsType, queueName: string): Promise<JobId> {
     try {
-      this.setupQueueListeners();
-
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
         attempts: 2, // Retry twice if it fails
         backoff: 5000, // Optional: wait 5 seconds between retries
@@ -81,10 +79,11 @@ export class ScrapingProductsService {
    * Listens for the completed event on the products scraping queue.
    * When a job is completed, it schedules a job to store the product data.
    */
-  private setupQueueListeners() {
+  public setupQueueListeners(): void {
     const manyProductQueue = this._qContext.getQueue(QUEUE_NAME.products_scraping);
     manyProductQueue.on('completed', async (job: Job<IRevolicoProduct[]>, result: IRevolicoProduct[]) => {
-      
+      this._log.debug(`Job ${job.id} completed: ${result.length} products data scraped. Scheduling storing jobs.`);
+
       const batchSize = Number(process.env.PRODUCT_STORAGE_BATCHSIZE) || 50;
       const totalBatches = Math.ceil(result.length / batchSize);
 
