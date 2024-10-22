@@ -28,7 +28,7 @@ container.bind<IFetchProductData>(TYPES.RevolicoData).to(RevolicoFetchDataServic
 container.bind(TYPES.ScrapingManyProduct).to(ScrapingProductsService);
 container.bind(TYPES.ScrapingOneProduct).to(ScrapingProductService);
 container.bind(TYPES.ProductService).to(ProductService);
-container.bind<IQueueModule>(TYPES.RevolicoQueues).to(RevolicoQueues);
+container.bind<IQueueModule>(TYPES.RevolicoQueues).to(RevolicoQueues).inSingletonScope();
 
 //controllers
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
