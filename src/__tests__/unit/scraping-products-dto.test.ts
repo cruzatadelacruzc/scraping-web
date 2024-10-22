@@ -25,24 +25,27 @@ describe('DTO - Scraping Products', () => {
       pageNumber: 1,
       totalPages: 5,
     };
+    let error: unknown;
 
     expect(() => ScrapingProductsDTO.from(invalidData)).toThrow(ValidationError);
 
     try {
       ScrapingProductsDTO.from(invalidData);
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        expect(error.validationErrors).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              code: 'invalid_type',
-              message: 'Required',
-              path: ['category'],
-            }),
-          ]),
-        );
-      }
+    } catch (e) {
+      error = e;
     }
+
+    expect(error).toBeInstanceOf(ValidationError);
+    const validationError = error as ValidationError;
+    expect(validationError.validationErrors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid_type',
+          message: 'Required',
+          path: ['category'],
+        }),
+      ]),
+    );
   });
 
   it('should throw an error if category is empty', () => {
