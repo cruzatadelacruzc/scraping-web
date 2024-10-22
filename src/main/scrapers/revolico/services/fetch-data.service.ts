@@ -167,7 +167,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
     }
   }
 
-  public async fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails> {
+  public async fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails | null> {
     this._log.debug(`Fetching product deatail at URL: ${url}`);
 
     if (!url) throw new InvalidParameterError('url');
@@ -194,6 +194,11 @@ export class RevolicoFetchDataService implements IFetchProductData {
       let location = { state: '' };
       let seller = { name: '', whatsapp: '', phone: '', email: '' };
       const [viewsAndLocationContainer, sellerAndContactContainer] = await Promise.all([page.$('div.bzsCgK'), page.$('div.fmEzaW')]);
+
+      if (!viewsAndLocationContainer && !sellerAndContactContainer) {
+        this._log.warn('Page structure unexpected: missing views/location or seller/contact container');
+        return null;
+      }
 
       if (viewsAndLocationContainer) {
         const [viewsParagraph, locationParagraph] = await Promise.all([
