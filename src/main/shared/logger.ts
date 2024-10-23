@@ -6,16 +6,16 @@ export class Logger implements ILogger {
   private debugMode: boolean = false;
   private _className: string;
 
-  constructor() {
+  public constructor() {
     this.debugMode = process.env.NODE_ENV === 'development';
     this._className = 'Logger';
   }
 
-  set context(context: string) {
+  public set context(context: string) {
     this._className = context;
   }
 
-  log(message: string, object?: any) {
+  public log(message: string, object?: any): void {
     if (this.debugMode) {
       this.debug(message, object);
     } else {
@@ -28,9 +28,9 @@ export class Logger implements ILogger {
    * @param object - El objeto que será serializado.
    * @returns Una cadena JSON serializada o un mensaje de error si la serialización falla.
    */
-  safeSerialize(object: unknown): string {
+  public safeSerialize(object: unknown): string {
     if (object === undefined) return '';
-    
+
     if (typeof object !== 'object') return object.toString();
 
     if (object instanceof Error) {
@@ -44,7 +44,7 @@ export class Logger implements ILogger {
         2,
       );
     }
-    
+
     try {
       return JSON.stringify(object, null, 2);
     } catch (error) {
@@ -58,7 +58,7 @@ export class Logger implements ILogger {
    * @param message - El mensaje a validar.
    * @returns El mensaje validado, o un mensaje de advertencia si no es un string.
    */
-  validateMessage(message: unknown): string {
+  public validateMessage(message: unknown): string {
     if (typeof message !== 'string') {
       console.warn('Invalid message type. Expected a string.');
       return '[Invalid message type]';
@@ -70,11 +70,11 @@ export class Logger implements ILogger {
    * Generates a string with the current date and time in ISO 8601 format with milliseconds.
    * @returns {string} - A string with the current date and time including milliseconds.
    */
-  currentDateTime(): string {
+  public currentDateTime(): string {
     return new Date().toISOString();
   }
 
-  debug(message: string, object?: unknown): void {
+  public debug(message: string, object?: unknown): void {
     if (!this.debugMode) return;
 
     const validatedMessage = this.validateMessage(message);
@@ -84,7 +84,7 @@ export class Logger implements ILogger {
     console.log(`[${timestamp}] Debug: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
-  info(message: string, object?: unknown): void {
+  public info(message: string, object?: unknown): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();
@@ -92,7 +92,7 @@ export class Logger implements ILogger {
     console.info(`[${timestamp}] Info: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
-  warn(message: string, object?: unknown): void {
+  public warn(message: string, object?: unknown): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();
@@ -100,7 +100,7 @@ export class Logger implements ILogger {
     console.warn(`[${timestamp}] Warn: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
-  error(message: string, object?: any): void {
+  public error(message: string, object?: any): void {
     const validatedMessage = this.validateMessage(message);
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();

@@ -134,14 +134,14 @@ describe('ProductService Integration Test', () => {
       expect.arrayContaining(['Path `category` is required.', 'Path `url` is required.', 'Path `cost` is required.']),
     );
   });
-  
+
   it('should return invalid product data if required fields are missing', async () => {
-    const invalidProductData = { ...productData[0], category: ''};
+    const invalidProductData = { ...productData[0], category: '' };
 
     const result = await productService.bulkAddOrEditUrls([invalidProductData]);
 
     expect(result.urls).toHaveLength(0);
-    expect(result.errors).toHaveLength(1);    
+    expect(result.errors).toHaveLength(1);
     expect(result.invalidProductInfo[0]).toEqual(
       expect.objectContaining({
         ID: invalidProductData.ID,
@@ -159,6 +159,5 @@ describe('ProductService Integration Test', () => {
         seller: expect.any(Object),
       }),
     );
-  }); 
-  
+  });
 });

@@ -1,7 +1,7 @@
-import { IRevolicoProduct } from "../models/product.model";
+import { IRevolicoProduct } from '../models/product.model';
 
 export class InvalidProductInfoError extends Error {
-  constructor(
+  public constructor(
     public invalidProductsInfo: IRevolicoProduct[],
     message: string = 'error:invalid-product-data',
   ) {

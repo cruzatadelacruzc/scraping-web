@@ -1,14 +1,13 @@
-import { QContext } from "@config/queue.config";
-import { inject, injectable } from "inversify";
-import { ILogger } from "./logger.interfaces";
-import { TYPES } from "./types.container";
-import Arena, {} from 'bull-arena';
+import { QContext } from '@config/queue.config';
+import { inject, injectable } from 'inversify';
+import { ILogger } from './logger.interfaces';
+import { TYPES } from './types.container';
+import Arena from 'bull-arena';
 import Bull from 'bull';
-import { CONFIG } from "@config/constants";
+import { CONFIG } from '@config/constants';
 import { getQueueModules } from '@shared/main-queues';
-import { Redis } from 'ioredis';
 
-export interface ArenaQueueConfig {
+export interface IArenaQueueConfig {
   name: string;
   hostId: string;
   type: 'bull' | 'bee';
@@ -18,14 +17,14 @@ export interface ArenaQueueConfig {
   };
 }
 @injectable()
-export class BullArenaService {  
+export class BullArenaService {
   private _config: any;
 
-  constructor(
+  public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(QContext) private readonly _qContext: QContext,
   ) {
-    this._log.context = BullArenaService.name;    
+    this._log.context = BullArenaService.name;
   }
 
   /**
@@ -34,7 +33,7 @@ export class BullArenaService {
    *
    * @returns {void}
    */
-  setupBullArena(): void {
+  public setupBullArena(): void {
     const queueModules = getQueueModules();
 
     const initialQueues = queueModules.map(module => {
@@ -61,7 +60,7 @@ export class BullArenaService {
    * Returns the Express Router for Arena to integrate with the application.
    *
    */
-  get getArenaConfig() {
+  public get getArenaConfig(): any {
     return this._config;
   }
 }

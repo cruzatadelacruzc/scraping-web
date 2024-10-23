@@ -74,6 +74,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
             const message = `Failed to load page: ${url} with status ${response?.status()}`;
             log.debug(message);
             await job.log(message);
+            await browser.close();
             return scrapperOnly(currentPage + 1, remainingPages - 1);
           }
 
@@ -152,7 +153,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
           return scrapperOnly(currentPage + 1, remainingPages - 1);
         }
         await job.progress(100);
-
+        await browser.close();
         return Promise.resolve(productsInfo);
       }
 
@@ -161,9 +162,8 @@ export class RevolicoFetchDataService implements IFetchProductData {
       const errorMessage = `Error initializing scraping: ${error}`;
       this._log.error(errorMessage);
       job.log(errorMessage);
-      return Promise.reject(error);
-    } finally {
       await browser.close();
+      return Promise.reject(error);
     }
   }
 

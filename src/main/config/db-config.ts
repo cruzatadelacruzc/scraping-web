@@ -11,7 +11,7 @@ export class DBContext {
    *
    * @param uri - The URI of the MongoDB database.
    */
-  async dbConnect(): Promise<void> {
+  public async dbConnect(): Promise<void> {
     const DB_URI = <string>process.env.DB_URI;
     try {
       this._db = await mongoose.connect(DB_URI);
@@ -22,14 +22,14 @@ export class DBContext {
     }
   }
 
-  get db(): typeof mongoose {
+  public get db(): typeof mongoose {
     if (!this._db) {
       throw new Error('The database connection has not been initialized.');
     }
     return this._db;
   }
 
-  get product(): mongoose.Model<IRevolicoProduct> {
+  public get product(): mongoose.Model<IRevolicoProduct> {
     return this._db.model<IRevolicoProduct>('products', productSchema);
   }
 }

@@ -21,8 +21,7 @@ describe('ResponseHandler', () => {
       message,
       data,
     });
-
-  })
+  });
 
   it('should send an error response', () => {
     const message = 'An error occurred';
@@ -73,5 +72,4 @@ describe('ResponseHandler', () => {
       message,
     });
   });
-
 });

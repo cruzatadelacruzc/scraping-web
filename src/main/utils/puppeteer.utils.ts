@@ -21,10 +21,15 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
 ];
-const getRandomUserAgent = () => {
+/**
+ * Returns a random user agent string from the array of strings.
+ *
+ * @returns {string} A random user agent string.
+ */
+const getRandomUserAgent = (): string => {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 };
-export  const CONFIG = {
+export const CONFIG = {
   headless: true,
   args: [
     `--user-agent=${getRandomUserAgent()}`,
@@ -43,7 +48,7 @@ export const VIEW_PORT = { width: 1280, height: 800 };
 
 /**
  * Generates a random delay between a minimum and maximum duration.
- * 
+ *
  * @param {number} min - The minimum delay in milliseconds.
  * @param {number} max - The maximum delay in milliseconds.
  * @returns {Promise<void>} A promise that resolves after the random delay.

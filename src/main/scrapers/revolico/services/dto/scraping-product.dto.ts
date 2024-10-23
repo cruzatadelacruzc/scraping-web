@@ -16,9 +16,7 @@ export type ScrapingProductType = z.infer<typeof JobSchema>;
  * const scrapingProductDto = new JobDTO('dasdasd1dad4', 'https://example.com');
  */
 export class ScrapingProductDTO {
-  constructor(
-    public readonly id: string,
-  ) {}
+  public constructor(public readonly id: string) {}
 
   /**
    * @description Factory method that creates a `ScrapingProductDTO` instance from validated data.
@@ -28,7 +26,7 @@ export class ScrapingProductDTO {
    * @returns {ScrapingProductDTO} - New `ScrapingProductDTO` instance with validated data.
    * @throws {ZodError} - Throws an error if validation fails.
    */
-  static from(data: Partial<ScrapingProductType>): ScrapingProductDTO {
+  public static from(data: Partial<ScrapingProductType>): ScrapingProductDTO {
     try {
       const parsedData = JobSchema.parse(data);
       return new ScrapingProductDTO(parsedData.id);

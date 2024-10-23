@@ -9,7 +9,7 @@
  * @param {string} [parameter] - The specific parameter that caused the error (optional).
  */
 export class InvalidParameterError extends Error {
-  constructor(parameter: string) {
+  public constructor(parameter: string) {
     super(`Invalid parameter: ${parameter}`);
     this.name = 'InvalidParameterError';
   }

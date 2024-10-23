@@ -1,7 +1,7 @@
 export interface IProductBase {
   url: string;
   cost: string;
-  category: string,
+  category: string;
   subcategory?: string;
   description?: string;
 }

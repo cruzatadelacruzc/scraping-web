@@ -20,4 +20,15 @@ export interface IQueueModule {
    * @throws {Error} If no processor is defined for the specified queue.
    */
   getProcessor(queueName: string): (job: Job) => Promise<any>;
+
+  /**
+   * Configures the event listeners for the queues within the module.
+   * This method is responsible for setting up any required listeners for
+   * queue events such as 'completed', 'failed', or others.
+   *
+   * It should be called after initializing the queues to ensure that all
+   * relevant events are being tracked and handled appropriately.
+   *
+   */
+  setupQueueListeners(): void;
 }

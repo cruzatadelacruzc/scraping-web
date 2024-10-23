@@ -1,6 +1,6 @@
-import { ScrapingProductsType, ScrapingProductType } from "@scrapers/revolico/services/dto";
-import { IProductBase, IProductDetails } from "@shared/product-base.interfaces";
-import { Job } from "bull";
+import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
+import { IProductBase, IProductDetails } from '@shared/product-base.interfaces';
+import { Job } from 'bull';
 
 export interface IFetchProductData {
   /**
@@ -38,5 +38,5 @@ export interface IFetchProductData {
    * @param job The Job in progress
    * @returns {Promise<IProductDetails>} A promise that resolves the product details.
    */
-  fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails>;
+  fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails | null>;
 }

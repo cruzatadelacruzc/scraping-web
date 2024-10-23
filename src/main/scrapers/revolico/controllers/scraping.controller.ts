@@ -11,15 +11,24 @@ import { QUEUE_NAME } from '../queues';
 
 @controller('/api/revolicos/scraping')
 export class ScrapingController {
-  constructor(
+  public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.ScrapingManyProduct) private scrapingJob: ScrapingProductsService,
   ) {
     this._log.context = ScrapingController.name;
   }
 
+  /**
+   * Handles a POST request to add a new scraping job to the queue.
+   * The request body should contain a ScrapingProductsDTO object.
+   * The response will contain a JobId as a JSON object.
+   * @param {Request<ScrapingProductsDTO>} req - The Express request object.
+   * @param {Response} res - The Express response object.
+   * @returns {Promise<void>} - A promise that resolves when the job is added to the queue.
+   * @throws {Error} - If the job cannot be added to the queue.
+   */
   @httpPost('/jobs', ValidateRequestMiddleware.with(ScrapingProductsDTO))
-  async addNewJob(req: Request, res: Response) {
+  public async addNewJob(req: Request, res: Response): Promise<void> {
     const request = ScrapingProductsDTO.from(req.body);
     this._log.debug('Request to add a new Job', request);
     const createdJobID = await this.scrapingJob.addScrapingJob(request, QUEUE_NAME.products_scraping.toString());

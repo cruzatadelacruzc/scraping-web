@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { DBContext } from '@config/db-config';
 import { container } from '@shared/container';
@@ -11,7 +11,7 @@ import { BullArenaService } from '@shared/bull-arena';
 const PORT = process.env.PORT || 3000;
 
 export class App {
-  async setup() {
+  public async setup(): Promise<void> {
     const _db = container.get(DBContext);
     const _bullArena = container.get(BullArenaService);
 
@@ -22,7 +22,7 @@ export class App {
     const server = new InversifyExpressServer(container);
 
     server.setErrorConfig(app => {
-      app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+      app.use((error: Error, req: Request, res: Response) => {
         if (error instanceof Error) {
           return ResponseHandler.error(res, 'Sorry, we have presented internal problems');
         }

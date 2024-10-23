@@ -5,7 +5,12 @@ import { App } from './app';
 
 console.clear();
 
-export async function bootstrap() {
+/**
+ * Initializes the application and starts the server.
+ *
+ * @returns {Promise<void>} A promise that resolves when the server is started.
+ */
+export async function bootstrap(): Promise<void> {
   new App().setup();
 }
 

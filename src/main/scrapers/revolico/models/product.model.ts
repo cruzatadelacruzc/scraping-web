@@ -49,7 +49,7 @@ export const productSchema = new Schema<IRevolicoProduct>(
     },
     priceHistory: {
       type: [{ value: { type: Number }, updatedAt: { type: Date, default: Date.now } }],
-      default: () => [],
+      default: (): Array<any> => [],
       _id: false,
     },
     imageURL: {
@@ -61,7 +61,7 @@ export const productSchema = new Schema<IRevolicoProduct>(
     },
     isOutstandingHistory: {
       type: [{ value: { type: Boolean }, updatedAt: { type: Date, default: Date.now } }],
-      default: () => [],
+      default: (): Array<any> => [],
       _id: false,
     },
     location: {
@@ -78,13 +78,13 @@ export const productSchema = new Schema<IRevolicoProduct>(
           updatedAt: { type: Date, default: Date.now },
         },
       ],
-      default: () => [],
+      default: (): Array<any> => [],
       _id: false,
     },
     views: { type: Number, default: 0 },
     viewsHistory: {
       type: [{ value: { type: Number }, updatedAt: { type: Date, default: Date.now } }],
-      default: () => [],
+      default: (): Array<any> => [],
       _id: false,
     },
     seller: {

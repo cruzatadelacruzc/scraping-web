@@ -1,12 +1,12 @@
-interface ValidationErrorDetail {
+interface IValidationErrorDetail {
   code?: string;
   message: string;
   path?: (string | number)[];
 }
 
 export class ValidationError extends Error {
-  constructor(
-    public validationErrors: ValidationErrorDetail[],
+  public constructor(
+    public validationErrors: IValidationErrorDetail[],
     message: string = `error:validation`,
   ) {
     super(message);

@@ -4,7 +4,7 @@ import { readdirSync } from 'fs';
 const PATH_ROUTER = `${__dirname}`;
 const router = Router();
 
-const cleanFileName = (fileName: string) => {
+const cleanFileName = (fileName: string): string | undefined => {
   const file = fileName.split('.').shift();
   return file;
 };

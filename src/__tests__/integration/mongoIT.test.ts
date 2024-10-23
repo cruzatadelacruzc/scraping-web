@@ -1,4 +1,4 @@
-import { model, Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 import { container } from '@shared/container';
 import { DBContext } from '@config/db-config';
 

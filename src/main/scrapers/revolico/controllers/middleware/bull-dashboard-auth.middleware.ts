@@ -3,11 +3,11 @@ import { ResponseHandler } from '@shared/response-handler';
 import { Request, Response, NextFunction } from 'express';
 
 export class QueueDashboardAuthMiddleware extends BaseMiddleware {
-  constructor() {
+  public constructor() {
     super();
   }
 
-  public execute(req: Request, res: Response, next: NextFunction) {
+  public execute(req: Request, res: Response, next: NextFunction): void {
     const auth = { login: process.env.BULL_BOARD_USER, password: process.env.BULL_BOARD_PASSWORD };
     const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
 
@@ -29,7 +29,7 @@ export class QueueDashboardAuthMiddleware extends BaseMiddleware {
    * @description Creates a middleware function for Basic Authentication.
    * This method instantiates the BullBoardAuthMiddleware and calls its execute method.
    */
-  static authenticate() {
+  public static authenticate(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       const middleware = new QueueDashboardAuthMiddleware();
       middleware.execute(req, res, next);

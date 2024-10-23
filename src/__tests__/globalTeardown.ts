@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-module.exports = async () => {
+module.exports = async (): Promise<void> => {
   const instance = (global as any).__MONGOINSTANCE;
 
   if (mongoose.connection.readyState !== 0) {
@@ -11,4 +11,3 @@ module.exports = async () => {
     await instance.stop();
   }
 };
-

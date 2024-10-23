@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from 'express';
 
 /**
  * Middleware base class.
@@ -9,7 +9,7 @@ export abstract class BaseMiddleware {
    * @constructor.
    * Binds the context of the execute() function to the class instance.
    */
-  constructor() {
+  public constructor() {
     this.execute = this.execute.bind(this);
   }
 
@@ -22,5 +22,4 @@ export abstract class BaseMiddleware {
    * @returns {void | Promise<void>} - Returns nothing or a promise that resolves when the request completes.
    */
   public abstract execute(req: Request, res: Response, next: NextFunction): void | Promise<void>;
-  
 }

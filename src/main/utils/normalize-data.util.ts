@@ -26,24 +26,24 @@ export const parseCost = (cost: string): { value: number; currency: string } => 
  * @returns {string | null} The constructed full URL or null if the URL is invalid.
  */
 export function buildFullUrl(baseUrl: string, path: string): string | null {
-    try {
-        const url = new URL(path, baseUrl);
-        return url.href;
-    } catch (error) {
-        console.error('🔥 Invalid URL:', error);
-        return null;
-    }
+  try {
+    const url = new URL(path, baseUrl);
+    return url.href;
+  } catch (error) {
+    console.error('🔥 Invalid URL:', error);
+    return null;
+  }
 }
 
 /**
  * Extracts and parses the numeric value from a string representing views.
  * Handles numbers with commas and decimals.
- * 
+ *
  * @param {string} views - The string containing the view count, potentially with commas or additional text.
  * @returns {number} The parsed numeric value of the views, or 0 if no valid number is found.
  */
-export const parseViews = (views: string): number => {  
-  const valueMatch = views.match(/[\d,.]+/); //Extract number, including decimals  
+export const parseViews = (views: string): number => {
+  const valueMatch = views.match(/[\d,.]+/); //Extract number, including decimals
   const value = valueMatch ? parseFloat(valueMatch[0].replace(',', '')) : 0;
 
   return value;
@@ -52,7 +52,7 @@ export const parseViews = (views: string): number => {
 /**
  * Parses a location string into state and municipality (if available).
  * It accepts any non-alphanumeric character as a separator (e.g., '/', '-', '+', '.').
- * 
+ *
  * @param location - The location string, which could be in the format "municipality/ province" or just "state".
  * @returns An object with the state and optionally the municipality.
  */

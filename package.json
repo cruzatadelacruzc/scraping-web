@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/main/bootstrap.js",
   "scripts": {
-    "test": "NODE_ENV=test jest --verbose",
+    "test": "jest --verbose",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:cov": "NODE_ENV=test jest --verbose --collectCoverage",
     "start": "node ./dist/main/bootstrap.js",

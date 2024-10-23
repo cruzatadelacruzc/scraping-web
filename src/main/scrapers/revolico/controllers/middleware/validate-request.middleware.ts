@@ -13,14 +13,14 @@ export class ValidateRequestMiddleware extends BaseMiddleware {
    * @param {Object} _DtoClass - DTO Class that defines the validation scheme `(method from())`.
    * @param {Boolean} _withParams - Indicates whether route parameters should be included in the request.
    */
-  constructor(
+  public constructor(
     private readonly _DtoClass: { from: any },
     private readonly _withParams: boolean = false,
   ) {
     super();
   }
 
-  public execute(req: Request, res: Response, next: NextFunction) {
+  public execute(req: Request, res: Response, next: NextFunction): void {
     if (this._withParams) {
       req.body = {
         ...req.body,
@@ -38,15 +38,16 @@ export class ValidateRequestMiddleware extends BaseMiddleware {
       ResponseHandler.error(res);
     }
   }
-
   /**
    * @description Creates a new instance of the class,
    *  specifying parameter exclusion and returns the execute method.
    * @param  dto - Class that defines the validation scheme.
    * @returns - Execute method of the new instance.
    */
-  static with(dto: any) {
-    return new ValidateRequestMiddleware(dto, false).execute;
+  public static with(dto: any): (req: Request, res: Response, next: NextFunction) => void {
+    return (req: Request, res: Response, next: NextFunction) => {
+      new ValidateRequestMiddleware(dto, false).execute(req, res, next);
+    };
   }
 
   /**
@@ -55,7 +56,9 @@ export class ValidateRequestMiddleware extends BaseMiddleware {
    * @param  dto - Class that defines the validation scheme.
    * @returns - Execute method of the new instance.
    */
-  static withParams(dto: any) {
-    return new ValidateRequestMiddleware(dto, true).execute;
+  public static withParams(dto: any): (req: Request, res: Response, next: NextFunction) => void {
+    return (req: Request, res: Response, next: NextFunction) => {
+      new ValidateRequestMiddleware(dto, true).execute(req, res, next);
+    };
   }
 }

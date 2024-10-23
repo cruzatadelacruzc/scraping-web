@@ -18,7 +18,7 @@ export type ScrapingProductsType = z.infer<typeof JobSchema>;
  * @param {number | undefined} totalPages - The total number of pages in the job
  */
 export class ScrapingProductsDTO {
-  constructor(
+  public constructor(
     public readonly category: string,
     public readonly subcategory?: string,
     public readonly pageNumber?: number,
@@ -33,7 +33,7 @@ export class ScrapingProductsDTO {
    * @returns {ScrapingProductsDTO} - New `ScrapingProductsDTO` instance with validated data.
    * @throws {ZodError} - Throws an error if validation fails.
    */
-  static from(data: Partial<ScrapingProductsType>): ScrapingProductsDTO {
+  public static from(data: Partial<ScrapingProductsType>): ScrapingProductsDTO {
     try {
       const parsedData = JobSchema.parse(data);
       return new ScrapingProductsDTO(parsedData.category, parsedData.subcategory, parsedData.pageNumber, parsedData.totalPages);

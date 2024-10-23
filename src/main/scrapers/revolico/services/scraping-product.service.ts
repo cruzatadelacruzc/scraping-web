@@ -3,7 +3,6 @@ import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { Job, JobId } from 'bull';
 import { inject, injectable } from 'inversify';
-import { ScrapingProductType } from './dto/scraping-product.dto';
 import { ProductRepository } from '../repositories/product.repository';
 import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
 import { delayRandom } from '@utils/puppeteer.utils';
@@ -11,7 +10,7 @@ import { progressCalculate } from '@utils/queue.util';
 
 @injectable()
 export class ScrapingProductService {
-  constructor(
+  public constructor(
     @inject(QContext) private readonly _qContext: QContext,
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(ProductRepository) private readonly _repository: ProductRepository,
@@ -28,10 +27,9 @@ export class ScrapingProductService {
    * @returns {Promise<string>} - A message indicating how many product URLs were processed.
    * @throws Will throw an error if scraping or updating a product fails.
    */
-  async processor(job: Job<{ url: string }[]>): Promise<string> {
+  public async processor(job: Job<{ url: string }[]>): Promise<string> {
     const productsData = job.data;
     this._log.debug(`Processing scraping job for ${productsData?.length} product URLs`);
-    let url;
     let remaining = productsData.length;
     for (const { url } of productsData) {
       try {
@@ -45,6 +43,12 @@ export class ScrapingProductService {
         }
 
         const productDetails = await this._revolicoProductData.fetchProductDetails(url, job);
+        if (!productDetails) {
+          const warnMessage = `Failed to fetch product details for URL: ${url}`;
+          this._log.warn(warnMessage);
+          await job.log(warnMessage);
+          continue;
+        }
 
         await this._repository.update(product._id, productDetails);
         job.log(`Successfully scraped and updated product(${product._id}) at URL: ${url}`);
@@ -71,7 +75,7 @@ export class ScrapingProductService {
    * @returns {Promise<JobId>} A promise that resolves with the job ID.
    * @throws {Error} If the job cannot be added to the queue.
    */
-  async addScrapingJob(data: { url: string }[], queueName: string): Promise<JobId> {
+  public async addScrapingJob(data: { url: string }[], queueName: string): Promise<JobId> {
     try {
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
         attempts: 2,

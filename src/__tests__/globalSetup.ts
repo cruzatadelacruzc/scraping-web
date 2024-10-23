@@ -1,7 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
-module.exports = async () => {
+module.exports = async (): Promise<void> => {
   // it's needed in global space, because we don't want to create a new instance every test-suite
   const instance = await MongoMemoryServer.create();
   const uri = instance.getUri();

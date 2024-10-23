@@ -1,19 +1,17 @@
 import { DBContext } from '@config/db-config';
 import { inject, injectable } from 'inversify';
 import productModel, { IRevolicoProduct } from '../models/product.model';
-import { InsertManyOptions, InsertManyResult, Model, MongooseBulkWriteOptions, RootFilterQuery } from 'mongoose';
+import { Model, RootFilterQuery } from 'mongoose';
+import { DeleteResult } from 'mongodb';
 
-export interface CustomInsertManyOptions extends InsertManyOptions {
-  // Otras configuraciones personalizadas que desees agregar
-}
-export interface CustomInsertManyResult {
+export interface ICustomInsertManyResult {
   acknowledged: boolean;
   insertedCount?: number;
   insertedIds?: Record<number, any>;
   errors?: Error[];
 }
 
-export interface BulkWriteResultWithErrors {
+export interface IBulkWriteResultWithErrors {
   insertedIds: Record<number, any>;
   upsertedIds: Record<number, any>;
   nInserted: number;
@@ -27,24 +25,25 @@ export interface BulkWriteResultWithErrors {
 export class ProductRepository {
   private readonly _model: Model<IRevolicoProduct>;
 
-  constructor(@inject(DBContext) private readonly _dbContext: DBContext) {
+  public constructor(@inject(DBContext) private readonly _dbContext: DBContext) {
     this._model = productModel;
   }
 
   /**
    * Removes all products from the database.
-   * @returns A promise that resolves once all products have been removed.
+   * @returns {Promise<DeleteResult>} A promise that resolves once all products have been removed.
    */
-  async clearAll() {
+  public async clearAll(): Promise<DeleteResult> {
     return this._model.deleteMany({});
   }
 
   /**
-   * Finds a product by its id.
-   * @param {string} id - The ID of the product to retrieve.
-   * @returns {Promise<IRevolicoProduct | null>} - Returns the found product or null if not found.
+   * Finds a single product from the database.
+   * @param filter The filter to use when looking up the product.
+   * @param projection The fields to include in the result.
+   * @returns A promise that resolves with the product if found, or null if no product is found.
    */
-  async findOne(
+  public async findOne(
     filter: RootFilterQuery<IRevolicoProduct>,
     projection?: Partial<Record<keyof IRevolicoProduct, 1 | 0>>,
   ): Promise<IRevolicoProduct | null> {
@@ -53,10 +52,11 @@ export class ProductRepository {
 
   /**
    * Update a product in the database.
-   * @param updateData Partial entity of IRevolicoProduct
-   * @returns The updated product document
+   * @param {string} _id - The _id of the product to update.
+   * @param {Partial<IRevolicoProduct>} updateData - The data to update the product with.
+   * @returns {Promise<IRevolicoProduct | null>} - The updated product document, or null if no product is found.
    */
-  async update(_id: string, updateData: Partial<IRevolicoProduct>) {
+  public async update(_id: string, updateData: Partial<IRevolicoProduct>): Promise<IRevolicoProduct | null> {
     return this._model.findByIdAndUpdate(_id, { $set: updateData }, { new: true, runValidators: true });
   }
 
@@ -68,7 +68,7 @@ export class ProductRepository {
    * @param {RootFilterQuery<IRevolicoProduct>} [filter] - A filter to apply to the query.
    * @returns {Promise<IRevolicoProduct[]>} - A promise that resolves with an array of products.
    */
-  async find(
+  public async find(
     skip: number,
     limit: number,
     sort: { field: string; order: 'asc' | 'desc' } = { field: 'createdAt', order: 'asc' },
@@ -88,13 +88,22 @@ export class ProductRepository {
    * @param {RootFilterQuery<IRevolicoProduct>} [filter] - The filter to apply on the count query.
    * @returns {Promise<number>} - The count of products that match the filter.
    */
-  async count(filter?: RootFilterQuery<IRevolicoProduct>): Promise<number> {
+  public async count(filter?: RootFilterQuery<IRevolicoProduct>): Promise<number> {
     return this._model.countDocuments(filter || {}).exec();
   }
 
-  async bulkInsertOrUpdate(product: IRevolicoProduct, filterFields: (keyof IRevolicoProduct)[] = ['ID']): Promise<IRevolicoProduct | null> {
+  /**
+   * Inserts or updates a single product in the database.
+   * @param {IRevolicoProduct} product - The product to be inserted or updated.
+   * @param {keyof IRevolicoProduct[]} filterFields - The fields to use as filter. Defaults to ['ID'].
+   * @returns {Promise<IRevolicoProduct | null>} - The inserted or updated product document, or null if no product is found.
+   */
+  public async bulkInsertOrUpdate(
+    product: IRevolicoProduct,
+    filterFields: (keyof IRevolicoProduct)[] = ['ID'],
+  ): Promise<IRevolicoProduct | null> {
     const filter: Partial<Record<keyof IRevolicoProduct, any>> = {};
-    
+
     filterFields.forEach(field => {
       if (product[field]) {
         filter[field] = product[field];
@@ -130,8 +139,8 @@ export class ProductRepository {
         ...(product.views ? { viewsHistory: { value: product.views, updatedAt: new Date() } } : {}),
         ...(product.isOutstanding !== undefined ? { isOutstandingHistory: { value: product.isOutstanding, updatedAt: new Date() } } : {}),
       },
-    };   
-    
+    };
+
     return this._model.findOneAndUpdate(filter, update, { upsert: true, new: true, lean: true, runValidators: true }).exec();
   }
 }
