@@ -13,5 +13,4 @@ module.exports = async (): Promise<void> => {
   if (connection?.connection?.db) {
     await connection.connection.db.dropDatabase();
   }
-  await mongoose.disconnect();
 };

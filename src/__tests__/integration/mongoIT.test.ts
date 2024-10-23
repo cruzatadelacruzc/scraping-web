@@ -4,8 +4,9 @@ import { DBContext } from '@config/db-config';
 
 describe('MongoDB Integration Tests', () => {
   let _dbContext: DBContext;
-  beforeAll(() => {
+  beforeAll(async () => {
     _dbContext = container.get<DBContext>(DBContext);
+    await _dbContext.dbConnect();
   });
 
   it('should save a document to MongoDB', async () => {
