@@ -43,5 +43,6 @@ export default [
       ],
     },
   },
+  { files: ['jest.config.js'], rules: { '@typescript-eslint/no-require-imports': 'off' } },
   eslintPluginPrettierRecommended,
 ];
