@@ -1,0 +1,50 @@
+name: Deploy Scrapers API
+
+on:
+  push: 
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "DB_URI=${{ secrets.DB_URI }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "TIME_OUT=${{ secrets.TIME_OUT }}" >> .env
+          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
+          echo "BULL_BOARD_USER=${{ secrets.BULL_BOARD_USER }}" >> .env
+          echo "BULL_BOARD_PASSWORD=${{ secrets.BULL_BOARD_PASSWORD }}" >> .env
+          echo "BULL_ARENA_URL=${{ secrets.BULL_ARENA_URL }}" >> .env
+          echo "PRODUCT_URLS_BATCHSIZE=${{ secrets.PRODUCT_URLS_BATCHSIZE }}" >> .env
+          echo "PRODUCT_STORAGE_BATCHSIZE=${{ secrets.PRODUCT_STORAGE_BATCHSIZE }}" >> .env
+
+      - name: Build & push Docker image to Quay.io
+        uses: mr-smithers-excellent/docker-build-push@v6
+        with:
+          image: gsi_cesar/scrappers/revolico
+          tags: ${{ github.ref_name }},latest
+          registry: quay.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull image from Qua.io
+        run: docker pull gsi_cesar/scrappers/revolico:${{ github.ref_name }}
+
+      - name: Delete old container
+        run: docker rm -f scrapper-revolico-api:${{ github.ref_name }}
+
+      - name: Run docker container
+        run: |
+          docker run -d -p 80:${{ secrets.PORT }} \
+            --env-file .env \
+            --name scrapper-revolico-api gsi_cesar/scrappers/revolico:${{ github.ref_name }}
