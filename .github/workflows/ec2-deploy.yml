@@ -1,7 +1,7 @@
 name: Deploy Scrapers API
 
 on:
-  push: 
+  push:
     branches:
       - main
 
@@ -38,7 +38,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Pull image from Qua.io
-        run: docker pull gsi_cesar/scrappers/revolico:${{ github.ref_name }}
+        run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ github.ref_name }}
 
       - name: Delete old container
         run: docker rm -f scrapper-revolico-api:${{ github.ref_name }}
@@ -47,4 +47,4 @@ jobs:
         run: |
           docker run -d -p 80:${{ secrets.PORT }} \
             --env-file .env \
-            --name scrapper-revolico-api gsi_cesar/scrappers/revolico:${{ github.ref_name }}
+            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/revolico:${{ github.ref_name }}
