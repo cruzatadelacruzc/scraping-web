@@ -14,7 +14,7 @@
     "format": "prettier -uw --cache src/**/*.{js,ts,json,yaml}",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "prepare": "husky"
+    "prepare": "[[ $NODE_ENV != 'production' ]] && husky || exit 0"
   },
   "keywords": [],
   "author": "",
