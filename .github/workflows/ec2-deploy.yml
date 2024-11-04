@@ -3,7 +3,7 @@ name: Deploy Scrapers API
 on:
   push:
     branches:
-      - main
+      - revolico
     tags:
       - 'v*.*.*'  
 
@@ -30,7 +30,8 @@ jobs:
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
           image: gsi_cesar/scrappers/revolico
-          tags: ${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
+          tags: |
+            ${{ github.ref_name == 'revolico' && 'latest' || github.ref_name }}
           registry: quay.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -43,13 +44,25 @@ jobs:
         run: docker login quay.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Determine Docker Tag
-        id: tag
+        id: extract_tag
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          if [[ "${GITHUB_REF}" == "refs/heads/revolico" ]]; then
             echo "tag=latest" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # Esto extrae solo el nombre de la etiqueta después de "refs/tags/"
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            echo "tag=${TAG_NAME}" >> $GITHUB_ENV
           else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_ENV
+            # Usa el nombre de la rama como etiqueta para pruebas o desarrollo
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            echo "tag=${BRANCH_NAME}" >> $GITHUB_ENV
           fi
+
+      - name: Show determined tag
+        run: |
+          echo "Docker tag is set to: ${{ env.tag }}"
+          echo "Docker tag is set to: ${{ steps.extract_tag.outputs.tag  }}"
+    
 
       - name: Pull image from Qua.io
         run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ github.ref_name }}
