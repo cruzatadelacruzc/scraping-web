@@ -5,7 +5,7 @@ on:
     branches:
       - revolico
     tags:
-      - 'v*.*.*'  
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -27,11 +27,12 @@ jobs:
           echo "PRODUCT_STORAGE_BATCHSIZE=${{ secrets.PRODUCT_STORAGE_BATCHSIZE }}" >> .env
 
       - name: Build & push Docker image to Quay.io
+        if: github.event_name != 'pull_request'
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
           image: gsi_cesar/scrappers/revolico
           tags: |
-            ${{ github.ref_name == 'revolico' && 'latest' || github.ref_name }}
+            ${{ github.ref_name == 'revolico' && 'cesar' || github.ref_name }}
           registry: quay.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -39,21 +40,20 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
+    if: github.event_name != 'pull_request'
     steps:
       - name: Login to Quay.io
         run: docker login quay.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      
+
       - name: Determine Docker Tag
         id: extract_tag
         run: |
           if [[ "${GITHUB_REF}" == "refs/heads/revolico" ]]; then
             echo "tag=latest" >> $GITHUB_ENV
           elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            # Esto extrae solo el nombre de la etiqueta después de "refs/tags/"
             TAG_NAME="${GITHUB_REF#refs/tags/}"
             echo "tag=${TAG_NAME}" >> $GITHUB_ENV
           else
-            # Usa el nombre de la rama como etiqueta para pruebas o desarrollo
             BRANCH_NAME="${GITHUB_REF#refs/heads/}"
             echo "tag=${BRANCH_NAME}" >> $GITHUB_ENV
           fi
@@ -62,16 +62,14 @@ jobs:
         run: |
           echo "Docker tag is set to: ${{ env.tag }}"
           echo "Docker tag is set to: ${{ steps.extract_tag.outputs.tag  }}"
-    
 
       - name: Pull image from Qua.io
-        run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ github.ref_name }}
+        run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ env.tag }}
 
       - name: Delete old container
-        run: docker rm -f scrapper-revolico-api:${{ github.ref_name }} || true
+        run: docker rm -f scrapper-revolico-api || true
 
       - name: Run docker container
         run: |
           docker run -d -p 80:${{ secrets.PORT }} \
-            --env-file .env \
-            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/revolico:${{ github.ref_name }}
+            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/revolico:${{ env.tag }}
