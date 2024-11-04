@@ -45,24 +45,6 @@ jobs:
       - name: Login to Quay.io
         run: docker login quay.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Determine Docker Tag
-        id: extract_tag
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/revolico" ]]; then
-            echo "tag=latest" >> $GITHUB_ENV
-          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG_NAME="${GITHUB_REF#refs/tags/}"
-            echo "tag=${TAG_NAME}" >> $GITHUB_ENV
-          else
-            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-            echo "tag=${BRANCH_NAME}" >> $GITHUB_ENV
-          fi
-
-      - name: Show determined tag
-        run: |
-          echo "Docker tag is set to: ${{ env.tag }}"
-          echo "Docker tag is set to: ${{ steps.extract_tag.outputs.tag  }}"
-
       - name: Pull image from Qua.io
         run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ env.tag }}
 
