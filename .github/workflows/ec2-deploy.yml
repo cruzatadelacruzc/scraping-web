@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.meta.outputs.tag }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -26,13 +28,30 @@ jobs:
           echo "PRODUCT_URLS_BATCHSIZE=${{ secrets.PRODUCT_URLS_BATCHSIZE }}" >> .env
           echo "PRODUCT_STORAGE_BATCHSIZE=${{ secrets.PRODUCT_STORAGE_BATCHSIZE }}" >> .env
 
+      - name: Determine Docker Tag
+        id: meta
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/revolico" ]]; then
+            echo "tag=latest" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            echo "tag=${TAG_NAME}" >> $GITHUB_ENV
+          else
+            echo "tag=revolico" >> $GITHUB_ENV
+          fi
+          echo "::set-output name=tag::${tag}"    
+
+      - name: Show determined tag
+        run: |
+         echo "Docker tag is set to: ${{ steps.meta.outputs.tag }}"    
+
       - name: Build & push Docker image to Quay.io
         if: github.event_name != 'pull_request'
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
           image: gsi_cesar/scrappers/revolico
           tags: |
-            ${{ github.ref_name == 'revolico' && 'cesar' || github.ref_name }}
+            ${{ steps.meta.outputs.tag }}
           registry: quay.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -46,7 +65,7 @@ jobs:
         run: docker login quay.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Pull image from Qua.io
-        run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ env.tag }}
+        run: docker pull quay.io/gsi_cesar/scrappers/revolico:${{ needs.build.outputs.docker_tag }}
 
       - name: Delete old container
         run: docker rm -f scrapper-revolico-api || true
@@ -54,4 +73,4 @@ jobs:
       - name: Run docker container
         run: |
           docker run -d -p 80:${{ secrets.PORT }} \
-            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/revolico:${{ env.tag }}
+            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/revolico:${{ needs.build.outputs.docker_tag }}
