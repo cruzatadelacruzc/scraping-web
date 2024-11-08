@@ -3,7 +3,7 @@ name: Deploy Scrapers API
 on:
   push:
     branches:
-      - revolico
+      - main
     tags:
       - 'v*.*.*'
 
@@ -30,7 +30,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
-          image: gsi_cesar/scrappers/revolico
+          image: gsi_cesar/scrappers/main
           addLatest: true
           registry: quay.io
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -45,12 +45,15 @@ jobs:
         run: docker login quay.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Pull image from Qua.io
-        run: docker pull quay.io/gsi_cesar/scrappers/revolico
+        run: docker pull quay.io/gsi_cesar/scrappers/main
 
       - name: Delete old container
         run: docker rm -f scrapper-revolico-api || true
 
+      - name: Delete old container
+        run: docker rmi quay.io/gsi_cesar/scrappers/main || true  
+
       - name: Run docker container
         run: |
           docker run -d -p 80:${{ secrets.PORT }} \
-            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/revolico
+            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/main
