@@ -51,7 +51,9 @@ jobs:
         run: docker rm -f scrapper-revolico-api || true
 
       - name: Delete old image
-        run: docker rmi quay.io/gsi_cesar/scrappers/main || true  
+        run: |
+            docker images --filter "reference=quay.io/gsi_cesar/scrappers/main" --format "{{.ID}}" | xargs -r docker rmi -f
+
 
       - name: Run docker container
         run: |
