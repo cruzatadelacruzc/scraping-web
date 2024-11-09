@@ -56,4 +56,5 @@ jobs:
       - name: Run docker container
         run: |
           docker run -d -p 80:${{ secrets.PORT }} \
+            --network scrappers \
             --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/main
