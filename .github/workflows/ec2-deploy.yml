@@ -50,7 +50,7 @@ jobs:
       - name: Delete old container
         run: docker rm -f scrapper-revolico-api || true
 
-      - name: Delete old container
+      - name: Delete old image
         run: docker rmi quay.io/gsi_cesar/scrappers/main || true  
 
       - name: Run docker container
