@@ -9,7 +9,11 @@ module.exports = {
   moduleDirectories: ['node_modules', 'src/main'],
   testEnvironment: 'node',
   modulePaths: [compilerOptions.baseUrl],
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
+  moduleNameMapper: {
+    ...pathsToModuleNameMapper(compilerOptions.paths),
+    // jose is ESM-only; Jest runs in CJS via ts-jest. Redirect to a CJS stub.
+    '^jose$': '<rootDir>/src/__tests__/__mocks__/jose.ts',
+  },
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setupTests.ts'],
   coverageProvider: 'v8',
 };

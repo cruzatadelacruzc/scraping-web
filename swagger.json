@@ -1,0 +1,121 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Revolico Scraping API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/users/register": {
+      "post": {
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserRegister" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/api/account/login": {
+      "post": {
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserLogin" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "JWT token" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/account/me": {
+      "get": {
+        "summary": "Get current user profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "User profile" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "summary": "List all users (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of users" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/api/revolicos/scraping/jobs": {
+      "post": {
+        "summary": "Create scraping job (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScrapingProductsDTO" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Job created" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegister": {
+        "type": "object",
+        "properties": {
+          "tenantId": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "role": { "type": "string", "enum": ["admin", "client"] }
+        },
+        "required": ["tenantId", "email", "password", "role"]
+      },
+      "UserLogin": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        },
+        "required": ["email", "password"]
+      },
+      "ScrapingProductsDTO": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string" },
+          "subcategory": { "type": "string" },
+          "pageNumber": { "type": "integer" },
+          "totalPages": { "type": "integer" }
+        },
+        "required": ["category"]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "api-security-best-practices": {
+      "source": "/mnt/D4B873F1B873D10A/Dev/javascript/scrapper",
+      "sourceType": "local",
+      "computedHash": "5a088c5b84b75ed44955e7a153b4af20b5a70b6430e86d0f0398b824cc9efb20"
+    },
+    "docker-expert": {
+      "source": "/mnt/D4B873F1B873D10A/Dev/javascript/scrapper",
+      "sourceType": "local",
+      "computedHash": "0974b5f64fcd284c1bd662810e2388f7beb9be6784c597de4d0ad4213ccbd6af"
+    },
+    "javascript-typescript-jest": {
+      "source": "/mnt/D4B873F1B873D10A/Dev/javascript/scrapper",
+      "sourceType": "local",
+      "computedHash": "0073d19ab0275eb6a8200aced6789a53744667bd717b5d1f44ce708a1740e5d4"
+    },
+    "typescript-best-practices": {
+      "source": "/mnt/D4B873F1B873D10A/Dev/javascript/scrapper",
+      "sourceType": "local",
+      "computedHash": "9866bb48d92a951feafb77f6f48ea39b42c6c1e901788c916d4aad40f60db008"
+    }
+  }
+}
