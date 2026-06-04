@@ -5,6 +5,17 @@ import { Response } from 'express';
  * @class ResponseHandler
  */
 export class ResponseHandler {
+  private static readonly MESSAGES = {
+    SUCCESS: 'Success',
+    CREATED: 'http:created',
+    UPDATED: 'http:updated',
+    DELETED: 'http:deleted',
+    NOT_FOUND: 'Resource not found',
+    BAD_REQUEST: 'Bad request',
+    UNAUTHORIZED: 'Forbidden access',
+    UNAUTHENTICATED: 'unauthenticated',
+  } as const;
+
   /**
    * Send a successful response with a custom message and status code.
    * @param {Response} res - Express Response object.
@@ -46,6 +57,20 @@ export class ResponseHandler {
   }
 
   /**
+   * Wraps the response or returns a 404 Not Found if the data is undefined
+   * @param {Response} res - Express Response object.
+   * @param {any} [data] - Data to be sent in the response.
+   * @param {string} [message='Success'] - Custom message for the response.
+   */
+  public static wrapOrNotFound(res: Response, data?: any, message: string = 'Success'): void {
+    if (data === undefined || data === null) {
+      ResponseHandler.error(res, 'Resource not found', 404);
+      return;
+    }
+    ResponseHandler.success(res, message, 200, data);
+  }
+
+  /**
    * Send a 400 Bad Request response indicating a client error.
    * @param {Response} res - Express Response object.
    * @param {string} message [message='Resource created'] - Custom error message.
@@ -67,9 +92,8 @@ export class ResponseHandler {
   /**
    * @description Handles unauthenticated responses for various authentication methods.
    * @param {Response} res - The Express response object.
-   * @param {string} [message='unauthenticated'] - The error message to send in the response.
-   * @param {number} [statusCode=401] - The HTTP status code for unauthenticated access.
    * @param {boolean} [isBasicAuth=false] - Define basic authentication type.
+   * @param {string} [message='unauthenticated'] - The error message to send in the response.
    * @param {any} [error] - Optional error object for detailed logging or debugging.
    */
   public static unAuthenticated(res: Response, isBasicAuth: boolean = false, message: string = 'unauthenticated', error?: any): void {
@@ -77,5 +101,42 @@ export class ResponseHandler {
       res.set('WWW-Authenticate', 'Basic realm="401"');
     }
     ResponseHandler.error(res, message, 401, error);
+  }
+
+  /**
+   * @description Handles unAuthorized responses.
+   * @param {Response} res - The Express response object.
+   * @param {string} [message='Forbidden access'] - The error message to send in the response.
+   * @param {any} [error] - Optional error object for detailed logging or debugging.
+   */
+  public static unAuthorized(res: Response, message: string = 'Forbidden access', error?: any): void {
+    ResponseHandler.error(res, message, 403, error);
+  }
+
+  /**
+   * @description Handles successful responses with a 200 OK status.
+   * @param {Response} res - The Express response object.
+   * @param {any} [data] - Optional data to include in the response.
+   */
+  public static ok(res: Response, data?: any): void {
+    ResponseHandler.success(res, ResponseHandler.MESSAGES.SUCCESS, 200, data);
+  }
+
+  /**
+   * @description Handles updated responses with a 200 OK status.
+   * @param {Response} res - The Express response object.
+   * @param {any} [data] - Optional data to include in the response.
+   */
+  public static updated(res: Response, data?: any): void {
+    ResponseHandler.success(res, ResponseHandler.MESSAGES.UPDATED, 200, data);
+  }
+
+  /**
+   * @description Handles deleted responses with a 200 OK status.
+   * @param {Response} res - The Express response object.
+   * @param {any} [data] - Optional data to include in the response.
+   */
+  public static deleted(res: Response, data?: any): void {
+    ResponseHandler.success(res, ResponseHandler.MESSAGES.DELETED, 200, data);
   }
 }

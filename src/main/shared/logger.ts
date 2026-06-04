@@ -81,7 +81,7 @@ export class Logger implements ILogger {
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();
 
-    console.log(`[${timestamp}] Debug: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.log(`🐛 [${timestamp}] Debug: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   public info(message: string, object?: unknown): void {
@@ -89,7 +89,7 @@ export class Logger implements ILogger {
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();
 
-    console.info(`[${timestamp}] Info: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.info(`ℹ️ [${timestamp}] Info: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   public warn(message: string, object?: unknown): void {
@@ -97,7 +97,7 @@ export class Logger implements ILogger {
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();
 
-    console.warn(`[${timestamp}] Warn: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.warn(`⚠️ [${timestamp}] Warn: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 
   public error(message: string, object?: any): void {
@@ -105,6 +105,6 @@ export class Logger implements ILogger {
     const serializedObject = this.safeSerialize(object);
     const timestamp = this.currentDateTime();
 
-    console.error(`[${timestamp}] Error: ${this._className} - ${validatedMessage}`, serializedObject);
+    console.error(`🔥 [${timestamp}] Error: ${this._className} - ${validatedMessage}`, serializedObject);
   }
 }
