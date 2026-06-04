@@ -1,4 +1,4 @@
-import { BaseMiddleware } from '@shared/base-middleware';
+import { BaseMiddleware } from '@shared/middleware/base-middleware';
 import { ResponseHandler } from '@shared/response-handler';
 import { Request, Response, NextFunction } from 'express';
 

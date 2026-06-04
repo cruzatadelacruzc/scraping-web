@@ -6,7 +6,8 @@ import { controller, httpPost } from 'inversify-express-utils';
 import { ScrapingProductsService } from '@scrapers/revolico/services/scraping-products.service';
 import { ResponseHandler } from '@shared/response-handler';
 import { ScrapingProductsDTO } from '@scrapers/revolico/services/dto';
-import { ValidateRequestMiddleware } from './middleware/validate-request.middleware';
+import { ValidateRequestMiddleware } from '@shared/middleware/validate-request.middleware';
+import { AuthMiddleware } from '@shared/middleware/auth.middleware';
 import { QUEUE_NAME } from '../queues';
 
 @controller('/api/revolicos/scraping')
@@ -27,7 +28,7 @@ export class ScrapingController {
    * @returns {Promise<void>} - A promise that resolves when the job is added to the queue.
    * @throws {Error} - If the job cannot be added to the queue.
    */
-  @httpPost('/jobs', ValidateRequestMiddleware.with(ScrapingProductsDTO))
+  @httpPost('/jobs', AuthMiddleware.forRoles('SUPER_ADMIN'), ValidateRequestMiddleware.with(ScrapingProductsDTO))
   public async addNewJob(req: Request, res: Response): Promise<void> {
     const request = ScrapingProductsDTO.from(req.body);
     this._log.debug('Request to add a new Job', request);

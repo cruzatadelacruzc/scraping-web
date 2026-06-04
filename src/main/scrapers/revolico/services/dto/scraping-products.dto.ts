@@ -1,4 +1,4 @@
-import { ValidationError } from '@scrapers/revolico/errors';
+import { ValidationError } from '@shared/errors/validation.error';
 import { z } from 'zod';
 
 const JobSchema = z.object({

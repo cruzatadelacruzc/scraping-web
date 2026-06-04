@@ -8,6 +8,8 @@ import { ProductRepository } from '../repositories/product.repository';
 import { QUEUE_NAME } from '../queues';
 import { ScrapingProductService } from './scraping-product.service';
 import { InvalidProductInfoError } from '../errors/invalid-product-data.error';
+import { AlarmEngineService } from '@alarms/services/alarm-engine.service';
+import { IProductSnapshot } from '@alarms/conditions/condition.interface';
 
 @injectable()
 export class ProductService {
@@ -16,24 +18,11 @@ export class ProductService {
     @inject(QContext) private readonly _qContext: QContext,
     @inject(ProductRepository) private readonly _repository: ProductRepository,
     @inject(TYPES.ScrapingOneProduct) private readonly _scrapingproductService: ScrapingProductService,
+    @inject(TYPES.AlarmEngineService) private readonly _alarmEngine: AlarmEngineService,
   ) {
     this._log.context = ProductService.name;
   }
 
-  /**
-   * Inserts or updates a list of products in the database. The list contains
-   * product objects with their respective information. The method returns
-   * an object with three properties: urls (an array of strings containing
-   * the URLs of the products that were successfully inserted or updated),
-   * invalidProductInfo (an array of product objects containing the products
-   * that were not inserted or updated due to invalid product information),
-   * and errors (an array of strings containing the error messages for the
-   * products that were not inserted or updated).
-   *
-   * @param {IRevolicoProduct[]} batchProducts - An array of product objects
-   * containing the products to be inserted or updated in the database.
-   * @returns {Promise<{ urls: string[]; invalidProductInfo: IRevolicoProduct[]; errors: Error[] }>}
-   */
   public async bulkAddOrEditUrls(
     batchProducts: IRevolicoProduct[],
   ): Promise<{ urls: string[]; errors: Error[]; invalidProductInfo: IRevolicoProduct[] }> {
@@ -63,15 +52,6 @@ export class ProductService {
     return { urls: processedUrls, invalidProductInfo, errors };
   }
 
-  /**
-   * Processes the storage job by saving the provided products to the database.
-   * It extracts the product data from the job, passes it to the ProductService,
-   * and logs the result.
-   *
-   * @param {Job<IRevolicoProduct[]>} job - The job object containing an array of products to be processed.
-   * @returns {Promise<{ id: string }[]>} - The result of saving the products Id to the database.
-   * @throws {Error} - Throws an error if the job processing fails.
-   */
   public async processor(job: Job<IRevolicoProduct[]>): Promise<{ url: string }[]> {
     this._log.debug(`Processing scraping job ID(${job.id})`);
 
@@ -93,7 +73,7 @@ export class ProductService {
 
       return result.urls.map(url => ({ url }));
     } catch (error) {
-      job.log('🔥 Failed to save data to database 🔥');
+      job.log('Failed to save data to database');
       if (error instanceof InvalidProductInfoError) {
         job.update(error.invalidProductsInfo);
       }
@@ -101,13 +81,6 @@ export class ProductService {
     }
   }
 
-  /**
-   * Adds a new storage product data job to the queue.
-   *
-   * @param {JobSchemaType} data - The data for the scraping job.
-   * @returns {Promise<JobId>} A promise that resolves with the job ID.
-   * @throws {Error} If the job cannot be added to the queue.
-   */
   public async addStorageDataJob(data: IRevolicoProduct[], queueName: string): Promise<JobId> {
     try {
       const createdJob = await this._qContext.getQueue(queueName).add(data, {
@@ -126,12 +99,37 @@ export class ProductService {
 
   /**
    * Listens for the completed event on the product storage queue.
-   * When a job is completed, it schedules a job to scrape each product URL.
+   * When a job is completed, evaluates alarms and schedules scraping jobs.
    */
   public setupQueueListeners(): void {
     const storageQueue = this._qContext.getQueue(QUEUE_NAME.product_storage);
     storageQueue.on('completed', async (job: Job<IRevolicoProduct[]>, result: { url: string }[]) => {
       this._log.debug(`Job ${job.id} completed: ${result.length} products stored. Scheduling scraping jobs.`);
+
+      // Evaluate alarms with the stored products (non-blocking)
+      const snapshots: IProductSnapshot[] = (job.data || [])
+        .filter(p => p.url && p.price != null)
+        .map(p => ({
+          url: p.url,
+          price: p.price,
+          currency: p.currency || 'USD',
+          views: p.views ?? 0,
+          isOutstanding: p.isOutstanding ?? false,
+          seller: {
+            name: p.seller?.name,
+            phone: p.seller?.phone,
+            email: p.seller?.email,
+            whatsapp: p.seller?.whatsapp,
+          },
+          location: {
+            state: p.location?.state ?? '',
+            municipality: p.location?.municipality,
+          },
+          priceHistory: (p.priceHistory || []).map(h => ({ value: h.value, updatedAt: h.updatedAt })),
+        }));
+      if (snapshots.length) {
+        this._alarmEngine.evaluateAlarms(snapshots).catch(err => this._log.error('Alarm engine evaluation failed', err));
+      }
 
       const batchSize = Number(process.env.PRODUCT_URLS_BATCHSIZE) || 30;
 
