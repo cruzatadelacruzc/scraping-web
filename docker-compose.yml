@@ -1,7 +1,6 @@
-version: '3'
 services:
   mongo:
-    image: mongo:4.4
+    image: mongo:4.4.5
     container_name: database
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${DB_ROOT_USERNAME}
@@ -20,3 +19,21 @@ services:
       - '6379:6379'
     volumes:
       - ${VOL_DIR}/bull_redis:/data
+
+  postgres:
+    image: postgres:16
+    container_name: revolico_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: revolico
+      POSTGRES_PASSWORD: revolico
+      POSTGRES_DB: revolico
+    ports:
+      - '5432:5432'
+    volumes:
+      - ${VOL_DIR}/postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U revolico']
+      interval: 10s
+      timeout: 5s
+      retries: 5

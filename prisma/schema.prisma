@@ -1,0 +1,216 @@
+// Prisma schema for User Management (multi-tenant)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("TENANT_DB_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enum for plan type
+// -----------------------------------------------------------------------------
+enum PlanType {
+  TRIAL
+  STANDARD
+  UNLIMITED
+}
+
+// -----------------------------------------------------------------------------
+// Enum for provider type
+// -----------------------------------------------------------------------------
+enum ProviderType {
+  google
+  facebook
+}
+
+// -----------------------------------------------------------------------------
+// Enum for status subscription
+// -----------------------------------------------------------------------------
+enum SubscritionStatusType {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+// -----------------------------------------------------------------------------
+// Enum for role type
+// -----------------------------------------------------------------------------
+enum RoleType {
+  ACCOUNT_OWNER
+  SUPER_ADMIN
+  MEMBER
+}
+
+// -----------------------------------------------------------------------------
+// User Roles
+// -----------------------------------------------------------------------------
+model Role {
+  id   String @id @default(uuid())
+  name String
+
+  accountId String? // null = global role
+  account   Account? @relation(fields: [accountId], references: [id])
+  users     User[]   @relation("UserRoles")
+
+  @@unique([accountId, name]) // avoid duplicates in the same tenant
+}
+
+// -----------------------------------------------------------------------------
+// User Identity
+// -----------------------------------------------------------------------------
+model UserIdentity {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation("userIdentities", fields: [userId], references: [id])
+  provider   String
+  providerId String
+  createdAt  DateTime @default(now())
+
+  @@unique([provider, providerId])
+}
+
+// -----------------------------------------------------------------------------
+// Accounts OR Tenants
+// -----------------------------------------------------------------------------
+model Account {
+  id            String                @id @default(uuid())
+  name          String
+  settings      Json? // JSONB for global configurations
+  users         User[]
+  subscriptions AccountSubscription[] @relation("AccountSubscriptions")
+  alarms        Alarm[]
+  notifications Notification[]
+  deletedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      Role[]
+}
+
+// -----------------------------------------------------------------------------
+// Users
+// -----------------------------------------------------------------------------
+model User {
+  id             String         @id @default(uuid())
+  accountId      String
+  account        Account        @relation(fields: [accountId], references: [id])
+  username       String         @unique
+  email          String         @unique
+  passwordHash   String?
+  displayName    String?        
+  avatarUrl      String?        
+  emailVerified  Boolean        @default(false)
+  roles          Role[]         @relation("UserRoles")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  userIdentity   UserIdentity[] @relation("userIdentities")
+}
+
+// -----------------------------------------------------------------------------
+// Catalog of plans
+// -----------------------------------------------------------------------------
+model Plan {
+  id            String                @id @default(uuid())
+  type          PlanType
+  name          String                @unique
+  price         Decimal               @db.Decimal(10, 2)
+  features      Json
+  subscriptions AccountSubscription[] @relation("PlanSubscriptions")
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Account Subscriptions to Plan
+// -----------------------------------------------------------------------------
+model AccountSubscription {
+  id          String                @id @default(uuid())
+  accountId   String
+  account     Account               @relation("AccountSubscriptions", fields: [accountId], references: [id])
+  planId      String
+  plan        Plan                  @relation("PlanSubscriptions", fields: [planId], references: [id])
+  periodStart DateTime              @default(now()) @map("period_start")
+  periodEnd   DateTime              @map("period_end")
+  status      SubscritionStatusType @default(TRIALING)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Enum for alarm condition type
+// -----------------------------------------------------------------------------
+enum AlarmConditionType {
+  PRICE_DROPS_BELOW
+  PRICE_RISES_ABOVE
+  PRICE_CHANGES_BY_PERCENT
+  VIEWS_EXCEED
+  IS_OUTSTANDING
+  SELLER_CHANGED
+}
+
+// -----------------------------------------------------------------------------
+// Enum for notification type
+// -----------------------------------------------------------------------------
+enum NotificationType {
+  ALARM_TRIGGERED
+}
+
+// -----------------------------------------------------------------------------
+// Alarms
+// -----------------------------------------------------------------------------
+model Alarm {
+  id                 String              @id @default(uuid())
+  accountId          String
+  account            Account             @relation(fields: [accountId], references: [id])
+  productUrl         String
+  name               String
+  condition          AlarmConditionType
+  threshold          Decimal             @db.Decimal(12, 2)
+  percentage         Float?
+  params             Json?
+  enabled            Boolean             @default(true)
+  lastEvaluatedAt    DateTime?
+  lastEvaluatedPrice Decimal?            @db.Decimal(12, 2)
+  lastMatchedAt      DateTime?
+  lastNotifiedAt     DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  history            AlarmHistory[]
+  notifications      Notification[]
+}
+
+// -----------------------------------------------------------------------------
+// Alarm history
+// -----------------------------------------------------------------------------
+model AlarmHistory {
+  id         String   @id @default(uuid())
+  alarmId    String
+  alarm      Alarm    @relation(fields: [alarmId], references: [id])
+  productUrl String
+  price      Decimal  @db.Decimal(12, 2)
+  matchedAt  DateTime @default(now())
+
+  @@index([alarmId, matchedAt])
+  @@index([alarmId, price])
+}
+
+// -----------------------------------------------------------------------------
+// Notifications
+// -----------------------------------------------------------------------------
+model Notification {
+  id        String           @id @default(uuid())
+  accountId String
+  account   Account          @relation(fields: [accountId], references: [id])
+  alarmId   String?
+  alarm     Alarm?           @relation(fields: [alarmId], references: [id])
+  type      NotificationType @default(ALARM_TRIGGERED)
+  title     String
+  message   String
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([accountId, createdAt])
+}
