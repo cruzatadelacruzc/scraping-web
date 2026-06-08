@@ -108,3 +108,35 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 - Bull Arena dashboard for queue monitoring
 - Structured logging with request/tenant context
 - OpenAPI/Swagger docs at `/api-docs`
+
+## API Documentation
+
+### Workflow
+
+Después de desarrollar y pasar los tests, SIEMPRE ejecutar `npm run docs:generate`. Esto regenera `swagger.json` desde los Zod DTOs y las definiciones de paths en `src/main/docs/`. El comando debe ejecutarse tras cualquier cambio en DTOs, controladores, o nuevos endpoints.
+
+### Scripts
+
+- `npm run docs:generate` — genera `swagger.json` desde `src/main/docs/`
+- `npm run docs:validate` — CI: diffea swagger.json actual vs generado, falla si out of sync
+
+### Herramienta
+
+- `@asteasolutions/zod-to-openapi@^7.0.0` (NO v8 — v8 requiere Zod v4, aquí se usa Zod v3)
+- `ts-node` necesita `-O '{"types":["node"]}'` para built-ins (fs, path)
+
+### Arquitectura
+
+- Metadata OpenAPI centralizada en `src/main/docs/schema-registry.ts` — los DTOs NO se modifican
+- Paths definidos en `src/main/docs/modules/*.paths.ts` (9 archivos, uno por módulo)
+- Para `$ref` en paths usar el retorno de `registry.register()`, no el Zod schema crudo
+- `tsconfig.build.json` excluye `src/main/docs/**` — código solo build-time
+
+### Schemas especiales
+
+- Scraper DTOs no exportan sus Zod schemas → schemas OpenAPI inline en el registry
+- `AlarmResponseDTO` y `NotificationDTO` usan `fromModel()` → schemas complementarios en schema-registry
+
+### Path aliases
+
+`@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`

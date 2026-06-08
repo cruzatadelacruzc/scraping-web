@@ -52,4 +52,4 @@ Before completing any task, verify these requirements:
 
 - [ ] **Examples**: Complex patterns have JSDoc examples
 - [ ] **Type Clarity**: Generic types named clearly (not `T`, use `TData`, `TResponse`)
-- [ ] **API Docs**: Swagger/OpenAPI updated for new endpoints
+- [ ] **API Docs**: `npm run docs:generate` ejecutado después de que los tests pasen (regenera swagger.json)

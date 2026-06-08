@@ -8,6 +8,16 @@ import { getRequestContext, runWithRequestContext } from '@shared/tenant-context
 import prisma from '@users/custom-prisma-client';
 import { TokenService } from '@shared/security/token.service';
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
 /**
  * Unified AuthMiddleware — handles both authentication and authorization.
  *
