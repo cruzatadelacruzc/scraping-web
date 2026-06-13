@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import mongoose from 'mongoose';
 
+// Global mock — avoids ESM 'jose' import in ALL integration tests
+jest.mock('@shared/security/provider-token-verifier');
+
 beforeAll(async () => {
   // put your client connection code here, example with mongoose:
   const dbUri = process.env.DB_URI;
@@ -45,5 +48,5 @@ afterEach((): void => {
   } catch (err) {
     if (err instanceof Error) console.log(err.message);
   }
-  jest.resetAllMocks();
+  jest.clearAllMocks();
 });

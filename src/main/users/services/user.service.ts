@@ -24,7 +24,7 @@ export class UserService {
     @inject(UserRepository) private readonly _userRepository: UserRepository,
     @inject(TYPES.UserMapper) private readonly _userMapper: UserMapper,
     @inject(TYPES.TokenService) private readonly _tokenService: TokenService,
-    @inject(TYPES.UserIdentityRepository) private readonly _userIdentityRepository: UserIdentityRepository,
+    @inject(UserIdentityRepository) private readonly _userIdentityRepository: UserIdentityRepository,
     @inject(TYPES.PasswordHasher) private readonly _hasher: PasswordHasher,
     @inject(TYPES.ProviderTokenVerifier) private readonly _providerVerifier: ProviderTokenVerifier,
     @inject(AccountRepository) private readonly _accountRepository: AccountRepository,

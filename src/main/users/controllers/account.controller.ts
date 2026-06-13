@@ -61,35 +61,71 @@ export class AccountController {
 
   @httpPost('/register/local', ValidateRequestMiddleware.with(UserRegisterDTO))
   public async registerLocal(@request() req: Request, @response() res: Response): Promise<void> {
-    const registerRequest = UserRegisterDTO.from(req.body);
-    this._log.debug('REST request to register user with local credentials', {
-      email: registerRequest.email,
-      username: registerRequest.username,
-      accountId: registerRequest.accountId,
-    });
+    try {
+      const registerRequest = UserRegisterDTO.from(req.body);
+      this._log.debug('REST request to register user with local credentials', {
+        email: registerRequest.email,
+        username: registerRequest.username,
+        accountId: registerRequest.accountId,
+      });
 
-    const accountId = registerRequest.accountId || req.body.accountId;
-    const authResponse = await this._userService.registerLocal(registerRequest, accountId);
-    ResponseHandler.created(res, 'http:created', {
-      user: authResponse.user,
-      token: authResponse.token,
-    });
+      const accountId = registerRequest.accountId || req.body.accountId;
+      const authResponse = await this._userService.registerLocal(registerRequest, accountId);
+      ResponseHandler.created(res, 'http:created', {
+        user: authResponse.user,
+        token: authResponse.token,
+      });
+    } catch (err: unknown) {
+      const errorName = err instanceof Error ? err.name : 'Unknown';
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this._log.error('Local registration failed', { errorName, errorMsg });
+      if (err instanceof Error) {
+        if (err.name === 'AccountNotFoundError' || err.message.includes('not found')) {
+          return ResponseHandler.notFound(res, err.message);
+        }
+        if (err.name === 'ConflictError' || err.message.includes('already')) {
+          return ResponseHandler.error(res, err.message, 409);
+        }
+        if (err.name === 'InvalidArgumentError' || err.message.includes('Missing')) {
+          return ResponseHandler.badRequest(res, err.message);
+        }
+      }
+      return ResponseHandler.error(res, 'Registration failed', 500);
+    }
   }
 
   @httpPost('/register/provider', ValidateRequestMiddleware.with(ProviderRegistrationDTO))
   public async registerWithProvider(@request() req: Request, @response() res: Response): Promise<void> {
-    const registerRequest = ProviderRegistrationDTO.from(req.body);
-    this._log.debug('REST request to register user with provider', {
-      email: registerRequest.email,
-      username: registerRequest.username,
-      provider: registerRequest.provider,
-    });
+    try {
+      const registerRequest = ProviderRegistrationDTO.from(req.body);
+      this._log.debug('REST request to register user with provider', {
+        email: registerRequest.email,
+        username: registerRequest.username,
+        provider: registerRequest.provider,
+      });
 
-    const accountId = req.body.accountId;
-    const authResponse = await this._userService.registerWithProvider(registerRequest, accountId);
-    ResponseHandler.created(res, 'http:created', {
-      user: authResponse.user,
-      token: authResponse.token,
-    });
+      const accountId = registerRequest.accountId || req.body.accountId;
+      const authResponse = await this._userService.registerWithProvider(registerRequest, accountId);
+      ResponseHandler.created(res, 'http:created', {
+        user: authResponse.user,
+        token: authResponse.token,
+      });
+    } catch (err: unknown) {
+      const errorName = err instanceof Error ? err.name : 'Unknown';
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this._log.error('Provider registration failed', { errorName, errorMsg });
+      if (err instanceof Error) {
+        if (err.name === 'AccountNotFoundError' || err.message.includes('not found')) {
+          return ResponseHandler.notFound(res, err.message);
+        }
+        if (err.name === 'ConflictError' || err.message.includes('already')) {
+          return ResponseHandler.error(res, err.message, 409);
+        }
+        if (err.name === 'InvalidArgumentError' || err.message.includes('Missing')) {
+          return ResponseHandler.badRequest(res, err.message);
+        }
+      }
+      ResponseHandler.error(res, 'Registration failed', 500);
+    }
   }
 }

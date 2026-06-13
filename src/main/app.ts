@@ -54,9 +54,11 @@ export class App {
       })
       .build();
 
-    appInstance.listen(PORT, () =>
-      console.log(`\nServer listening on port ${PORT}\nBull Arena is available on path ${CONFIG.bull_arena_url}\n`),
-    );
+    if (process.env.NODE_ENV !== 'test') {
+      appInstance.listen(PORT, () =>
+        console.log(`\nServer listening on port ${PORT}\nBull Arena is available on path ${CONFIG.bull_arena_url}\n`),
+      );
+    }
     return appInstance;
   }
 }
