@@ -6,7 +6,6 @@ import { IAlarmCondition, IProductSnapshot } from './condition.interface';
 export class IsOutstandingCondition implements IAlarmCondition {
   public readonly type = 'IS_OUTSTANDING';
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public evaluate(product: IProductSnapshot, _alarm: Alarm): boolean {
     return product.isOutstanding === true;
   }

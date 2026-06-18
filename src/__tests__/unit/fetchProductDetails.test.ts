@@ -4,13 +4,11 @@ import { container } from '@shared/container';
 import { InvalidParameterError } from '@scrapers/revolico/errors/invalid-parameter.error';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { Job } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { PageLoadError } from '@scrapers/revolico/errors/page-load.error';
 
 jest.mock('puppeteer-extra', () => {
-  const puppeteer = jest.requireActual('puppeteer') as any;
   return {
-    ...puppeteer,
     use: jest.fn(),
     launch: jest.fn().mockResolvedValue({
       newPage: jest.fn().mockResolvedValue({
@@ -38,7 +36,7 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
     newPage: jest.Mock;
     close: jest.Mock;
   };
-  let jobMock: Partial<Job<{ url: string }[]>>;
+  let jobMock: Partial<IJobContext<{ url: string }[]>>;
   const DEFAULT_URL = 'https://www.example.com';
   const DEFAULT_SELLER_NAME = 'Jorge';
   const DEFAULT_SELLER_WHATSAPP = '5353042539';
@@ -78,7 +76,9 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
   });
 
   it('should throw an error if url is not defined', async () => {
-    await expect(service.fetchProductDetails('', jobMock as Job<{ url: string }[]>)).rejects.toThrow(new InvalidParameterError('url'));
+    await expect(service.fetchProductDetails('', jobMock as IJobContext<{ url: string }[]>)).rejects.toThrow(
+      new InvalidParameterError('url'),
+    );
   });
 
   it('should correctly call puppeteer and return product details', async () => {
@@ -128,7 +128,7 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
       }),
     });
 
-    const productDetails = await service.fetchProductDetails(DEFAULT_URL, jobMock as Job<{ url: string }[]>);
+    const productDetails = await service.fetchProductDetails(DEFAULT_URL, jobMock as IJobContext<{ url: string }[]>);
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);
@@ -159,7 +159,7 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
       waitForSelector: jest.fn(),
     });
 
-    await expect(service.fetchProductDetails(DEFAULT_URL, jobMock as Job<{ url: string }[]>)).rejects.toThrow(PageLoadError);
+    await expect(service.fetchProductDetails(DEFAULT_URL, jobMock as IJobContext<{ url: string }[]>)).rejects.toThrow(PageLoadError);
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);
@@ -195,7 +195,7 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
       }),
     });
 
-    const productDetails = await service.fetchProductDetails(DEFAULT_URL, jobMock as Job<{ url: string }[]>);
+    const productDetails = await service.fetchProductDetails(DEFAULT_URL, jobMock as IJobContext<{ url: string }[]>);
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);
@@ -244,7 +244,7 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
       }),
     });
 
-    const productDetails = await service.fetchProductDetails(DEFAULT_URL, jobMock as Job<{ url: string }[]>);
+    const productDetails = await service.fetchProductDetails(DEFAULT_URL, jobMock as IJobContext<{ url: string }[]>);
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);
@@ -276,7 +276,7 @@ describe('RevolicoFetchDataService - fetchProductDetails', () => {
 
     const logWarnMock = jest.spyOn((service as any)['_log'], 'warn').mockImplementation(() => {});
 
-    const result = await service.fetchProductDetails(DEFAULT_URL, jobMock as Job<{ url: string }[]>);
+    const result = await service.fetchProductDetails(DEFAULT_URL, jobMock as IJobContext<{ url: string }[]>);
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);

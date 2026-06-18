@@ -1,7 +1,7 @@
-import { QContext } from '@config/queue.config';
+import { QueueContext } from '@shared/queue/queue-context';
 import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
-import { Job, JobId } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { inject, injectable } from 'inversify';
 import { ProductRepository } from '../repositories/product.repository';
 import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
@@ -11,7 +11,7 @@ import { progressCalculate } from '@utils/queue.util';
 @injectable()
 export class ScrapingProductService {
   public constructor(
-    @inject(QContext) private readonly _qContext: QContext,
+    @inject(QueueContext) private readonly _qContext: QueueContext,
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(ProductRepository) private readonly _repository: ProductRepository,
     @inject(TYPES.RevolicoData) private readonly _revolicoProductData: IFetchProductData,
@@ -23,12 +23,12 @@ export class ScrapingProductService {
    * Processes a job containing product IDs, retrieves additional product details,
    * and updates each product with the fetched information.
    *
-   * @param {Job<{id: string}[]>} job - Bull job containing an array of product IDs for scraping.
+   * @param {IJobContext<{url: string}[]>} ctx - Backend-agnostic job context.
    * @returns {Promise<string>} - A message indicating how many product URLs were processed.
    * @throws Will throw an error if scraping or updating a product fails.
    */
-  public async processor(job: Job<{ url: string }[]>): Promise<string> {
-    const productsData = job.data;
+  public async processor(ctx: IJobContext<{ url: string }[]>): Promise<string> {
+    const productsData = ctx.data;
     this._log.debug(`Processing scraping job for ${productsData?.length} product URLs`);
     let remaining = productsData.length;
     for (const { url } of productsData) {
@@ -38,29 +38,29 @@ export class ScrapingProductService {
         if (!product?._id) {
           const warnMessage = `Product with URL ${url} not found`;
           this._log.warn(warnMessage);
-          await job.log(warnMessage);
+          await ctx.log(warnMessage);
           continue;
         }
 
-        const productDetails = await this._revolicoProductData.fetchProductDetails(url, job);
+        const productDetails = await this._revolicoProductData.fetchProductDetails(url, ctx);
         if (!productDetails) {
           const warnMessage = `Failed to fetch product details for URL: ${url}`;
           this._log.warn(warnMessage);
-          await job.log(warnMessage);
+          await ctx.log(warnMessage);
           continue;
         }
 
         await this._repository.update(product._id, productDetails);
-        job.log(`Successfully scraped and updated product(${product._id}) at URL: ${url}`);
+        await ctx.log(`Successfully scraped and updated product(${product._id}) at URL: ${url}`);
 
         remaining--;
-        await job.progress(progressCalculate(productsData.length, remaining));
+        await ctx.progress(progressCalculate(productsData.length, remaining));
 
         // Delay the next request to avoid triggering rate limits
         delayRandom(1000, 3000);
       } catch (error) {
         this._log.error(`Failed to scrape product data for URL: ${url}`, error);
-        job.log(`Product data retrieval and storage failed`);
+        await ctx.log(`Product data retrieval and storage failed`);
         throw error;
       }
     }
@@ -71,19 +71,19 @@ export class ScrapingProductService {
   /**
    * Adds a new product info scraping job to the queue.
    *
-   * @param {Array<{id: string}[]>} data - The data for the product scraping job.
-   * @returns {Promise<JobId>} A promise that resolves with the job ID.
+   * @param {Array<{url: string}>} data - The data for the product scraping job.
+   * @returns {Promise<string>} A promise that resolves with the job ID.
    * @throws {Error} If the job cannot be added to the queue.
    */
-  public async addScrapingJob(data: { url: string }[], queueName: string): Promise<JobId> {
+  public async addScrapingJob(data: { url: string }[], queueName: string): Promise<string> {
     try {
-      const createdJob = await this._qContext.getQueue(queueName).add(data, {
+      const jobId = await this._qContext.enqueue(queueName, data, {
         attempts: 2,
         backoff: 5000,
       });
 
-      this._log.info(`Job ID: ${createdJob.id} added to the "${queueName}" queue`);
-      return createdJob.id;
+      this._log.info(`Job ID: ${jobId} added to the "${queueName}" queue`);
+      return jobId;
     } catch (error) {
       let message = `Failed to add job to the "${queueName}" queue`;
       if (error instanceof Error) message = `Failed to add job to the "${queueName}" queue: ${error.message}`;

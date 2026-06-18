@@ -2,7 +2,7 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { getRequestContext } from '@shared/tenant-context-als';
 
 // ---- List of models containing accountId ----
-const modelsWithAccountId = new Set(['User', 'Account', 'AccountSubscription', 'Alarm', 'Notification']);
+const modelsWithAccountId = new Set(['User', 'Account', 'AccountSubscription', 'Alarm', 'Notification', 'BotLinkCode', 'BotConversation']);
 
 // ---- Defining the extension that will apply accountId from ALS ----
 const tenantExtension = Prisma.defineExtension(prisma =>

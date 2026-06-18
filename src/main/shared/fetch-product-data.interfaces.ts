@@ -1,6 +1,6 @@
 import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
 import { IProductBase, IProductDetails } from '@shared/product-base.interfaces';
-import { Job } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 
 export interface IFetchProductData {
   /**
@@ -20,7 +20,7 @@ export interface IFetchProductData {
    * @param subcategory The subcategory to fetch products from.
    * @param pageNumber The page number for the request.
    * @param totalPages The number of pages to scrape.
-   * @param job The Job in progress
+   * @param job Backend-agnostic job context used for progress and logging.
    * @returns {Promise<T[]>} A promise that resolves to an array of products.
    */
   fetchProductInfoByCategory<T extends IProductBase>(
@@ -28,15 +28,15 @@ export interface IFetchProductData {
     subcategory?: string,
     pageNumber?: number,
     totalPages?: number,
-    job?: Job<ScrapingProductsType>,
+    job?: IJobContext<ScrapingProductsType>,
   ): Promise<T[]>;
 
   /**
    * Fetch product information
    *
    * @param url The URL to fetch product from.
-   * @param job The Job in progress
+   * @param job Backend-agnostic job context used for progress and logging.
    * @returns {Promise<IProductDetails>} A promise that resolves the product details.
    */
-  fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails | null>;
+  fetchProductDetails(url: string, job: IJobContext<{ url: string }[]>): Promise<IProductDetails | null>;
 }

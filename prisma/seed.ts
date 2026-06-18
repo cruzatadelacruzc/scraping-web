@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 const DEFAULT_ROLES = ['ACCOUNT_OWNER', 'SUPER_ADMIN', 'MEMBER'] as const;
 
-async function main() {
+async function main(): Promise<void> {
   console.log('Seeding default roles...');
 
   for (const name of DEFAULT_ROLES) {

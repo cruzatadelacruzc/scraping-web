@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { ScrapingProductService } from './services/scraping-product.service';
 import { IQueueModule } from '@shared/queue-module.interface';
-import { Job } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { ScrapingProductsService } from './services/scraping-products.service';
@@ -27,16 +27,16 @@ export class RevolicoQueues implements IQueueModule {
     return 'REVOLICO';
   }
 
-  public getProcessor(queueName: string): (job: Job) => Promise<any> {
+  public getProcessor(queueName: string): (ctx: IJobContext<any>) => Promise<any> {
     switch (queueName) {
       case QUEUE_NAME.products_scraping:
-        return this._scrapingProductsService.processor.bind(this._scrapingProductsService);
+        return this._scrapingProductsService.processor.bind(this._scrapingProductsService) as (ctx: IJobContext<any>) => Promise<any>;
 
       case QUEUE_NAME.product_scraping:
-        return this._scrapingProductService.processor.bind(this._scrapingProductService);
+        return this._scrapingProductService.processor.bind(this._scrapingProductService) as (ctx: IJobContext<any>) => Promise<any>;
 
       case QUEUE_NAME.product_storage:
-        return this._productService.processor.bind(this._productService);
+        return this._productService.processor.bind(this._productService) as (ctx: IJobContext<any>) => Promise<any>;
 
       default:
         throw new Error(`No processor defined for queue: ${queueName}`);

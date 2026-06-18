@@ -24,7 +24,7 @@ function generate(): void {
       description:
         'Multi-tenant SaaS platform for product price monitoring. Create alarms on products, track price history, and receive notifications when conditions match.',
     },
-    servers: [{ url: '/api', description: 'API base path' }],
+    servers: [{ url: '/', description: 'API base path' }],
     tags: API_TAGS,
     security: [{ bearerAuth: [] }],
   });

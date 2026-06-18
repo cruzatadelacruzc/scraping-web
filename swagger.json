@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "/api",
+      "url": "/",
       "description": "API base path"
     }
   ],
@@ -337,6 +337,10 @@
           "providerId": {
             "type": "string"
           },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "displayName": {
             "type": "string"
           },
@@ -355,7 +359,8 @@
           "email",
           "username",
           "provider",
-          "providerId"
+          "providerId",
+          "accountId"
         ]
       },
       "UserProviderRegisterDTO": {

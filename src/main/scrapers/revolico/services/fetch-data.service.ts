@@ -7,12 +7,13 @@ import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
 import { ILogger } from '@shared/logger.interfaces';
 import { TYPES } from '@shared/types.container';
 import { buildFullUrl, parseCost, parseLocation, parseViews } from '@utils/normalize-data.util';
-import { Job } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { ScrapingProductsType } from './dto';
 import { PageLoadError } from '../errors/page-load.error';
 import { progressCalculate } from '@utils/queue.util';
 import { extractDataFromUrl } from '../utils/extract-data.util';
 import { IProductDetails } from '@shared/product-base.interfaces';
+import { ElementHandle } from 'puppeteer-core';
 
 @injectable()
 export class RevolicoFetchDataService implements IFetchProductData {
@@ -38,7 +39,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
     subcategory: string,
     pageNumber: number = 1,
     totalPages: number = 100,
-    job: Job<ScrapingProductsType>,
+    job: IJobContext<ScrapingProductsType>,
   ): Promise<IRevolicoProduct[]> {
     this._log.debug(`Fetching products info from category: ${category}, subcategory: ${subcategory}, page: ${pageNumber}`);
 
@@ -86,7 +87,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
             for (const ul of uls) {
               const lis = await ul.$$('li');
               await Promise.all(
-                lis.map(async li => {
+                lis.map(async (li: ElementHandle<Element>) => {
                   const [elememntlink, elememntCost, elememntDescription, elememntImage, elememntOutstanding] = await Promise.all([
                     li.$('a'),
                     li.$('span'),
@@ -96,11 +97,11 @@ export class RevolicoFetchDataService implements IFetchProductData {
                   ]);
 
                   const [pathItemProduct, cost, description, imageURL, isOutstanding] = await Promise.all([
-                    elememntlink?.evaluate(element => element.getAttribute('href')?.trim()),
-                    elememntCost?.evaluate(element => element.textContent?.trim()),
-                    elememntDescription?.evaluate(element => element.textContent?.trim() || ''),
-                    elememntImage?.evaluate(element => element.getAttribute('src')?.trim()),
-                    elememntOutstanding?.evaluate(element => !!element) ?? false,
+                    elememntlink?.evaluate((element: Element) => element.getAttribute('href')?.trim()),
+                    elememntCost?.evaluate((element: Element) => element.textContent?.trim()),
+                    elememntDescription?.evaluate((element: Element) => element.textContent?.trim() || ''),
+                    elememntImage?.evaluate((element: Element) => element.getAttribute('src')?.trim()),
+                    elememntOutstanding?.evaluate((element: Element) => !!element) ?? false,
                   ]);
 
                   let productURL;
@@ -136,20 +137,20 @@ export class RevolicoFetchDataService implements IFetchProductData {
             }
           }
 
-          job.progress(progressCalculate(totalPages, remainingPages));
+          await job.progress(progressCalculate(totalPages, remainingPages));
           await job.log(`Number of products processed on page (${currentPage}) : ${productQtyPage}`);
 
           // Check if next page exists
           const nextButton = await page.$('a#paginator-next');
-          const isNextDisabled = await nextButton?.evaluate(el => el.classList.contains('disabled'));
+          const isNextDisabled = await nextButton?.evaluate((el: Element) => el.classList.contains('disabled'));
 
           if (!isNextDisabled && remainingPages > 1) {
             return scrapperOnly(currentPage + 1, remainingPages - 1);
           }
         } catch (error) {
           log.debug(`Error on page ${currentPage}`, error);
-          job.log(`Error on page ${currentPage}: ${error}`);
-          job.progress(progressCalculate(totalPages, remainingPages));
+          await job.log(`Error on page ${currentPage}: ${error}`);
+          await job.progress(progressCalculate(totalPages, remainingPages));
           return scrapperOnly(currentPage + 1, remainingPages - 1);
         }
         await job.progress(100);
@@ -161,13 +162,13 @@ export class RevolicoFetchDataService implements IFetchProductData {
     } catch (error) {
       const errorMessage = `Error initializing scraping: ${error}`;
       this._log.error(errorMessage);
-      job.log(errorMessage);
+      await job.log(errorMessage);
       await browser.close();
       return Promise.reject(error);
     }
   }
 
-  public async fetchProductDetails(url: string, job: Job<{ url: string }[]>): Promise<IProductDetails | null> {
+  public async fetchProductDetails(url: string, job: IJobContext<{ url: string }[]>): Promise<IProductDetails | null> {
     this._log.debug(`Fetching product deatail at URL: ${url}`);
 
     if (!url) throw new InvalidParameterError('url');
@@ -207,8 +208,8 @@ export class RevolicoFetchDataService implements IFetchProductData {
         ]);
 
         const [rawViews, rawLocation] = await Promise.all([
-          viewsParagraph?.evaluate(element => element.textContent?.trim() || ''),
-          locationParagraph?.evaluate(element => element.textContent?.trim() || ''),
+          viewsParagraph?.evaluate((element: Element) => element.textContent?.trim() || ''),
+          locationParagraph?.evaluate((element: Element) => element.textContent?.trim() || ''),
         ]);
 
         views = rawViews ? parseViews(rawViews) : 0;
@@ -224,16 +225,16 @@ export class RevolicoFetchDataService implements IFetchProductData {
         ]);
 
         const [rawSellerName, rawWhatsapp, rawPhone, rawEmail] = await Promise.all([
-          sellerNameParagraph?.evaluate(element => element.textContent?.trim() || '') ?? '',
-          whatsappElement?.evaluate(element => {
+          sellerNameParagraph?.evaluate((element: Element) => element.textContent?.trim() || '') ?? '',
+          whatsappElement?.evaluate((element: Element) => {
             const href = element.getAttribute('href');
             return href ? href.split('?')[0]?.split('/').pop() || '' : '';
           }) ?? '',
-          phoneElement?.evaluate(element => {
+          phoneElement?.evaluate((element: Element) => {
             const href = element.getAttribute('href');
             return href ? href.split(':')?.pop() || '' : '';
           }) ?? '',
-          emailElement?.evaluate(element => {
+          emailElement?.evaluate((element: Element) => {
             const href = element.getAttribute('href');
             return href ? href.split(':')?.pop() || '' : '';
           }) ?? '',
@@ -246,7 +247,7 @@ export class RevolicoFetchDataService implements IFetchProductData {
     } catch (error) {
       const errorMessage = `Error initializing scraping: ${error}`;
       this._log.error(errorMessage);
-      job.log(errorMessage);
+      await job.log(errorMessage);
       return Promise.reject(error);
     } finally {
       await browser.close();

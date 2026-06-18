@@ -3,7 +3,7 @@ import { ScrapingController } from '@scrapers/revolico/controllers/scraping.cont
 import { Logger } from '@shared/logger';
 import { RevolicoFetchDataService } from '@scrapers/revolico/services/fetch-data.service';
 import { DBContext } from '@config/db-config';
-import { QContext } from '@config/queue.config';
+import { QueueContext } from '@shared/queue/queue-context';
 import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
 import { TYPES } from '@shared/types.container';
 import { ILogger } from '@shared/logger.interfaces';
@@ -12,8 +12,14 @@ import { ProductService } from '@scrapers/revolico/services/product.service';
 import { ProductRepository } from '@scrapers/revolico/repositories/product.repository';
 import { ScrapingProductService } from '@scrapers/revolico/services/scraping-product.service';
 import { RevolicoQueues } from '@scrapers/revolico/queues';
-import { BullArenaService } from './bull-arena';
 import { IQueueModule } from './queue-module.interface';
+import { BullMQQueueAdapter } from '@shared/queue/adapters/bullmq';
+import { SQSQueueAdapter } from '@shared/queue/adapters/sqs';
+import { MockQueueAdapter } from '@shared/queue/adapters/mock';
+import { QueueAdapterRegistry } from '@shared/queue/queue-adapter-registry';
+import { IQueueAdapter } from '@shared/queue/port/queue-adapter.interfaces';
+import { IQueueAdapterRegistry } from '@shared/queue/port/queue-adapter-registry.interfaces';
+import { QueueDashboardService } from '@shared/queue-dashboard';
 import { UserController } from '@users/controllers/user.controller';
 import { UserService } from '@users/services/user.service';
 import { UserRepository } from '@users/repositories/user.repository';
@@ -53,7 +59,7 @@ import { PriceDropsBelowCondition } from '@alarms/conditions/price-drops-below.c
 import { PriceRisesAboveCondition } from '@alarms/conditions/price-rises-above.condition';
 import { PriceChangesByPercentCondition } from '@alarms/conditions/price-changes-by-percent.condition';
 import { ViewsExceedCondition } from '@alarms/conditions/views-exceed.condition';
-import { IsOutstandingCondition } from '@alarms/conditions/is-outstanding.condition';
+import { IsOutstandingCondition } from '@alarms/conditions/outstanding.condition.interfaces';
 import { SellerChangedCondition } from '@alarms/conditions/seller-changed.condition';
 
 export const container = new Container();
@@ -61,14 +67,29 @@ export const container = new Container();
 //shared services
 container.bind<ILogger>(TYPES.Logger).to(Logger);
 container.bind(DBContext).toSelf().inSingletonScope();
-container.bind(QContext).toSelf().inSingletonScope();
-container.bind(BullArenaService).toSelf().inSingletonScope();
+container.bind(QueueContext).toSelf().inSingletonScope();
+container.bind<QueueDashboardService>(TYPES.QueueDashboardService).to(QueueDashboardService).inSingletonScope();
 container.bind<PgDBContext>(TYPES.TenantDB).to(PgDBContext).inSingletonScope();
 container.bind(TYPES.PrismaClient).toConstantValue(prisma);
 container.bind<TenantContext>(TYPES.TenantContext).to(TenantContext).inRequestScope();
 container.bind<PasswordHasher>(TYPES.PasswordHasher).to(PasswordHasher).inSingletonScope();
 container.bind<TokenService>(TYPES.TokenService).to(TokenService).inSingletonScope();
 container.bind<ProviderTokenVerifier>(TYPES.ProviderTokenVerifier).to(ProviderTokenVerifier).inSingletonScope();
+
+// Queue adapters (BullMQ/SQS/Mock) and the registry that selects one
+container.bind<IQueueAdapter>(TYPES.BullMQAdapter).to(BullMQQueueAdapter).inSingletonScope();
+container.bind<IQueueAdapter>(TYPES.SQSAdapter).to(SQSQueueAdapter).inSingletonScope();
+container.bind<IQueueAdapter>(TYPES.MockAdapter).to(MockQueueAdapter).inSingletonScope();
+container
+  .bind<IQueueAdapterRegistry>(TYPES.QueueAdapterRegistry)
+  .toDynamicValue(ctx => {
+    return new QueueAdapterRegistry(
+      ctx.container.get<IQueueAdapter>(TYPES.BullMQAdapter),
+      ctx.container.get<IQueueAdapter>(TYPES.SQSAdapter),
+      ctx.container.get<IQueueAdapter>(TYPES.MockAdapter),
+    );
+  })
+  .inSingletonScope();
 
 //services
 container.bind<IFetchProductData>(TYPES.RevolicoData).to(RevolicoFetchDataService);

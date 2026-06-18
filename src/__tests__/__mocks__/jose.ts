@@ -2,12 +2,10 @@
 // Jest (ts-jest) runs in CommonJS mode and cannot load ESM modules.
 // This stub provides the exports used by src/main/shared/security/provider-token-verifier.ts.
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function createRemoteJWKSet(_url: URL): ReturnType<typeof jest.fn> {
   return jest.fn();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function jwtVerify(_token: string, _jwks: ReturnType<typeof jest.fn>): Promise<{ payload: Record<string, unknown> }> {
   return Promise.resolve({ payload: {} });
 }

@@ -7,7 +7,24 @@ lastUpdated: '2026-06-05'
 
 # Price Monitoring SaaS — Project Specification
 
-A multi-tenant SaaS platform that lets customers create price-change alarms on products. The system periodically scrapes product data from target sites (e.g., Revolico), stores historical prices, evaluates alarm conditions, and notifies users when a price drops or rises. Built with TypeScript, Express, Inversify, Bull, Prisma, Mongoose, and Puppeteer.
+A multi-tenant SaaS platform that lets customers create price-change alarms on products. The system periodically scrapes product data from target sites (e.g., Revolico), stores historical prices, evaluates alarm conditions, and notifies users when a price drops or rises. Built with TypeScript, Express, Inversify, BullMQ, Prisma, Mongoose, and Puppeteer.
+
+## CRITICAL RULES - MUST FOLLOW
+
+### PLANNING MODE
+
+- Always ask clarifying questions
+- Never assume design, tech stack or features
+- Use deep-dive sub-agents to assist with research
+- Use deep-dive sub-agents to review the different aspects of your planning to the user
+
+### CHANGE / EDIT MODE
+
+- Never implement features yourself when possible - use sub-agents!
+- Identify changes from the plan that can be implemented in parallel, and use sub-agents to implement the features efficiently
+- When using sub-agents to implement features, act as a coordinator only
+- Use the best model for the task - premium models for complex tasks (like coding) and mid-tier models for simpler tasks, like documentation
+- After completing features (large or small), always run commands like lint, type check and next build to check code quality
 
 ## Development Workflow
 
@@ -46,9 +63,9 @@ Copy `.env.example` to `.env` and fill in values. Required variables:
 - `JWT_EXPIRATION` — token expiration (e.g. `1d`, `7d`)
 - `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` — initial super-admin credentials (used by seed)
 - `TENANT_DB_URL` — PostgreSQL connection string for Prisma
-- `REDIS_URL` — Redis connection for Bull queues
+- `REDIS_URL` — Redis connection for BullMQ queues
 - `DB_URI` — MongoDB connection string for scraped product data (Mongoose)
-- `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` — credentials for Bull Arena dashboard
+- `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` — credentials for the Queue Dashboard (`@bull-board`)
 
 ### Running Tests
 
@@ -66,7 +83,7 @@ Integration tests use `MongoMemoryServer` (configured in `jest-mongodb-config.js
 
 ## Architecture
 
-**Layers**: Controller (request handling, Zod validation, no business logic) → Service (business logic, orchestrates repositories) → Repository (DB/queue interactions, tenant isolation via Prisma client extensions).
+**Layers**: Controller (request handling, Middleware, no business logic) → Service (business logic, orchestrates repositories, DTO with Zod validation ) → Repository (DB/queue interactions, tenant isolation via Prisma client extensions).
 
 **DTOs**: Zod schemas with `z.infer<typeof>` for type inference. Static `from()` factory for parsing request bodies.
 
@@ -92,7 +109,7 @@ src/
 - **PostgreSQL** (Prisma) — users, accounts, alarms, subscriptions (`TENANT_DB_URL`)
 - **MongoDB** (Mongoose) — scraped product data and price history (`DB_URI`)
 
-**File naming**: `*.service.ts`, `*.controller.ts`, `*.repository.ts`. Group by feature/domain. Tests mirror source structure.
+**File naming**: `*.service.ts`, `*.controller.ts`, `*.repository.ts`, `*.interfaces.ts`. Group by feature/domain. Tests mirror source structure.
 
 ## Security & Multi-tenancy
 
@@ -110,7 +127,7 @@ tenantInitMiddleware → AuthMiddleware → Controller
 
 | Rol | Propósito | Acceso |
 |---|---|---|
-| `SUPER_ADMIN` | Dueño del sistema / staff técnico | Todo: cuentas, planes, suscripciones, scraping manual, Bull Arena |
+| `SUPER_ADMIN` | Dueño del sistema / staff técnico | Todo: cuentas, planes, suscripciones, scraping manual, Queue Dashboard |
 | `ACCOUNT_OWNER` | Cliente que paga la suscripción | Solo su tenant: crea alarmas, ve resultados, gestiona usuarios de su cuenta |
 | `MEMBER` | Miembro del equipo (futuro) | Solo lectura dentro de su tenant (no implementado aún en guards) |
 
@@ -135,5 +152,6 @@ tenantInitMiddleware → AuthMiddleware → Controller
 | Environment setup | `.env.example` |
 | PostgreSQL / Prisma schema | `prisma/schema.prisma` |
 | MongoDB / Mongoose connection | `src/main/config/db-config.ts` |
-| Queue config | `src/main/config/queue.config.ts` |
+| Queue port & adapters (BullMQ / Mock / SQS) | `src/main/shared/queue/` |
+| Queue dashboard (`@bull-board`) | `src/main/shared/queue-dashboard/` |
 | DB utility scripts | `scripts/` (RLS, migrations, Prisma generation) |

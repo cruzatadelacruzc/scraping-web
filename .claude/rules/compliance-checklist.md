@@ -10,7 +10,7 @@ Before completing any task, verify these requirements:
 ## Code Standards
 
 - [ ] **TypeScript**: Strict mode, no `any` types, proper generics
-- [ ] **File Naming**: Matches conventions (`*.service.ts`, `*.controller.ts`, `*.repository.ts`)
+- [ ] **File Naming**: Matches conventions (`*.service.ts`, `*.controller.ts`, `*.repository.ts`, `*.interfaces.ts`, , `*.dto.ts`, `*.error.ts`, `*.mapper.ts`)
 - [ ] **Imports**: Organized (types → interfaces → implementations) using barrel files
 
 ## Architecture & Patterns

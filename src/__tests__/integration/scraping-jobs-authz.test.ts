@@ -13,16 +13,17 @@ jest.mock('@shared/security/provider-token-verifier', () => ({
 
 import request from 'supertest';
 import { v4 as uuidv4 } from 'uuid';
+import { Queue } from 'bullmq';
 import { App } from '../../main/app';
 import { container } from '@shared/container';
 import { TYPES } from '@shared/types.container';
 import { PgDBContext } from '@config/pg-db';
-import { QContext } from '@config/queue.config';
+import { QueueContext } from '@shared/queue/queue-context';
+import { BullMQQueueAdapter } from '@shared/queue/adapters/bullmq';
 import { QUEUE_NAME } from '@scrapers/revolico/queues';
 
 let app: any;
 let pgDb: PgDBContext;
-let qContext: QContext;
 let testAccountId: string;
 let memberToken: string;
 let superAdminToken: string;
@@ -31,12 +32,12 @@ beforeAll(async () => {
   app = await new App().setup();
   pgDb = container.get<PgDBContext>(TYPES.TenantDB);
   await pgDb.dbConnect();
-  qContext = container.get<QContext>(QContext);
 
-  // Stub Bull queue.add() to avoid Bull 4.16.3 + Redis 7.4.0 incompatibility
-  // (the real add() hangs because the 'ready' event never fires on Redis 7).
-  // This test validates authz, not the queue, so a stub is appropriate.
-  const productsQueue = qContext.getQueue(QUEUE_NAME.products_scraping.toString());
+  // Stub the BullMQ queue.add() to avoid real Redis roundtrips in this
+  // authz test (we only validate authorization, not queue mechanics).
+  const qContext = container.get(QueueContext);
+  const adapter = qContext.getAdapter() as BullMQQueueAdapter;
+  const productsQueue = adapter.getRawQueue(QUEUE_NAME.products_scraping) as Queue;
   jest.spyOn(productsQueue, 'add').mockResolvedValue({ id: 'mock-job-id-1' } as any);
 
   // Create test account

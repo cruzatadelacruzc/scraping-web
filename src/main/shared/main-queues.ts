@@ -1,9 +1,8 @@
+import { container } from '@shared/container';
 import { IQueueModule } from './queue-module.interface';
-import { QContext } from '@config/queue.config';
-import { Job } from 'bull';
 import { ILogger } from './logger.interfaces';
 import { TYPES } from './types.container';
-import { container } from './container';
+import { IQueueAdapterRegistry } from '@shared/queue/port/queue-adapter-registry.interfaces';
 
 /**
  * Retrieves an array of all {@link IQueueModule} instances.
@@ -16,20 +15,20 @@ export const getQueueModules = (): ReadonlyArray<IQueueModule> => {
 };
 
 /**
- * Initializes all queues by calling {@link IQueueModule.getQueuesToInitialize} and
- * {@link IQueueModule.getProcessor} for each queue module passed in.
+ * Initializes all queues: for each {@link IQueueModule} it asks for the list
+ * of queues to initialize, then registers the module's processor with the
+ * active queue adapter (selected by the {@link IQueueAdapterRegistry}).
  *
  * @returns {Promise<void>} A promise that resolves when all queues have been initialized.
  */
 export const initializeQueues = async (): Promise<void> => {
   const log = container.get<ILogger>(TYPES.Logger);
-  const qContext = container.get<QContext>(QContext);
+  const registry = container.get<IQueueAdapterRegistry>(TYPES.QueueAdapterRegistry);
+  const adapter = registry.getCurrent();
   log.context = 'MainQueues';
-  log.info('Initializing queues and setting up listeners...');
+  log.info(`Initializing queues and setting up listeners (backend=${adapter.backend})...`);
 
   const queueModules = getQueueModules();
-  const queuesToInitialize: string[] = [];
-  const queueProcessors: Map<string, (job: Job) => Promise<any>> = new Map();
 
   try {
     for (const module of queueModules) {
@@ -38,18 +37,14 @@ export const initializeQueues = async (): Promise<void> => {
         throw new Error(`Module ${module.constructor.name} did not return an array of queues to initialize.`);
       }
 
-      queuesToInitialize.push(...queues);
-
       for (const queueName of queues) {
         const processor = module.getProcessor(queueName);
         if (!processor) {
           throw new Error(`Module ${module.constructor.name} did not return a processor for queue ${queueName}.`);
         }
-
-        queueProcessors.set(queueName, processor);
+        adapter.registerWorker(queueName, processor);
       }
     }
-    await Promise.all(queuesToInitialize.map(queueName => qContext.QCreate(queueName, queueProcessors.get(queueName)!)));
     queueModules.forEach(module => module.setupQueueListeners());
   } catch (err) {
     log.error('Error initializing queues: ', err);

@@ -29,8 +29,29 @@ const USER_AGENTS = [
 const getRandomUserAgent = (): string => {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 };
+/**
+ * Returns the absolute path to the Chrome/Chromium binary that Puppeteer
+ * should launch. Throws on access if the env var is unset — the check is
+ * lazy (only fires when `puppeteer.launch(CONFIG)` actually reads the
+ * property) so importing this module from tests / container wiring is safe.
+ */
+function resolveExecutablePath(): string {
+  const path = process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (!path) {
+    throw new Error(
+      'PUPPETEER_EXECUTABLE_PATH is not set. ' +
+        'Point it at a Chrome/Chromium binary (e.g. /usr/bin/google-chrome-stable ' +
+        'in dev, /usr/bin/chromium in the Docker image).',
+    );
+  }
+  return path;
+}
+
 export const CONFIG = {
   headless: true,
+  get executablePath(): string {
+    return resolveExecutablePath();
+  },
   args: [
     `--user-agent=${getRandomUserAgent()}`,
     '--window-size=1200,800',

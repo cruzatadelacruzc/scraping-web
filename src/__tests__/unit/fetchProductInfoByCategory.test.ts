@@ -2,16 +2,13 @@ import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
 import { TYPES } from '@shared/types.container';
 import { container } from '@shared/container';
 import { InvalidParameterError } from '@scrapers/revolico/errors/invalid-parameter.error';
-import { Job } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 jest.mock('puppeteer-extra', () => {
-  const puppeteer = jest.requireActual('puppeteer') as any;
-
   return {
-    ...puppeteer,
     use: jest.fn(),
     launch: jest.fn().mockResolvedValue({
       newPage: jest.fn().mockResolvedValue({
@@ -41,7 +38,7 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
     newPage: jest.Mock;
     close: jest.Mock;
   };
-  let jobMock: Partial<Job<ScrapingProductsType>>;
+  let jobMock: Partial<IJobContext<ScrapingProductsType>>;
   const DEFAULT_CURRENCY = 'USD';
   const DEFAULT_PRICE = 100;
   const DEFAULT_COST = `${DEFAULT_PRICE} ${DEFAULT_CURRENCY}`;
@@ -126,7 +123,13 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
       }),
     });
 
-    const products = await service.fetchProductInfoByCategory('category', 'subcategory', 1, 2, jobMock as Job<ScrapingProductsType>);
+    const products = await service.fetchProductInfoByCategory(
+      'category',
+      'subcategory',
+      1,
+      2,
+      jobMock as IJobContext<ScrapingProductsType>,
+    );
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);
@@ -212,7 +215,13 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
       }),
     });
 
-    const products = await service.fetchProductInfoByCategory('category', 'subcategory', 1, 3, jobMock as Job<ScrapingProductsType>);
+    const products = await service.fetchProductInfoByCategory(
+      'category',
+      'subcategory',
+      1,
+      3,
+      jobMock as IJobContext<ScrapingProductsType>,
+    );
 
     expect(products).toHaveLength(2);
     expect(products).toEqual(expect.arrayContaining(expectedProducts));
@@ -266,7 +275,13 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
         return null;
       }),
     });
-    const products = await service.fetchProductInfoByCategory('category', 'subcategory', 1, 2, jobMock as Job<ScrapingProductsType>);
+    const products = await service.fetchProductInfoByCategory(
+      'category',
+      'subcategory',
+      1,
+      2,
+      jobMock as IJobContext<ScrapingProductsType>,
+    );
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);
@@ -312,7 +327,13 @@ describe('RevolicoFetchDataService - fetchProductInfoByCategory', () => {
       }),
     });
 
-    const products = await service.fetchProductInfoByCategory('category', 'subcategory', 1, 1, jobMock as Job<ScrapingProductsType>);
+    const products = await service.fetchProductInfoByCategory(
+      'category',
+      'subcategory',
+      1,
+      1,
+      jobMock as IJobContext<ScrapingProductsType>,
+    );
 
     expect(puppeteer.launch).toHaveBeenCalled();
     expect(browserMock.newPage).toHaveBeenCalledTimes(1);

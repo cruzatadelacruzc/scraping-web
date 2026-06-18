@@ -20,7 +20,7 @@ applyTo: 'src/main/**'
 ### Repository / Adapter
 - Handles all external interactions (DB, queues)
 - Enforces tenant isolation via Prisma client extensions
-- Queue operations use Bull/Arena
+- Queue operations go through the `IQueueAdapter` port (BullMQ / Mock / SQS)
 
 ### DTOs
 - Zod schemas with `z.infer<typeof>` for type inference
@@ -33,11 +33,12 @@ applyTo: 'src/main/**'
 
 ## Queue System
 
-- Queues implement `IQueueModule` interface (`readonly queues: string[]`)
-- Job handlers: `process(job: Job<T>): Promise<void>`
-- Report progress: `job.progress(percentage)`
+- Queues implement `IQueueModule` interface (`getQueuesToInitialize()`, `getProcessor()`, `setupQueueListeners()`)
+- Job handlers receive a backend-agnostic `IJobContext<TData>` (id, name, data, attemptsMade, log, progress)
+- Report progress: `ctx.progress(value)` (0-100 or structured object)
 - Log errors with job context before throwing
-- Bull Arena dashboard at `/arena` (auth via `BULL_BOARD_USER`/`BULL_BOARD_PASSWORD`)
+- Active adapter selected by `QUEUE_BACKEND` env var (`bullmq` | `sqs` | `mock`); see `src/main/shared/queue/`
+- Queue Dashboard (`@bull-board/api`) mounted at `/queue` (configurable via `BULL_AREANA_URL`)
 
 ## Development Standards
 
@@ -105,7 +106,7 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 
 ## Debugging & Monitoring
 
-- Bull Arena dashboard for queue monitoring
+- Queue Dashboard (`@bull-board`) at `/queue` for monitoring BullMQ queues
 - Structured logging with request/tenant context
 - OpenAPI/Swagger docs at `/api-docs`
 

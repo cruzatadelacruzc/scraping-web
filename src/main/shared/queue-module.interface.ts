@@ -1,4 +1,4 @@
-import { Job } from 'bull';
+import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 
 export interface IQueueModule {
   /**
@@ -14,12 +14,14 @@ export interface IQueueModule {
   getQueuesToInitialize(): string[];
 
   /**
-   * Returns a processor function for the specified queue.
+   * Returns a processor function for the specified queue. Implementations
+   * may specialise the generic `IJobContext` parameter; the runtime
+   * contract is the same regardless.
    * @param {string} queueName The name of the queue.
-   * @returns {(job: Job) => Promise<any>} A function that takes a job and returns a promise that resolves to any type.
+   * @returns {(ctx: IJobContext<any>) => Promise<any>} A function that takes a backend-agnostic job context and returns a promise.
    * @throws {Error} If no processor is defined for the specified queue.
    */
-  getProcessor(queueName: string): (job: Job) => Promise<any>;
+  getProcessor(queueName: string): (ctx: IJobContext<any>) => Promise<any>;
 
   /**
    * Configures the event listeners for the queues within the module.
