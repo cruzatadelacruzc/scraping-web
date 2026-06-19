@@ -1,7 +1,7 @@
 {
-  "name": "web-booking-scraping",
+  "name": "bazaarsentinel",
   "version": "1.0.0",
-  "description": "",
+  "description": "Multi-tenant SaaS for marketplace listing monitoring — watch prices, views, sellers, and outstanding status across online bazaars like Revolico.",
   "main": "dist/main/bootstrap.js",
   "scripts": {
     "test": "NODE_ENV=test jest --verbose",

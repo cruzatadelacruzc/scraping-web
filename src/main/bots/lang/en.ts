@@ -14,7 +14,7 @@ export const en = {
     errorAiUnavailable: 'AI assistant is currently unavailable. Try /alarms, /subscription or /profile.',
   },
   welcome: {
-    greeting: 'Hello! Welcome to the price monitor bot.',
+    greeting: 'Hello! Welcome to the BazaarSentinel bot.',
     intro: 'To get started, link this chat to your account:',
     cta: 'Tap to create an account',
     alreadyHaveAccount: 'Already have an account? Open the web app and click "Link WhatsApp" to get a code.',

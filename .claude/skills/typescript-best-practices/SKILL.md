@@ -1,6 +1,6 @@
 ---
 name: typescript-best-practices
-description: Use when reading or writing TypeScript or JavaScript files (.ts, .tsx, .js, tsconfig.json).
+description: Use when reading or writing TypeScript or JavaScript files (.ts, .tsx, .js, tsconfig.json). All examples are drawn from the BazaarSentinel project — branded types, Zod DTOs, discriminated unions, exhaustive switches.
 ---
 
 # TypeScript Best Practices

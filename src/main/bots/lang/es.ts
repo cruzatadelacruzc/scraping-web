@@ -14,7 +14,7 @@ export const es = {
     errorAiUnavailable: 'El asistente de IA no está disponible ahora. Prueba /alarms, /subscription o /profile.',
   },
   welcome: {
-    greeting: '¡Hola! Bienvenido al bot de monitoreo de precios.',
+    greeting: '¡Hola! Bienvenido al bot de BazaarSentinel.',
     intro: 'Para empezar, vincula este chat a tu cuenta:',
     cta: 'Toca para crear una cuenta',
     alreadyHaveAccount: '¿Ya tienes cuenta? Abre la web y haz clic en "Vincular WhatsApp" para obtener un código.',

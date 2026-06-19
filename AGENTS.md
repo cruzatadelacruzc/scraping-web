@@ -1,13 +1,13 @@
 ---
-description: 'Project rules and architecture for the Price Monitoring SaaS: scraping, alarms, multi-tenant isolation, auth, and coding standards.'
+description: 'Project rules and architecture for BazaarSentinel — multi-tenant SaaS for marketplace listing monitoring: scraping, alarms, multi-tenant isolation, auth, and coding standards.'
 applyTo: '**'
 version: '1.3.0'
 lastUpdated: '2026-06-05'
 ---
 
-# Price Monitoring SaaS — Project Specification
+# BazaarSentinel — Project Specification
 
-A multi-tenant SaaS platform that lets customers create price-change alarms on products. The system periodically scrapes product data from target sites (e.g., Revolico), stores historical prices, evaluates alarm conditions, and notifies users when a price drops or rises. Built with TypeScript, Express, Inversify, BullMQ, Prisma, Mongoose, and Puppeteer.
+A multi-tenant SaaS platform that watches product listings across online bazaars (e.g., Revolico) for any user-configurable change — price drops or rises, view-count thresholds, seller changes, outstanding status — and notifies tenants when their alarm conditions match. Built with TypeScript, Express, Inversify, BullMQ, Prisma, Mongoose, and Puppeteer.
 
 ## CRITICAL RULES - MUST FOLLOW
 

@@ -19,10 +19,10 @@ function generate(): void {
   const document = generator.generateDocument({
     openapi: '3.0.0',
     info: {
-      title: 'Revolico Scraping API',
+      title: 'BazaarSentinel API',
       version: '1.0.0',
       description:
-        'Multi-tenant SaaS platform for product price monitoring. Create alarms on products, track price history, and receive notifications when conditions match.',
+        'Multi-tenant SaaS for marketplace listing monitoring. Watch products on online bazaars (e.g., Revolico) and get notified when any user-configured alarm condition matches — price drops/rises, view-count thresholds, seller changes, outstanding status.',
     },
     servers: [{ url: '/', description: 'API base path' }],
     tags: API_TAGS,
