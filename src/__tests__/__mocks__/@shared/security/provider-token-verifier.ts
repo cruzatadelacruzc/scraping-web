@@ -7,6 +7,7 @@
 
 export const ProviderTokenVerifier = jest.fn().mockImplementation(() => ({
   verifyProvider: jest.fn().mockImplementation((_provider: string, opts: { idToken?: string; accessToken?: string }) => {
+    void _provider;
     const email = opts.idToken || 'mock@example.com';
     return Promise.resolve({
       providerId: 'prov-1',

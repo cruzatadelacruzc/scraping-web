@@ -59,7 +59,7 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 
 **Red** — Write tests first, before any production code:
 - Unit tests for Service and Repository with mocked dependencies
-- Integration test using `runWithRequestContext({ tenantId, userId }, async () => { ... })`
+- Integration test using `runWithRequestContext({ tenantId, userId }, async () => { ... })` — see `.claude/skills/testing/SKILL.md`
 - Place tests under `src/__tests__/unit/` and `src/__tests__/integration/`
 - Run with `npm run test -- --testPathPattern="feature"` — expect failures
 
@@ -75,18 +75,14 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 - Re-run tests to confirm green
 - For MongoDB features, tenant isolation does NOT apply (product data is shared)
 
-### Testing Rules
-- **Unit tests**: Mock tenant context and external dependencies
-- **Integration tests**: Use `runWithRequestContext` for tenant-scoped features
-- Test tenant isolation explicitly
-- Mock ESM modules (`jose`) before import — see `src/__tests__/unit/user.service.registerLocal.test.ts`
+> See skill: `.claude/skills/testing/SKILL.md` for the full testing patterns (Jest, MongoMemoryServer, Prisma mocks, ALS mocks, ESM jose moduleNameMapper workaround). Follow strictly.
 
 ## File Organization
 
 - Group by feature/domain (users, alarms, scrapers, etc.)
 - Use barrel files (`index.ts`) for clean exports
 - Tests mirror source structure in `src/__tests__/`
-- File naming: `*.service.ts`, `*.controller.ts`, `*.repository.ts`
+- File naming conventions: see `.claude/rules/compliance-checklist.md` "File naming (canonical suffixes)" section.
 
 ## Creating New Components
 
@@ -114,29 +110,29 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 
 ### Workflow
 
-Después de desarrollar y pasar los tests, SIEMPRE ejecutar `npm run docs:generate`. Esto regenera `swagger.json` desde los Zod DTOs y las definiciones de paths en `src/main/docs/`. El comando debe ejecutarse tras cualquier cambio en DTOs, controladores, o nuevos endpoints.
+After developing and passing tests, ALWAYS run `npm run docs:generate`. This regenerates `swagger.json` from the Zod DTOs and path definitions in `src/main/docs/`. The command must run after any change to DTOs, controllers, or new endpoints.
 
 ### Scripts
 
-- `npm run docs:generate` — genera `swagger.json` desde `src/main/docs/`
-- `npm run docs:validate` — CI: diffea swagger.json actual vs generado, falla si out of sync
+- `npm run docs:generate` — generates `swagger.json` from `src/main/docs/`
+- `npm run docs:validate` — CI: diffs current `swagger.json` vs generated, fails if out of sync
 
-### Herramienta
+### Tool
 
-- `@asteasolutions/zod-to-openapi@^7.0.0` (NO v8 — v8 requiere Zod v4, aquí se usa Zod v3)
-- `ts-node` necesita `-O '{"types":["node"]}'` para built-ins (fs, path)
+- `@asteasolutions/zod-to-openapi@^7.0.0` (NOT v8 — v8 requires Zod v4, this project uses Zod v3)
+- `ts-node` needs `-O '{"types":["node"]}'` for built-ins (fs, path)
 
-### Arquitectura
+### Architecture
 
-- Metadata OpenAPI centralizada en `src/main/docs/schema-registry.ts` — los DTOs NO se modifican
-- Paths definidos en `src/main/docs/modules/*.paths.ts` (9 archivos, uno por módulo)
-- Para `$ref` en paths usar el retorno de `registry.register()`, no el Zod schema crudo
-- `tsconfig.build.json` excluye `src/main/docs/**` — código solo build-time
+- OpenAPI metadata centralized in `src/main/docs/schema-registry.ts` — DTOs are NEVER modified
+- Paths defined in `src/main/docs/modules/*.paths.ts` (9 files, one per module)
+- For `$ref` in paths use the return value of `registry.register()`, not the raw Zod schema
+- `tsconfig.build.json` excludes `src/main/docs/**` — code only used at build time
 
-### Schemas especiales
+### Special schemas
 
-- Scraper DTOs no exportan sus Zod schemas → schemas OpenAPI inline en el registry
-- `AlarmResponseDTO` y `NotificationDTO` usan `fromModel()` → schemas complementarios en schema-registry
+- Scraper DTOs do not export their Zod schemas → inline OpenAPI schemas in the registry
+- `AlarmResponseDTO` and `NotificationDTO` use `fromModel()` → complementary schemas in schema-registry
 
 ### Path aliases
 

@@ -15,7 +15,10 @@ jest.mock('@users/custom-prisma-client', () => ({
 }));
 
 jest.mock('@shared/tenant-context-als', () => {
-  const mockRunWithRequestContext = jest.fn((_ctx: any, fn: () => any) => fn());
+  const mockRunWithRequestContext = jest.fn((_ctx: any, fn: () => any) => {
+    void _ctx;
+    return fn();
+  });
   return {
     getRequestContext: jest.fn(),
     runWithRequestContext: mockRunWithRequestContext,

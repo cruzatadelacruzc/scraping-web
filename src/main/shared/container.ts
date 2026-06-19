@@ -59,7 +59,7 @@ import { PriceDropsBelowCondition } from '@alarms/conditions/price-drops-below.c
 import { PriceRisesAboveCondition } from '@alarms/conditions/price-rises-above.condition';
 import { PriceChangesByPercentCondition } from '@alarms/conditions/price-changes-by-percent.condition';
 import { ViewsExceedCondition } from '@alarms/conditions/views-exceed.condition';
-import { IsOutstandingCondition } from '@alarms/conditions/outstanding.condition.interfaces';
+import { IsOutstandingCondition } from '@alarms/conditions/outstanding.condition.interface';
 import { SellerChangedCondition } from '@alarms/conditions/seller-changed.condition';
 
 export const container = new Container();

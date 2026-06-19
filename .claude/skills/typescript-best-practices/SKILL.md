@@ -3,122 +3,196 @@ name: typescript-best-practices
 description: Use when reading or writing TypeScript or JavaScript files (.ts, .tsx, .js, tsconfig.json). All examples are drawn from the BazaarSentinel project — branded types, Zod DTOs, discriminated unions, exhaustive switches.
 ---
 
-# TypeScript Best Practices
+# TypeScript Best Practices (project-style)
 
-Follows type-first, functional, and error handling patterns from CLAUDE.md. This skill covers language-specific idioms only.
-
-## Pair with React Best Practices
-
-When working with React components (`.tsx`, `.jsx` files or `@react` imports), always load `react-best-practices` alongside this skill. This skill covers TypeScript fundamentals; React-specific patterns (effects, hooks, refs, component design) are in the dedicated React skill.
+Type-first, functional-leaning, error-aware patterns. Every example below is taken from this codebase (`src/main/users/dto/user-register.dto.ts`, `src/main/alarms/conditions/condition.interface.ts`, `prisma/schema.prisma`).
 
 ## Make Illegal States Unrepresentable
 
 Use the type system to prevent invalid states at compile time.
 
-**Discriminated unions for mutually exclusive states:**
-```ts
-// Good: only valid combinations possible
-type RequestState<T> =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: Error };
+**Discriminated unions for mutually exclusive states** — taken from `IAlarmCondition.computeParamsUpdate`:
 
-// Bad: allows invalid combinations like { loading: true, error: Error }
-type RequestState<T> = {
-  loading: boolean;
-  data?: T;
-  error?: Error;
+```ts
+// Good: only valid combinations possible — the optional method is on its own
+// variant of the union, so callers must handle the absence.
+export interface IAlarmCondition {
+  readonly type: string;
+  evaluate(product: IProductSnapshot, alarm: Alarm): boolean;
+  buildNotification(alarm: Alarm, product: IProductSnapshot): [string, string];
+  computeParamsUpdate?(
+    currentParams: Record<string, unknown>,
+    product: IProductSnapshot,
+  ): Record<string, unknown> | null;
+}
+
+// Bad: caller can't tell whether `computeParamsUpdate` is missing because
+// the condition is stateless vs. forgotten to be implemented.
+type AlarmCondition = {
+  type: string;
+  evaluate: (...) => boolean;
+  buildNotification: (...) => [string, string];
+  computeParamsUpdate?: (...) => Record<string, unknown> | null;
 };
 ```
 
-**Branded types for domain primitives:**
-```ts
-type UserId = string & { readonly __brand: 'UserId' };
-type OrderId = string & { readonly __brand: 'OrderId' };
+**Const assertions for literal unions** — keep arrays and TS types in sync:
 
-// Compiler prevents passing OrderId where UserId expected
-function getUser(id: UserId): Promise<User> { /* ... */ }
+```ts
+// src/main/alarms/conditions/condition.interface.ts would benefit from:
+const CONDITION_TYPES = [
+  'PRICE_DROPS_BELOW',
+  'PRICE_RISES_ABOVE',
+  'PRICE_CHANGES_BY_PERCENT',
+  'VIEWS_EXCEED',
+  'IS_OUTSTANDING',
+  'SELLER_CHANGED',
+] as const;
+type AlarmConditionTypeValue = typeof CONDITION_TYPES[number];
 ```
 
-**Const assertions for literal unions:**
+The Prisma `enum AlarmConditionType { ... }` is the source of truth for the DB; mirror it in TS via `typeof` rather than re-typing by hand.
+
+**Exhaustive switch with `never` check** — for alarm conditions:
+
 ```ts
-const ROLES = ['admin', 'user', 'guest'] as const;
-type Role = typeof ROLES[number]; // 'admin' | 'user' | 'guest'
+import { AlarmConditionType } from '@prisma/client';
 
-// Array and type stay in sync automatically
-function isValidRole(role: string): role is Role {
-  return ROLES.includes(role as Role);
-}
-```
-
-**Exhaustive switch with never check:**
-```ts
-type Status = "active" | "inactive";
-
-function processStatus(status: Status): string {
-  switch (status) {
-    case "active":
-      return "processing";
-    case "inactive":
-      return "skipped";
+function conditionLabel(type: AlarmConditionType): string {
+  switch (type) {
+    case 'PRICE_DROPS_BELOW':        return 'drops below threshold';
+    case 'PRICE_RISES_ABOVE':        return 'rises above threshold';
+    case 'PRICE_CHANGES_BY_PERCENT': return 'changes by percentage';
+    case 'VIEWS_EXCEED':             return 'exceeds view count';
+    case 'IS_OUTSTANDING':           return 'marked outstanding';
+    case 'SELLER_CHANGED':           return 'seller changed';
     default: {
-      const _exhaustive: never = status;
-      throw new Error(`unhandled status: ${_exhaustive}`);
+      const _exhaustive: never = type;
+      throw new Error(`Unhandled condition type: ${_exhaustive}`);
     }
   }
 }
 ```
 
-## Runtime Validation with Zod
+## Runtime Validation with Zod — project DTO pattern
 
-- Define schemas as single source of truth; infer TypeScript types with `z.infer<>`. Avoid duplicating types and schemas.
-- Use `safeParse` for user input where failure is expected; use `parse` at trust boundaries where invalid data is a bug.
-- Compose schemas with `.extend()`, `.pick()`, `.omit()`, `.merge()` for DRY definitions.
-- Add `.transform()` for data normalization at parse time (trim strings, parse dates).
+The project uses Zod schemas + a `from()` factory on a DTO class. Source of truth: `src/main/users/dto/user-register.dto.ts`.
 
 ```ts
-import { z } from "zod";
+import { z } from 'zod';
+import { ValidationError } from '@shared/errors/validation.error';
 
-const UserSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  name: z.string().min(1),
-  createdAt: z.string().transform((s) => new Date(s)),
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'must contain uppercase')
+  .regex(/[a-z]/, 'must contain lowercase')
+  .regex(/[0-9]/, 'must contain a number');
+
+const usernameSchema = z.string()
+  .min(3).max(30)
+  .transform(v => v.toLowerCase())
+  .refine(v => /^[a-z0-9_-]+$/.test(v), 'invalid characters');
+
+export const UserRegisterSchema = z.object({
+  accountId: z.string().uuid(),
+  email:     z.string().email().transform(v => v.toLowerCase()),
+  username:  usernameSchema,
+  password:  passwordSchema,
+  roleIds:   z.array(z.string().uuid()).optional(),
+  displayName: z.string().optional(),
+  avatarUrl:   z.string().url().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 });
 
-type User = z.infer<typeof UserSchema>;
+export type UserRegisterType = z.infer<typeof UserRegisterSchema>;
 
-// Strict parsing at trust boundaries — throws if API contract violated
-export async function fetchUser(id: string): Promise<User> {
-  const response = await fetch(`/api/users/${id}`);
-  if (!response.ok) {
-    throw new Error(`fetch user ${id} failed: ${response.status}`);
+export class UserRegisterDTO {
+  public constructor(
+    public readonly email: string,
+    public readonly username: string,
+    public readonly password: string,
+    public readonly accountId?: string,
+    public readonly roleIds?: string[],
+    public readonly displayName?: string,
+    public readonly avatarUrl?: string,
+    public readonly createdAt?: Date,
+    public readonly updatedAt?: Date,
+  ) {}
+
+  /** Strict parse at the trust boundary — throws ValidationError on failure. */
+  public static from(data: Partial<UserRegisterType>): UserRegisterDTO {
+    try {
+      const parsed = UserRegisterSchema.parse(data);
+      return new UserRegisterDTO(
+        parsed.email, parsed.username, parsed.password,
+        parsed.accountId, parsed.roleIds, parsed.displayName,
+        parsed.avatarUrl, parsed.createdAt, parsed.updatedAt,
+      );
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.issues.map(({ code, message, path }) => ({ code, message, path })));
+      }
+      throw err;
+    }
   }
-  return UserSchema.parse(await response.json());
 }
+```
 
-// Caller handles both success and error from user input
-const result = UserSchema.safeParse(formData);
-if (!result.success) {
-  setErrors(result.error.flatten().fieldErrors);
-  return;
-}
+### Conventions observed in this codebase
+
+- Schema file is `*.dto.ts` colocated with the DTO class.
+- `z.infer<typeof Schema>` derives the TS type — never duplicate it manually.
+- `from(data)` is `static`, calls `schema.parse(...)` (strict) at the trust boundary — controllers can call `UserRegisterDTO.from(req.body)` and rely on validation throwing `ValidationError` (mapped to HTTP 400 by `ResponseHandler`).
+- `safeParse` is reserved for cases where failure is expected and the caller wants to inspect errors — never at controller boundaries.
+
+### Composition
+
+```ts
+// Sub-DTO reused by create + update
+export const AlarmThresholdSchema = z.object({
+  threshold: z.number().positive().optional(),
+  percentage: z.number().min(-100).max(1000).optional(),
+});
+export type AlarmThreshold = z.infer<typeof AlarmThresholdSchema>;
+
+export const CreateAlarmSchema = z.object({
+  name: z.string().min(1).max(120),
+  conditionType: z.enum([
+    'PRICE_DROPS_BELOW', 'PRICE_RISES_ABOVE', 'PRICE_CHANGES_BY_PERCENT',
+    'VIEWS_EXCEED', 'IS_OUTSTANDING', 'SELLER_CHANGED',
+  ]),
+  productUrl: z.string().url(),
+}).merge(AlarmThresholdSchema);   // reuses threshold + percentage
+
+export const UpdateAlarmSchema = CreateAlarmSchema.partial();
 ```
 
 ## Optional: type-fest
 
-For advanced type utilities beyond TypeScript builtins, consider [type-fest](https://github.com/sindresorhus/type-fest):
+For advanced type utilities beyond TS builtins:
 
-- `Opaque<T, Token>` - cleaner branded types than manual `& { __brand }` pattern
-- `PartialDeep<T>` - recursive partial for nested objects
-- `ReadonlyDeep<T>` - recursive readonly for immutable data
-- `SetRequired<T, K>` / `SetOptional<T, K>` - targeted field modifications
-- `Simplify<T>` - flatten complex intersection types in IDE tooltips
+- `Opaque<T, Token>` — cleaner branded types than `string & { __brand }`
+- `PartialDeep<T>` — recursive partial for nested objects
+- `ReadonlyDeep<T>` — recursive readonly for immutable data
+- `SetRequired<T, K>` / `SetOptional<T, K>` — targeted field modifications
+- `Simplify<T>` — flatten complex intersection types in IDE tooltips
 
 ```ts
 import type { Opaque, PartialDeep } from 'type-fest';
 
-type UserId = Opaque<string, 'UserId'>;
-type UserPatch = PartialDeep<User>;
+type UserId   = Opaque<string, 'UserId'>;
+type AlarmId  = Opaque<string, 'AlarmId'>;
+type AlarmPatch = PartialDeep<Alarm>;
 ```
+
+## Pair with React Best Practices
+
+When working with React components (`.tsx`, `.jsx`, `@react` imports), always load `react-best-practices` alongside this skill. This skill covers TypeScript fundamentals; React-specific patterns (effects, hooks, refs, component design) are in the dedicated React skill.
+
+## Anti-patterns in this codebase to avoid
+
+- `any` on `req.user` (see `auth.middleware.ts:16`) — historical, don't propagate. New code uses `ITokenPayload` from `@shared/security/token.service`.
+- Bare `T` generic — use `TData`, `TResponse`, `TRequest`.
+- Inline DTO types next to controllers — DTOs belong in `services/dto/` per the folder structure rule.
+- Re-typing Prisma enums by hand — let `import { AlarmConditionType } from '@prisma/client'` be the source of truth.

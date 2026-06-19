@@ -6,6 +6,7 @@
 jest.mock('@shared/security/provider-token-verifier', () => ({
   ProviderTokenVerifier: jest.fn().mockImplementation(() => ({
     verifyProvider: jest.fn().mockImplementation((_provider: string, opts: { idToken?: string; accessToken?: string }) => {
+      void _provider;
       // Return dynamic claims — email and providerId derive from the idToken so each request
       // gets a unique identity (otherwise the first registration would be returned by all later ones)
       const email = opts.idToken || 'provideruser@example.com';

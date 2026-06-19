@@ -7,6 +7,7 @@ export class IsOutstandingCondition implements IAlarmCondition {
   public readonly type = 'IS_OUTSTANDING';
 
   public evaluate(product: IProductSnapshot, _alarm: Alarm): boolean {
+    void _alarm;
     return product.isOutstanding === true;
   }
 

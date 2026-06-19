@@ -3,10 +3,13 @@
 // This stub provides the exports used by src/main/shared/security/provider-token-verifier.ts.
 
 function createRemoteJWKSet(_url: URL): ReturnType<typeof jest.fn> {
+  void _url;
   return jest.fn();
 }
 
 function jwtVerify(_token: string, _jwks: ReturnType<typeof jest.fn>): Promise<{ payload: Record<string, unknown> }> {
+  void _token;
+  void _jwks;
   return Promise.resolve({ payload: {} });
 }
 

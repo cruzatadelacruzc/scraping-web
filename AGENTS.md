@@ -1,93 +1,75 @@
 ---
 description: 'Project rules and architecture for BazaarSentinel — multi-tenant SaaS for marketplace listing monitoring: scraping, alarms, multi-tenant isolation, auth, and coding standards.'
 applyTo: '**'
-version: '1.3.0'
-lastUpdated: '2026-06-05'
 ---
 
 # BazaarSentinel — Project Specification
 
 A multi-tenant SaaS platform that watches product listings across online bazaars (e.g., Revolico) for any user-configurable change — price drops or rises, view-count thresholds, seller changes, outstanding status — and notifies tenants when their alarm conditions match. Built with TypeScript, Express, Inversify, BullMQ, Prisma, Mongoose, and Puppeteer.
 
-## CRITICAL RULES - MUST FOLLOW
+## Stack
 
-### PLANNING MODE
+- **Language**: TypeScript (strict mode, target ES2022)
+- **Server**: Express with `inversify-express-utils` controllers and decorators
+- **DI**: Inversify (`@injectable()`, `@inject(TYPES.X)`)
+- **Queues**: BullMQ with `@bull-board` dashboard, swappable via `QUEUE_BACKEND` (`bullmq` | `sqs` | `mock`)
+- **Databases**: PostgreSQL (Prisma) for tenants/accounts/alarms; MongoDB (Mongoose) for scraped product data
+- **Scraping**: Puppeteer with local Chrome/Chromium
+- **Auth**: JWT (`jsonwebtoken`) + provider tokens (`jose`)
 
-- Always ask clarifying questions
-- Never assume design, tech stack or features
-- Use deep-dive sub-agents to assist with research
-- Use deep-dive sub-agents to review the different aspects of your planning to the user
-
-### CHANGE / EDIT MODE
-
-- Never implement features yourself when possible - use sub-agents!
-- Identify changes from the plan that can be implemented in parallel, and use sub-agents to implement the features efficiently
-- When using sub-agents to implement features, act as a coordinator only
-- Use the best model for the task - premium models for complex tasks (like coding) and mid-tier models for simpler tasks, like documentation
-- After completing features (large or small), always run commands like lint, type check and next build to check code quality
+> See rule: `.claude/rules/folder-structure.md` for the canonical module layout. Follow strictly.
 
 ## Development Workflow
 
-- Docker environment required: `docker-compose up -d` for dependencies
-- Build: `npm run build`
-- Dev mode: `npm run dev`
-- Tests: `npm run test` (filter with `--testPathPattern="unit"` or `"integration"`)
-- Migrations: `npm run migrate:dev`
-- Seed: `npm run seed`
-- Lint: `npm run lint`
+| Command                              | Description                                |
+|--------------------------------------|--------------------------------------------|
+| `docker-compose up -d`               | Start MongoDB, Redis, Postgres             |
+| `npm run dev`                        | Dev server with hot-reload (`ts-node-dev`) |
+| `npm run build`                      | Clean + compile TypeScript + path aliases  |
+| `npm run start`                      | Run compiled `dist/`                       |
+| `npm run test`                       | All tests (Jest)                           |
+| `npm run test -- --testPathPattern`  | Filter tests by path                       |
+| `npm run test:cov`                   | Tests with coverage                        |
+| `npm run test:watch`                 | Watch mode                                 |
+| `npm run migrate:dev`                | Prisma migrations                          |
+| `npm run seed`                       | Seed default roles + SUPER_ADMIN user      |
+| `npm run lint`                       | ESLint                                     |
+| `npm run lint:fix`                   | ESLint with auto-fix                       |
+| `npm run format`                     | Prettier                                   |
+| `npm run docs:generate`              | Regenerate `swagger.json` from Zod DTOs    |
+| `npm run docs:validate`              | CI: diff swagger.json vs generated         |
+| `npm run clean`                      | Remove `dist/`                             |
 
-### Available Commands
+### Environment variables
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server with hot-reload (`ts-node-dev`) |
-| `npm run build` | Clean + compile TypeScript + resolve path aliases |
-| `npm run start` | Start production server from `dist/` |
-| `npm run test` | Run all tests (`jest --verbose`) |
-| `npm run test -- --testPathPattern="unit"` | Run unit tests only |
-| `npm run test -- --testPathPattern="integration"` | Run integration tests only |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run test:cov` | Run tests with coverage report |
-| `npm run migrate:dev` | Run Prisma migrations in dev |
-| `npm run seed` | Seed database with default roles + SUPER_ADMIN user |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Run ESLint with auto-fix |
-| `npm run format` | Run Prettier formatting |
-| `npm run clean` | Remove `dist/` directory |
+Copy `.env.example` to `.env`. Required variables:
 
-### Environment Variables
-
-Copy `.env.example` to `.env` and fill in values. Required variables:
-
-- `JWT_SECRET` — secret key for JWT signing
-- `JWT_EXPIRATION` — token expiration (e.g. `1d`, `7d`)
-- `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` — initial super-admin credentials (used by seed)
+- `JWT_SECRET` — JWT signing secret
+- `JWT_EXPIRATION` — token expiration (e.g. `1d`)
+- `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` — used by `npm run seed`
 - `TENANT_DB_URL` — PostgreSQL connection string for Prisma
-- `REDIS_URL` — Redis connection for BullMQ queues
-- `DB_URI` — MongoDB connection string for scraped product data (Mongoose)
-- `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` — credentials for the Queue Dashboard (`@bull-board`)
+- `REDIS_URL` — Redis for BullMQ
+- `DB_URI` — MongoDB for scraped product data
+- `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` — dashboard basic auth
 
-### Running Tests
-
-```bash
-npm run test                                         # Run all tests
-npm run test -- --testPathPattern="unit"             # Unit tests only
-npm run test -- --testPathPattern="integration"      # Integration tests only
-npm run test -- --testPathPattern="auth.service|account.service"  # Specific files
-npm run test:cov                                     # With coverage
-```
-
-Tests importing `@shared/security/provider-token-verifier` must mock it before import to avoid the ESM `jose` module issue. See `src/__tests__/unit/user.service.registerLocal.test.ts` for the pattern.
-
-Integration tests use `MongoMemoryServer` (configured in `jest-mongodb-config.js`, started in `globalSetup.ts`). No external MongoDB instance is needed for tests.
+> See skill: `.claude/skills/docker-dev/SKILL.md` for the full list of env vars and the docker-compose workflow. Follow strictly.
 
 ## Architecture
 
-**Layers**: Controller (request handling, Middleware, no business logic) → Service (business logic, orchestrates repositories, DTO with Zod validation ) → Repository (DB/queue interactions, tenant isolation via Prisma client extensions).
+**Layers**: Controller (request handling, validation, response shaping) → Service (business logic, orchestration) → Repository (DB / queue access, tenant isolation via Prisma extensions).
 
-**DTOs**: Zod schemas with `z.infer<typeof>` for type inference. Static `from()` factory for parsing request bodies.
+> See file: `src/main/CLAUDE.md` for layer responsibilities and code patterns (DI, DTOs, mappers, queue system, coding constraints, TDD workflow). Follow strictly.
 
-### Project Structure
+**Folder structure**: every module under `src/main/<module>/` follows the canonical layout (controllers, services/dto, repositories, errors, mappers, optional models/utils, optional module-specific folders).
+
+> See rule: `.claude/rules/folder-structure.md` for the canonical module layout. Follow strictly.
+
+### File naming (canonical suffixes)
+
+> See rule: `.claude/rules/compliance-checklist.md` for the canonical File naming. Follow strictly.
+
+
+### Project structure
 
 ```
 src/
@@ -105,53 +87,87 @@ src/
 └── __tests__/         # Test files (unit/ + integration/)
 ```
 
-**Database architecture**: The project uses **two databases**:
+### Databases
+
 - **PostgreSQL** (Prisma) — users, accounts, alarms, subscriptions (`TENANT_DB_URL`)
 - **MongoDB** (Mongoose) — scraped product data and price history (`DB_URI`)
 
-**File naming**: `*.service.ts`, `*.controller.ts`, `*.repository.ts`, `*.interfaces.ts`. Group by feature/domain. Tests mirror source structure.
+## Security & Multi-Tenancy
 
-## Security & Multi-tenancy
-
-### Middleware Chain
+### Middleware chain
 
 ```
 tenantInitMiddleware → AuthMiddleware → Controller
 ```
 
-- **Tenant Context**: AsyncLocalStorage (ALS) stores tenant context — never use globals. All DB operations must include tenant scoping.
-- **Auth**: JWT-based with integrated role validation via `AuthMiddleware.forRoles(...)` — auth + role check in a single pass.
-- **SUPER_ADMIN** passes any `forRoles()` check automatically.
+> See skill: `.claude/skills/security/SKILL.md` for `AuthMiddleware`, `AuthMiddleware.forRoles`, `TokenService`, `TenantContext` (AsyncLocalStorage), and `ProviderTokenVerifier`. Follow strictly.
 
-### Role System
+### Tenant context (AsyncLocalStorage)
 
-| Rol | Propósito | Acceso |
-|---|---|---|
-| `SUPER_ADMIN` | Dueño del sistema / staff técnico | Todo: cuentas, planes, suscripciones, scraping manual, Queue Dashboard |
-| `ACCOUNT_OWNER` | Cliente que paga la suscripción | Solo su tenant: crea alarmas, ve resultados, gestiona usuarios de su cuenta |
-| `MEMBER` | Miembro del equipo (futuro) | Solo lectura dentro de su tenant (no implementado aún en guards) |
+ALS stores tenant context — never use globals. All DB operations must include tenant scoping.
 
-- `SUPER_ADMIN` — `forRoles()` always passes
-- `ACCOUNT_OWNER` — scoped to tenant via ALS + Prisma extension
-- `MEMBER` — seeded, not assigned to any endpoint yet
+> See skill: `.claude/skills/security/SKILL.md` for ALS details (`runWithRequestContext`, `getRequestContext`, `TenantContext.requireTenantId`). Follow strictly.
 
-### Data Isolation
+### Auth
+
+JWT-based with integrated role validation via `AuthMiddleware.forRoles(...)` — auth + role check in a single pass. `SUPER_ADMIN` automatically passes any `forRoles()` check.
+
+> See skill: `.claude/skills/security/SKILL.md` for JWT verification, provider tokens (Google/Facebook via `jose`), and common errors to avoid. Follow strictly.
+
+### Role system
+
+| Role             | Purpose                                              | Access                                                |
+|------------------|------------------------------------------------------|-------------------------------------------------------|
+| `SUPER_ADMIN`    | System owner / technical staff                       | Everything: accounts, plans, subscriptions, manual scraping, Queue Dashboard |
+| `ACCOUNT_OWNER`  | Paying customer                                      | Own tenant only: create alarms, view results, manage users on the account   |
+| `MEMBER`         | Team member (future)                                 | Read-only inside own tenant (no endpoints assigned yet)                    |
+
+### Data isolation
 
 - Prisma client extensions for automatic tenant filtering
 - No raw SQL unless using tenant-aware helpers
 - Validate tenant ID matches in auth middleware
+- MongoDB product data is shared across tenants — no isolation applies
+
+## Testing
+
+Unit tests mirror source structure under `src/__tests__/unit/`. Integration tests under `src/__tests__/integration/`. ESM `jose` module is mocked via `moduleNameMapper`. Tenant context is wrapped in `runWithRequestContext(...)` for integration tests.
+
+> See skill: `.claude/skills/testing/SKILL.md` for Jest patterns, `MongoMemoryServer`, Prisma mocks, ALS mocking, and TDD workflow. Follow strictly.
+
+## API Documentation
+
+After developing and passing tests, ALWAYS run `npm run docs:generate`. This regenerates `swagger.json` from Zod DTOs and path definitions in `src/main/docs/`. Run after any change to DTOs, controllers, or new endpoints.
+
+> See file: `src/main/CLAUDE.md` "API Documentation" section for tool, architecture, special schemas, and path aliases. Follow strictly.
+
+## Quality Gates
+
+Run before claiming any task done:
+
+- `npm run lint` — passes
+- `npm run test` — passes
+- `npm run docs:generate` — produces no diff (if DTOs/controllers/paths changed)
+- `npm run build` — succeeds
+
+> See rule: `.claude/rules/compliance-checklist.md` for the full pre-merge checklist (code standards, architecture, multi-tenancy, security, testing, queue, documentation). Follow strictly.
 
 ## External References
 
-| Resource | Location |
-|---|---|
-| Code patterns (DI, queues, layers, testing) | `src/main/CLAUDE.md` |
-| Alarm condition system (Strategy + Registry) | `src/main/alarms/CLAUDE.md` |
-| Pre-merge compliance checklist | `.claude/rules/compliance-checklist.md` |
-| TypeScript & JSDoc conventions | `.github/instructions/typescript-javadoc.instructions.md` |
-| Environment setup | `.env.example` |
-| PostgreSQL / Prisma schema | `prisma/schema.prisma` |
-| MongoDB / Mongoose connection | `src/main/config/db-config.ts` |
-| Queue port & adapters (BullMQ / Mock / SQS) | `src/main/shared/queue/` |
-| Queue dashboard (`@bull-board`) | `src/main/shared/queue-dashboard/` |
-| DB utility scripts | `scripts/` (RLS, migrations, Prisma generation) |
+| Resource                                            | Location                                                       |
+|-----------------------------------------------------|----------------------------------------------------------------|
+| Folder structure (canonical layout)                 | `.claude/rules/folder-structure.md`                            |
+| Code patterns (DI, queues, layers, TDD)             | `src/main/CLAUDE.md`                                           |
+| Meta-workflow rules (planning/change mode)          | `.claude/rules/meta-workflow.md`                               |
+| Pre-merge compliance checklist                      | `.claude/rules/compliance-checklist.md`                        |
+| Auth, JWT, roles, tenant context                    | `.claude/skills/security/SKILL.md`                             |
+| Docker dev environment                             | `.claude/skills/docker-dev/SKILL.md`                           |
+| Testing patterns (Jest + ALS + mocks)               | `.claude/skills/testing/SKILL.md`                              |
+| Add a new alarm condition                           | `.claude/skills/alarm-condition/SKILL.md`                      |
+| TypeScript best practices                           | `.claude/skills/typescript-best-practices/SKILL.md`            |
+| PostgreSQL / Prisma schema                          | `prisma/schema.prisma`                                         |
+| MongoDB / Mongoose connection                       | `src/main/config/db-config.ts`                                 |
+| Queue port & adapters (BullMQ / Mock / SQS)         | `src/main/shared/queue/`                                       |
+| Queue dashboard (`@bull-board`)                     | `src/main/shared/queue-dashboard/`                             |
+| DB utility scripts                                  | `scripts/`                                                     |
+| Environment setup                                   | `.env.example`                                                 |

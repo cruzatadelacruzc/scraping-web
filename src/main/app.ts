@@ -43,7 +43,8 @@ export class App {
         }
         next();
       });
-      app.use((_req: Request, res: Response) => {
+      app.use((req: Request, res: Response) => {
+        void req;
         ResponseHandler.notFound(res);
       });
     });
