@@ -201,7 +201,7 @@ const jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/ce
 const { payload } = await jwtVerify(idToken, jwks, { issuer: 'https://accounts.google.com' });
 ```
 
-**Testing**: `jose` is an ESM module and breaks Jest CJS. Tests MUST mock it via the moduleNameMapper (see @.claude/skills/testing/SKILL.md):
+**Testing**: `jose` is an ESM module and breaks Jest CJS. Tests MUST mock it via the moduleNameMapper (see @../testing/SKILL.md):
 
 ```typescript
 // jest.config.js
