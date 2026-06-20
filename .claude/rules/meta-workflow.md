@@ -46,3 +46,7 @@ This file covers the workflow. Project-specific knowledge lives in:
 - `.claude/skills/docker-dev/SKILL.md` — local environment
 - `.claude/skills/alarm-condition/SKILL.md` — add alarm condition
 - `.claude/skills/typescript-best-practices/SKILL.md` — TS patterns
+
+## Authoring instruction files
+
+`@path` imports resolve **relative to the file containing the import**, not the repo root (max depth: 4 hops). From `AGENTS.md` use `@.claude/...`; from `.claude/skills/security/SKILL.md` use `@../testing/SKILL.md` to reach a sibling.
