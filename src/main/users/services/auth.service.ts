@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { UserLoginDTO } from '../dto/user-login.dto';
 import { AuthResponseDTO } from '../dto/auth-response.dto';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { PasswordHasher } from '@shared/security/password-hasher.serice';
 import { UserRepository } from '@users/repositories';

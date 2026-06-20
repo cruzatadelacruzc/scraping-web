@@ -1,4 +1,4 @@
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { AccountDTO } from '@users/dto';
 import { AccountMapper } from '@users/mappers/account.mapper';

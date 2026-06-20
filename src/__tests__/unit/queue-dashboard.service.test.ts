@@ -3,7 +3,7 @@ import { Queue } from 'bullmq';
 import { QueueDashboardService } from '@shared/queue-dashboard/queue-dashboard.service';
 import { IQueueAdapter } from '@shared/queue/port/queue-adapter.interfaces';
 import { IQueueAdapterRegistry } from '@shared/queue/port/queue-adapter-registry.interfaces';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 
 jest.mock('@bull-board/api', () => ({
   createBullBoard: jest.fn(),

@@ -5,7 +5,7 @@ import { TYPES } from '@shared/types.container';
 import { ValidateRequestMiddleware } from '@shared/middleware/validate-request.middleware';
 import { PlanDTO } from '../dto/plan.dto';
 import { ResponseHandler } from '@shared/response-handler';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { PlanService } from '@users/services/plan.service';
 import { SubscriptionsService } from '@users/services/account-subscriptions.service';
 

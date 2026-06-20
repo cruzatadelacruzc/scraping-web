@@ -1,4 +1,4 @@
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { Request, Response } from 'express';
 import { inject } from 'inversify';

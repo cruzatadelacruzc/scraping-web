@@ -1,6 +1,6 @@
 import { Pool, PoolClient, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 import { injectable, inject } from 'inversify';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 
 export interface IDbQuery {

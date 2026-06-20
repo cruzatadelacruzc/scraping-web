@@ -2,7 +2,7 @@ import { BaseMiddleware } from 'inversify-express-utils';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '@shared/types.container';
 import { Request, Response, NextFunction } from 'express';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { ResponseHandler } from '@shared/response-handler';
 import { getRequestContext, runWithRequestContext } from '@shared/tenant-context-als';
 import prisma from '@users/custom-prisma-client';

@@ -1,4 +1,4 @@
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TokenService } from '@shared/security/token.service';
 import { TYPES } from '@shared/types.container';
 import { ProviderRegistrationDTO } from '@users/dto/provider-registration.dto';

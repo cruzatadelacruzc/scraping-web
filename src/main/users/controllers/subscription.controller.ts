@@ -4,7 +4,7 @@ import { inject } from 'inversify';
 import { TYPES } from '@shared/types.container';
 import { AuthMiddleware } from '@shared/middleware/auth.middleware';
 import { ResponseHandler } from '@shared/response-handler';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { SubscriptionsService } from '../services/account-subscriptions.service';
 
 @controller('/api')

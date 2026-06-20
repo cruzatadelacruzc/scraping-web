@@ -1,9 +1,9 @@
 import { QueueContext } from '@shared/queue/queue-context';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { injectable, inject } from 'inversify';
 import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
-import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
+import { IFetchProductData } from '@shared/fetch-product-data.interface';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { ProductService } from './product.service';
 import { QUEUE_NAME } from '../queues';

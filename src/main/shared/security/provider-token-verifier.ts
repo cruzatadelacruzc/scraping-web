@@ -4,7 +4,7 @@ import { ProviderConfigError } from './provider-config.error';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@shared/types.container';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 /**
  * Provider token verifier (DEV : tokeninfo/debug_token, PROD : JWKS verification)
  * Uses custom error classes instead of generic Error.

@@ -1,6 +1,6 @@
 import { TYPES } from '@shared/types.container';
 import { container } from '@shared/container';
-import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
+import { IFetchProductData } from '@shared/fetch-product-data.interface';
 
 describe('Inversify Container', () => {
   it('should resolve the service correctly from the container', async () => {

@@ -1,4 +1,4 @@
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { inject, injectable } from 'inversify';
 import { CreateAlarmDTO } from '@alarms/dto/create-alarm.dto';

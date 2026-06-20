@@ -1,5 +1,5 @@
 import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
-import { IProductBase, IProductDetails } from '@shared/product-base.interfaces';
+import { IProductBase, IProductDetails } from '@shared/product-base.interface';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 
 export interface IFetchProductData {

@@ -1,10 +1,10 @@
 import { QueueContext } from '@shared/queue/queue-context';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { inject, injectable } from 'inversify';
 import { ProductRepository } from '../repositories/product.repository';
-import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
+import { IFetchProductData } from '@shared/fetch-product-data.interface';
 import { delayRandom } from '@utils/puppeteer.utils';
 import { progressCalculate } from '@utils/queue.util';
 

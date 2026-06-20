@@ -1,4 +1,4 @@
-import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
+import { IFetchProductData } from '@shared/fetch-product-data.interface';
 import { TYPES } from '@shared/types.container';
 import { container } from '@shared/container';
 import { InvalidParameterError } from '@scrapers/revolico/errors/invalid-parameter.error';

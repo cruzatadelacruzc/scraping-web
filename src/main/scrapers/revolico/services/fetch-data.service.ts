@@ -3,8 +3,8 @@ import { CONFIG, TIME_OUT, VIEW_PORT } from '@utils/puppeteer.utils';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { inject, injectable } from 'inversify';
-import { IFetchProductData } from '@shared/fetch-product-data.interfaces';
-import { ILogger } from '@shared/logger.interfaces';
+import { IFetchProductData } from '@shared/fetch-product-data.interface';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { buildFullUrl, parseCost, parseLocation, parseViews } from '@utils/normalize-data.util';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
@@ -12,7 +12,7 @@ import { ScrapingProductsType } from './dto';
 import { PageLoadError } from '../errors/page-load.error';
 import { progressCalculate } from '@utils/queue.util';
 import { extractDataFromUrl } from '../utils/extract-data.util';
-import { IProductDetails } from '@shared/product-base.interfaces';
+import { IProductDetails } from '@shared/product-base.interface';
 import { ElementHandle } from 'puppeteer-core';
 
 @injectable()

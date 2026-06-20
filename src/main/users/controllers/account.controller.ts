@@ -8,7 +8,7 @@ import { UserRegisterDTO } from '../dto/user-register.dto';
 import { ProviderRegistrationDTO } from '../dto/provider-registration.dto';
 import { AccountDTO } from '../dto/account.dto';
 import { ResponseHandler } from '@shared/response-handler';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { UserService } from '../services/user.service';
 import { AccountService } from '../services/account.service';
 

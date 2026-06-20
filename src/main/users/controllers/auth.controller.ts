@@ -5,7 +5,7 @@ import { TYPES } from '@shared/types.container';
 import { ValidateRequestMiddleware } from '@shared/middleware/validate-request.middleware';
 import { UserLoginDTO } from '../dto/user-login.dto';
 import { ResponseHandler } from '@shared/response-handler';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { AuthService } from '../services/auth.service';
 
 @controller('/api/auth')

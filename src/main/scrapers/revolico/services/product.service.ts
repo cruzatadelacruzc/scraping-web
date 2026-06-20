@@ -1,5 +1,5 @@
 import { QueueContext } from '@shared/queue/queue-context';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { inject, injectable } from 'inversify';

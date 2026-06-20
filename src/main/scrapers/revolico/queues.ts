@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { ScrapingProductService } from './services/scraping-product.service';
 import { IQueueModule } from '@shared/queue-module.interface';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { ScrapingProductsService } from './services/scraping-products.service';
 import { ProductService } from './services/product.service';

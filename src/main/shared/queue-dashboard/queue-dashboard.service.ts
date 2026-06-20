@@ -4,7 +4,7 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { Queue as BullMQQueue } from 'bullmq';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { IQueueAdapterRegistry } from '@shared/queue/port/queue-adapter-registry.interfaces';
 import { CONFIG } from '@config/constants';

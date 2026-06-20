@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 import jwt from 'jsonwebtoken';
-import { ILogger } from '@shared/logger.interfaces';
+import { ILogger } from '@shared/logger.interface';
 import { inject } from 'inversify';
 import { TYPES } from '@shared/types.container';
 

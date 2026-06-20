@@ -1,6 +1,6 @@
 import { container } from '@shared/container';
 import { IQueueModule } from './queue-module.interface';
-import { ILogger } from './logger.interfaces';
+import { ILogger } from './logger.interface';
 import { TYPES } from './types.container';
 import { IQueueAdapterRegistry } from '@shared/queue/port/queue-adapter-registry.interfaces';
 

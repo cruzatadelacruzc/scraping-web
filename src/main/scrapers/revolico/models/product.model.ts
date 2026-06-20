@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IProductBase, IProductDetails } from '@shared/product-base.interfaces';
+import { IProductBase, IProductDetails } from '@shared/product-base.interface';
 
 export interface IRevolicoProduct extends IProductBase, IProductDetails {
   _id?: string;
