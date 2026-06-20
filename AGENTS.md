@@ -17,7 +17,7 @@ A multi-tenant SaaS platform that watches product listings across online bazaars
 - **Scraping**: Puppeteer with local Chrome/Chromium
 - **Auth**: JWT (`jsonwebtoken`) + provider tokens (`jose`)
 
-> See rule: `.claude/rules/folder-structure.md` for the canonical module layout. Follow strictly.
+> See rule: @.claude/rules/folder-structure.md for the canonical module layout. Follow strictly.
 
 ## Development Workflow
 
@@ -52,21 +52,21 @@ Copy `.env.example` to `.env`. Required variables:
 - `DB_URI` — MongoDB for scraped product data
 - `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` — dashboard basic auth
 
-> See skill: `.claude/skills/docker-dev/SKILL.md` for the full list of env vars and the docker-compose workflow. Follow strictly.
+> See skill: @.claude/skills/docker-dev/SKILL.md for the full list of env vars and the docker-compose workflow. Follow strictly.
 
 ## Architecture
 
 **Layers**: Controller (request handling, validation, response shaping) → Service (business logic, orchestration) → Repository (DB / queue access, tenant isolation via Prisma extensions).
 
-> See file: `src/main/CLAUDE.md` for layer responsibilities and code patterns (DI, DTOs, mappers, queue system, coding constraints, TDD workflow). Follow strictly.
+> See file: @src/main/CLAUDE.md for layer responsibilities and code patterns (DI, DTOs, mappers, queue system, coding constraints, TDD workflow). Follow strictly.
 
 **Folder structure**: every module under `src/main/<module>/` follows the canonical layout (controllers, services/dto, repositories, errors, mappers, optional models/utils, optional module-specific folders).
 
-> See rule: `.claude/rules/folder-structure.md` for the canonical module layout. Follow strictly.
+> See rule: @.claude/rules/folder-structure.md for the canonical module layout. Follow strictly.
 
 ### File naming (canonical suffixes)
 
-> See rule: `.claude/rules/compliance-checklist.md` for the canonical File naming. Follow strictly.
+> See rule: @.claude/rules/compliance-checklist.md for the canonical File naming. Follow strictly.
 
 ### Project structure
 
@@ -99,19 +99,19 @@ src/
 tenantInitMiddleware → AuthMiddleware → Controller
 ```
 
-> See skill: `.claude/skills/security/SKILL.md` for `AuthMiddleware`, `AuthMiddleware.forRoles`, `TokenService`, `TenantContext` (AsyncLocalStorage), and `ProviderTokenVerifier`. Follow strictly.
+> See skill: @.claude/skills/security/SKILL.md for `AuthMiddleware`, `AuthMiddleware.forRoles`, `TokenService`, `TenantContext` (AsyncLocalStorage), and `ProviderTokenVerifier`. Follow strictly.
 
 ### Tenant context (AsyncLocalStorage)
 
 ALS stores tenant context — never use globals. All DB operations must include tenant scoping.
 
-> See skill: `.claude/skills/security/SKILL.md` for ALS details (`runWithRequestContext`, `getRequestContext`, `TenantContext.requireTenantId`). Follow strictly.
+> See skill: @.claude/skills/security/SKILL.md for ALS details (`runWithRequestContext`, `getRequestContext`, `TenantContext.requireTenantId`). Follow strictly.
 
 ### Auth
 
 JWT-based with integrated role validation via `AuthMiddleware.forRoles(...)` — auth + role check in a single pass. `SUPER_ADMIN` automatically passes any `forRoles()` check.
 
-> See skill: `.claude/skills/security/SKILL.md` for JWT verification, provider tokens (Google/Facebook via `jose`), and common errors to avoid. Follow strictly.
+> See skill: @.claude/skills/security/SKILL.md for JWT verification, provider tokens (Google/Facebook via `jose`), and common errors to avoid. Follow strictly.
 
 ### Role system
 
@@ -132,17 +132,17 @@ JWT-based with integrated role validation via `AuthMiddleware.forRoles(...)` —
 
 Unit tests mirror source structure under `src/__tests__/unit/`. Integration tests under `src/__tests__/integration/`. ESM `jose` module is mocked via `moduleNameMapper`. Tenant context is wrapped in `runWithRequestContext(...)` for integration tests.
 
-> See skill: `.claude/skills/testing/SKILL.md` for Jest patterns, `MongoMemoryServer`, Prisma mocks, ALS mocking, and TDD workflow. Follow strictly.
+> See skill: @.claude/skills/testing/SKILL.md for Jest patterns, `MongoMemoryServer`, Prisma mocks, ALS mocking, and TDD workflow. Follow strictly.
 
 ## API Documentation
 
 After developing and passing tests, ALWAYS run `npm run docs:generate`. This regenerates `swagger.json` from Zod DTOs and path definitions in `src/main/docs/`. Run after any change to DTOs, controllers, or new endpoints.
 
-> See file: `src/main/CLAUDE.md` "API Documentation" section for tool, architecture, special schemas, and path aliases. Follow strictly.
+> See file: @src/main/CLAUDE.md "API Documentation" section for tool, architecture, special schemas, and path aliases. Follow strictly.
 
 ## Quality Gates
 
-Run before `git commit` — see [Quality gates (run before committing)](.claude/rules/compliance-checklist.md#quality-gates-run-before-committing) for the full checklist.
+Run before `git commit` — see @.claude/rules/compliance-checklist.md for the full checklist.
 
 ## External References
 

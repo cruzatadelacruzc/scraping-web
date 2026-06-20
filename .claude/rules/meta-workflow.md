@@ -21,7 +21,7 @@ These rules describe **how** to work in this repository. They are self-contained
 - Identify work that can be parallelized (independent files, independent concerns) and dispatch multiple sub-agents in one message.
 - When using sub-agents to implement features, act as a coordinator only — review their output and integrate.
 - Match the model to the task: premium models for complex coding and architecture; mid-tier models for documentation and routine edits.
-- After completing features (large or small), run quality gates — see [Quality gates (run before committing)](compliance-checklist.md) for the full checklist.
+- After completing features (large or small), run quality gates — see @compliance-checklist.md for the full checklist.
 
 ## Verification Before Completion
 

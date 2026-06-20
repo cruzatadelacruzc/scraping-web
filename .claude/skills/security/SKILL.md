@@ -31,7 +31,7 @@ If any layer is missing, downstream code cannot trust the tenant context. Always
 @injectable()
 export class AuthMiddleware extends BaseMiddleware {
   public constructor(
-    @inject(TYPES.Logger)    private readonly _log: ILogger,
+    @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.TokenService) private readonly _tokenService: TokenService,
   ) {
     super();
@@ -48,20 +48,25 @@ export class AuthMiddleware extends BaseMiddleware {
     const payload = await this._tokenService.verifyToken(token);
     const tenantId = payload?.tenantId ?? req.header('x-tenant-id');
     const userId = payload?.userId;
-    if (!tenantId || !userId) { /* unAuthenticated */ return; }
+    if (!tenantId || !userId) {
+      /* unAuthenticated */ return;
+    }
 
     await runWithRequestContext({ tenantId, userId }, async () => {
       const found = await prisma.user.findFirst({
         where: {
           id: userId,
-          accountId: tenantId,                    // <-- tenant scoping
-          userIdentity: payload.provider && payload.provider !== 'local'
-            ? { some: { provider: payload.provider, providerId: payload.providerId } }
-            : undefined,
+          accountId: tenantId, // <-- tenant scoping
+          userIdentity:
+            payload.provider && payload.provider !== 'local'
+              ? { some: { provider: payload.provider, providerId: payload.providerId } }
+              : undefined,
         },
         include: { userIdentity: true, roles: true },
       });
-      if (!found) { /* unAuthorized */ return; }
+      if (!found) {
+        /* unAuthorized */ return;
+      }
 
       req.user = { ...payload, user: found, roles: found.roles.map(r => r.name) };
       next();
@@ -70,7 +75,7 @@ export class AuthMiddleware extends BaseMiddleware {
 
   public static forRoles(...roles: string[]) {
     return async (req, res, next) => {
-      const { container } = require('../container');  // lazy require breaks circular dep
+      const { container } = require('../container'); // lazy require breaks circular dep
       const instance = container.get<AuthMiddleware>(TYPES.AuthMiddleware);
       await instance.handler(req, res, () => {
         const userRoles: string[] = (req.user as any)?.roles ?? [];
@@ -95,15 +100,21 @@ import { AuthMiddleware } from '@shared/middleware/auth.middleware';
 export class UserController {
   // auth only
   @httpGet('/me', TYPES.AuthMiddleware)
-  public async getMe(req: Request, res: Response): Promise<void> { /* ... */ }
+  public async getMe(req: Request, res: Response): Promise<void> {
+    /* ... */
+  }
 
   // auth + role check in a single pass
   @httpGet('/admin', AuthMiddleware.forRoles('ACCOUNT_OWNER'))
-  public async admin(req: Request, res: Response): Promise<void> { /* ... */ }
+  public async admin(req: Request, res: Response): Promise<void> {
+    /* ... */
+  }
 
   // multiple roles
   @httpPost('/shared', AuthMiddleware.forRoles('ACCOUNT_OWNER', 'MEMBER'))
-  public async shared(req: Request, res: Response): Promise<void> { /* ... */ }
+  public async shared(req: Request, res: Response): Promise<void> {
+    /* ... */
+  }
 }
 ```
 
@@ -145,7 +156,7 @@ JWT secret MUST come from `process.env.JWT_SECRET` — never hardcoded. Throw if
 `src/main/shared/tenant-context-als.ts`:
 
 ```typescript
-export type RequestContext = { tenantId?: string; userId?: string; traceId?: string; };
+export type RequestContext = { tenantId?: string; userId?: string; traceId?: string };
 const asyncRequestContext = new AsyncLocalStorage<RequestContext>();
 
 export function runWithRequestContext<T>(ctx: RequestContext, fn: () => T): T;
@@ -153,8 +164,12 @@ export function getRequestContext(): RequestContext | undefined;
 
 @injectable()
 export class TenantContext {
-  public get tenantId(): string | undefined { return getRequestContext()?.tenantId; }
-  public get userId():    string | undefined { return getRequestContext()?.userId;    }
+  public get tenantId(): string | undefined {
+    return getRequestContext()?.tenantId;
+  }
+  public get userId(): string | undefined {
+    return getRequestContext()?.userId;
+  }
   public requireTenantId(): string {
     const id = this.tenantId;
     if (!id) throw new Error('Missing tenantId in request context');
@@ -167,11 +182,11 @@ Inject `TenantContext` into services that need tenant scoping. NEVER store tenan
 
 ## Roles
 
-| Role           | Pass `forRoles` | Scope                           | Endpoints                  |
-|----------------|-----------------|---------------------------------|----------------------------|
-| `SUPER_ADMIN`  | always          | system-wide                     | all (`/admin/*`, dashboard)|
-| `ACCOUNT_OWNER`| when seeded     | own tenant only                 | tenant business endpoints  |
-| `MEMBER`       | when seeded     | own tenant (read-only, future)  | none yet                   |
+| Role            | Pass `forRoles` | Scope                          | Endpoints                   |
+| --------------- | --------------- | ------------------------------ | --------------------------- |
+| `SUPER_ADMIN`   | always          | system-wide                    | all (`/admin/*`, dashboard) |
+| `ACCOUNT_OWNER` | when seeded     | own tenant only                | tenant business endpoints   |
+| `MEMBER`        | when seeded     | own tenant (read-only, future) | none yet                    |
 
 The role check happens via Prisma lookup inside `AuthMiddleware` — there is no separate role guard.
 
@@ -186,7 +201,7 @@ const jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/ce
 const { payload } = await jwtVerify(idToken, jwks, { issuer: 'https://accounts.google.com' });
 ```
 
-**Testing**: `jose` is an ESM module and breaks Jest CJS. Tests MUST mock it via the moduleNameMapper (see `.claude/skills/testing/SKILL.md`):
+**Testing**: `jose` is an ESM module and breaks Jest CJS. Tests MUST mock it via the moduleNameMapper (see @.claude/skills/testing/SKILL.md):
 
 ```typescript
 // jest.config.js
@@ -202,8 +217,8 @@ moduleNameMapper: {
 The Prisma client is wrapped in an extension that automatically filters by `tenantId` from ALS. This means service code can write:
 
 ```typescript
-const alarms = await prisma.alarm.findMany();   // auto-filtered by tenantId
-const user   = await prisma.user.findUnique({ where: { id } });  // auto-scoped
+const alarms = await prisma.alarm.findMany(); // auto-filtered by tenantId
+const user = await prisma.user.findUnique({ where: { id } }); // auto-scoped
 ```
 
 without manually passing `where: { accountId: tenantId }`. For MongoDB features, tenant isolation does NOT apply — product data is shared across tenants.
