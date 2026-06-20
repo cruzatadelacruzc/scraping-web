@@ -8,6 +8,7 @@ applyTo: '**'
 These rules apply to **all** work in this repository. Agents MUST verify each item before declaring a task complete. The format is `[ ] item — actionable guidance` so each checkbox tells you exactly what to do, not just what to look for.
 
 Related references:
+
 - Folder structure: `.claude/rules/folder-structure.md`
 - Meta-workflow: `.claude/rules/meta-workflow.md`
 - Auth/tenant: `.claude/skills/security/SKILL.md`
@@ -148,9 +149,18 @@ Related references:
 
 ## Quality gates (run before committing)
 
-- [ ] `npm run lint` passes.
-- [ ] `npm run format` applied (or `lint:fix` covers it).
+Run before `git commit`. The husky pre-commit hook (`.husky/pre-commit` →
+`lint-staged` in `package.json`) is a **safety net**, not a substitute.
+
+- [ ] `npm run lint` passes with zero errors.
+- [ ] `npm run format && git diff --stat` is empty — prettier is separate
+      from eslint; `lint:fix` does NOT run prettier.
 - [ ] `npm run test` passes (unit + integration).
 - [ ] `npm run docs:generate` produces no diff (if DTOs/controllers/paths changed).
 - [ ] `npm run build` succeeds.
-- [ ] No unrelated files modified — `git diff --name-only` shows only files relevant to the task.
+- [ ] `git diff --name-only` shows only files relevant to the task.
+
+Files outside `src/**/*.{js,ts}` (`*.md`, `swagger.json`, `package.json`,
+`prisma/**`) are NOT auto-formatted by the husky hook — run `npm run format`
+manually. If the hook modifies staged files, the commit aborts; re-stage with
+`git add -u` and commit again.

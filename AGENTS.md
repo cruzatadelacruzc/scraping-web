@@ -21,24 +21,24 @@ A multi-tenant SaaS platform that watches product listings across online bazaars
 
 ## Development Workflow
 
-| Command                              | Description                                |
-|--------------------------------------|--------------------------------------------|
-| `docker-compose up -d`               | Start MongoDB, Redis, Postgres             |
-| `npm run dev`                        | Dev server with hot-reload (`ts-node-dev`) |
-| `npm run build`                      | Clean + compile TypeScript + path aliases  |
-| `npm run start`                      | Run compiled `dist/`                       |
-| `npm run test`                       | All tests (Jest)                           |
-| `npm run test -- --testPathPattern`  | Filter tests by path                       |
-| `npm run test:cov`                   | Tests with coverage                        |
-| `npm run test:watch`                 | Watch mode                                 |
-| `npm run migrate:dev`                | Prisma migrations                          |
-| `npm run seed`                       | Seed default roles + SUPER_ADMIN user      |
-| `npm run lint`                       | ESLint                                     |
-| `npm run lint:fix`                   | ESLint with auto-fix                       |
-| `npm run format`                     | Prettier                                   |
-| `npm run docs:generate`              | Regenerate `swagger.json` from Zod DTOs    |
-| `npm run docs:validate`              | CI: diff swagger.json vs generated         |
-| `npm run clean`                      | Remove `dist/`                             |
+| Command                             | Description                                |
+| ----------------------------------- | ------------------------------------------ |
+| `docker-compose up -d`              | Start MongoDB, Redis, Postgres             |
+| `npm run dev`                       | Dev server with hot-reload (`ts-node-dev`) |
+| `npm run build`                     | Clean + compile TypeScript + path aliases  |
+| `npm run start`                     | Run compiled `dist/`                       |
+| `npm run test`                      | All tests (Jest)                           |
+| `npm run test -- --testPathPattern` | Filter tests by path                       |
+| `npm run test:cov`                  | Tests with coverage                        |
+| `npm run test:watch`                | Watch mode                                 |
+| `npm run migrate:dev`               | Prisma migrations                          |
+| `npm run seed`                      | Seed default roles + SUPER_ADMIN user      |
+| `npm run lint`                      | ESLint                                     |
+| `npm run lint:fix`                  | ESLint with auto-fix                       |
+| `npm run format`                    | Prettier                                   |
+| `npm run docs:generate`             | Regenerate `swagger.json` from Zod DTOs    |
+| `npm run docs:validate`             | CI: diff swagger.json vs generated         |
+| `npm run clean`                     | Remove `dist/`                             |
 
 ### Environment variables
 
@@ -67,7 +67,6 @@ Copy `.env.example` to `.env`. Required variables:
 ### File naming (canonical suffixes)
 
 > See rule: `.claude/rules/compliance-checklist.md` for the canonical File naming. Follow strictly.
-
 
 ### Project structure
 
@@ -116,11 +115,11 @@ JWT-based with integrated role validation via `AuthMiddleware.forRoles(...)` —
 
 ### Role system
 
-| Role             | Purpose                                              | Access                                                |
-|------------------|------------------------------------------------------|-------------------------------------------------------|
-| `SUPER_ADMIN`    | System owner / technical staff                       | Everything: accounts, plans, subscriptions, manual scraping, Queue Dashboard |
-| `ACCOUNT_OWNER`  | Paying customer                                      | Own tenant only: create alarms, view results, manage users on the account   |
-| `MEMBER`         | Team member (future)                                 | Read-only inside own tenant (no endpoints assigned yet)                    |
+| Role            | Purpose                        | Access                                                                       |
+| --------------- | ------------------------------ | ---------------------------------------------------------------------------- |
+| `SUPER_ADMIN`   | System owner / technical staff | Everything: accounts, plans, subscriptions, manual scraping, Queue Dashboard |
+| `ACCOUNT_OWNER` | Paying customer                | Own tenant only: create alarms, view results, manage users on the account    |
+| `MEMBER`        | Team member (future)           | Read-only inside own tenant (no endpoints assigned yet)                      |
 
 ### Data isolation
 
@@ -143,31 +142,24 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 
 ## Quality Gates
 
-Run before claiming any task done:
-
-- `npm run lint` — passes
-- `npm run test` — passes
-- `npm run docs:generate` — produces no diff (if DTOs/controllers/paths changed)
-- `npm run build` — succeeds
-
-> See rule: `.claude/rules/compliance-checklist.md` for the full pre-merge checklist (code standards, architecture, multi-tenancy, security, testing, queue, documentation). Follow strictly.
+Run before `git commit` — see [Quality gates (run before committing)](.claude/rules/compliance-checklist.md#quality-gates-run-before-committing) for the full checklist.
 
 ## External References
 
-| Resource                                            | Location                                                       |
-|-----------------------------------------------------|----------------------------------------------------------------|
-| Folder structure (canonical layout)                 | `.claude/rules/folder-structure.md`                            |
-| Code patterns (DI, queues, layers, TDD)             | `src/main/CLAUDE.md`                                           |
-| Meta-workflow rules (planning/change mode)          | `.claude/rules/meta-workflow.md`                               |
-| Pre-merge compliance checklist                      | `.claude/rules/compliance-checklist.md`                        |
-| Auth, JWT, roles, tenant context                    | `.claude/skills/security/SKILL.md`                             |
-| Docker dev environment                             | `.claude/skills/docker-dev/SKILL.md`                           |
-| Testing patterns (Jest + ALS + mocks)               | `.claude/skills/testing/SKILL.md`                              |
-| Add a new alarm condition                           | `.claude/skills/alarm-condition/SKILL.md`                      |
-| TypeScript best practices                           | `.claude/skills/typescript-best-practices/SKILL.md`            |
-| PostgreSQL / Prisma schema                          | `prisma/schema.prisma`                                         |
-| MongoDB / Mongoose connection                       | `src/main/config/db-config.ts`                                 |
-| Queue port & adapters (BullMQ / Mock / SQS)         | `src/main/shared/queue/`                                       |
-| Queue dashboard (`@bull-board`)                     | `src/main/shared/queue-dashboard/`                             |
-| DB utility scripts                                  | `scripts/`                                                     |
-| Environment setup                                   | `.env.example`                                                 |
+| Resource                                    | Location                                            |
+| ------------------------------------------- | --------------------------------------------------- |
+| Folder structure (canonical layout)         | `.claude/rules/folder-structure.md`                 |
+| Code patterns (DI, queues, layers, TDD)     | `src/main/CLAUDE.md`                                |
+| Meta-workflow rules (planning/change mode)  | `.claude/rules/meta-workflow.md`                    |
+| Pre-merge compliance checklist              | `.claude/rules/compliance-checklist.md`             |
+| Auth, JWT, roles, tenant context            | `.claude/skills/security/SKILL.md`                  |
+| Docker dev environment                      | `.claude/skills/docker-dev/SKILL.md`                |
+| Testing patterns (Jest + ALS + mocks)       | `.claude/skills/testing/SKILL.md`                   |
+| Add a new alarm condition                   | `.claude/skills/alarm-condition/SKILL.md`           |
+| TypeScript best practices                   | `.claude/skills/typescript-best-practices/SKILL.md` |
+| PostgreSQL / Prisma schema                  | `prisma/schema.prisma`                              |
+| MongoDB / Mongoose connection               | `src/main/config/db-config.ts`                      |
+| Queue port & adapters (BullMQ / Mock / SQS) | `src/main/shared/queue/`                            |
+| Queue dashboard (`@bull-board`)             | `src/main/shared/queue-dashboard/`                  |
+| DB utility scripts                          | `scripts/`                                          |
+| Environment setup                           | `.env.example`                                      |
