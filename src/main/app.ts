@@ -13,6 +13,8 @@ import { PgDBContext } from '@config/pg-db';
 import swaggerUi from 'swagger-ui-express';
 import * as swaggerDocument from '../../swagger.json';
 import { tenantInitMiddleware } from '@shared/middleware/tenant-init.middleware';
+import { QueueContext } from '@shared/queue/queue-context';
+import prisma from '@users/custom-prisma-client';
 
 const PORT = process.env.PORT || 3000;
 
@@ -65,6 +67,20 @@ export class App {
       );
     }
     return appInstance;
+  }
+
+  /**
+   * Graceful shutdown — mirror of {@link setup}. Closes every BullMQ worker
+   * and queue opened during `initializeQueues()`, then drains and ends the
+   * tenant PostgreSQL pool. Idempotent: safe to call more than once.
+   *
+   * Call this from test `afterAll` hooks that invoked `setup()`, and as a
+   * SIGTERM handler in production.
+   */
+  public async close(): Promise<void> {
+    await container.get<QueueContext>(QueueContext).shutdown();
+    await container.get<PgDBContext>(TYPES.TenantDB).end();
+    await prisma.$disconnect();
   }
 }
 

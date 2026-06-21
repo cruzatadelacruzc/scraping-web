@@ -93,7 +93,25 @@ psql "${TENANT_DB_URL}" -c 'select 1'
 
 ## Integration with tests
 
-**Tests do NOT use docker-compose.** `jest-mongodb-config.js` + `globalSetup.ts` start a `MongoMemoryServer` in-process. PostgreSQL in tests is mocked via Prisma. Redis is mocked via `@shared/queue/__mocks__/`. Don't try to connect to a real DB from CI.
+Test environment is **partial**: some subsystems use docker-compose, others are mocked in-process. Bring up at minimum Postgres before `npm run test`.
+
+| Subsystem  | How tests run it | Prerequisite |
+|------------|------------------|--------------|
+| MongoDB    | `MongoMemoryServer` in-process (started by `src/__tests__/globalSetup.ts`, version 4.4.22) | none |
+| BullMQ / Redis | `MockQueueAdapter` in-process (selected by `QUEUE_BACKEND=mock` in `src/__tests__/setup-env.ts`, wired via `jest.config.js#setupFiles`) | none |
+| PostgreSQL | **REAL** — integration tests insert rows via raw SQL (`pgDb.query(...)`) and read them through Prisma | `docker-compose up -d postgres` (or full stack) |
+
+```bash
+# Before npm run test
+docker-compose up -d                    # or just `up -d postgres`
+pg_isready                              # confirm Postgres is up
+
+# After npm run test
+docker-compose down                     # optional; volumes persist
+# docker-compose down -v                # FULL reset (irreversible — drops data)
+```
+
+CI must provide Postgres the same way (via service containers or a compose sidecar). Mongo and BullMQ stay mocked in CI.
 
 ## Troubleshooting
 
@@ -102,6 +120,7 @@ psql "${TENANT_DB_URL}" -c 'select 1'
 | `ECONNREFUSED 127.0.0.1:27017`                  | mongo container not up                | `docker-compose up -d mongo`                   |
 | `ECONNREFUSED 127.0.0.1:6379`                   | redis container not up                | `docker-compose up -d redis`                   |
 | `P1001 Can't reach database server`             | postgres down or wrong `TENANT_DB_URL`| check compose logs + env var                   |
+| `Jest did not exit one second after the test run has completed.` | Real Postgres / Prisma sockets closing slowly | `openHandlesTimeout` in `jest.config.js` gives Jest 30s — already configured. See @../testing/SKILL.md. |
 | App boots but Puppeteer fails                   | `PUPPETEER_EXECUTABLE_PATH` missing   | install Chrome (`apt install google-chrome-stable`) and set the env var |
 | `permission denied` on `/srv/volumes`           | `VOL_DIR` not writable                | change `VOL_DIR` in `.env`                     |
 | Old data persists after schema changes          | mongo/postgres volumes not reset      | `docker-compose down -v` then `up -d` (irreversible) |

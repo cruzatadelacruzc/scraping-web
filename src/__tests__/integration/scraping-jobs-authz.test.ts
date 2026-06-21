@@ -13,32 +13,31 @@ jest.mock('@shared/security/provider-token-verifier', () => ({
 
 import request from 'supertest';
 import { v4 as uuidv4 } from 'uuid';
-import { Queue } from 'bullmq';
 import { App } from '../../main/app';
 import { container } from '@shared/container';
 import { TYPES } from '@shared/types.container';
 import { PgDBContext } from '@config/pg-db';
 import { QueueContext } from '@shared/queue/queue-context';
-import { BullMQQueueAdapter } from '@shared/queue/adapters/bullmq';
-import { QUEUE_NAME } from '@scrapers/revolico/queues';
 
 let app: any;
+let appInstance: App;
 let pgDb: PgDBContext;
 let testAccountId: string;
 let memberToken: string;
 let superAdminToken: string;
 
 beforeAll(async () => {
-  app = await new App().setup();
+  appInstance = new App();
+  app = await appInstance.setup();
   pgDb = container.get<PgDBContext>(TYPES.TenantDB);
   await pgDb.dbConnect();
 
-  // Stub the BullMQ queue.add() to avoid real Redis roundtrips in this
-  // authz test (we only validate authorization, not queue mechanics).
+  // Stub the queue context's enqueue to avoid any side effects from the
+  // active adapter (real Redis roundtrips with BullMQ, or in-memory
+  // processing with the mock). We only validate authorization here, not
+  // queue mechanics.
   const qContext = container.get(QueueContext);
-  const adapter = qContext.getAdapter() as BullMQQueueAdapter;
-  const productsQueue = adapter.getRawQueue(QUEUE_NAME.products_scraping) as Queue;
-  jest.spyOn(productsQueue, 'add').mockResolvedValue({ id: 'mock-job-id-1' } as any);
+  jest.spyOn(qContext, 'enqueue').mockResolvedValue('mock-job-id-1');
 
   // Create test account
   testAccountId = uuidv4();
@@ -90,6 +89,8 @@ afterAll(async () => {
   } catch {
     // ignore cleanup errors
   }
+
+  await appInstance.close();
 });
 
 describe('POST /api/revolicos/scraping/jobs (authz)', () => {

@@ -30,11 +30,13 @@ import { TYPES } from '@shared/types.container';
 import { PgDBContext } from '@config/pg-db';
 
 let app: any;
+let appInstance: App;
 let pgDb: PgDBContext;
 const testAccountId = uuidv4();
 
 beforeAll(async () => {
-  app = await new App().setup();
+  appInstance = new App();
+  app = await appInstance.setup();
   pgDb = container.get<PgDBContext>(TYPES.TenantDB);
   await pgDb.dbConnect();
 
@@ -64,6 +66,8 @@ afterAll(async () => {
   } catch (err) {
     console.error('Error cleaning up test data:', err);
   }
+
+  await appInstance.close();
 });
 
 describe('POST /api/accounts/register/local', () => {

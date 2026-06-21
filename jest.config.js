@@ -21,6 +21,12 @@ module.exports = {
     },
     pathsToModuleNameMapper(compilerOptions.paths),
   ),
+  setupFiles: ['<rootDir>/src/__tests__/setup-env.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setupTests.ts'],
+  // Jest waits up to 30s after a test run for open handles (sockets, workers)
+  // to close before reporting "Jest did not exit". The default 1s is too
+  // aggressive when integration tests open real Postgres / Redis connections
+  // whose graceful shutdown takes longer than 1s.
+  openHandlesTimeout: 30000,
   coverageProvider: 'v8',
 };

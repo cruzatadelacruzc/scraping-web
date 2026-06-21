@@ -1,6 +1,6 @@
 ---
 name: testing
-description: 'Project-specific testing patterns: Jest + ts-jest, MongoMemoryServer (in-process, version 4.4.22), Prisma mocks, AsyncLocalStorage tenant-context-als mocks, ESM jose moduleNameMapper workaround, and runWithRequestContext for tenant-scoped integration tests. Use when writing or reviewing tests for the BazaarSentinel project.'
+description: 'Project-specific testing patterns: Jest + ts-jest, MongoMemoryServer (in-process, version 4.4.22), AsyncLocalStorage tenant-context-als mocks, ESM jose moduleNameMapper workaround, runWithRequestContext for tenant-scoped integration tests, and the docker-compose prerequisite for the Postgres that integration tests use via raw SQL + real Prisma. Use when writing or reviewing tests for the BazaarSentinel project.'
 applyTo: 'src/__tests__/**, jest.config.js, jest-mongodb-config.js'
 risk: low
 ---
@@ -15,11 +15,14 @@ The project uses Jest with `ts-jest`, `MongoMemoryServer` for Mongo, and mocks f
 src/__tests__/
 ├── globalSetup.ts        # boots MongoMemoryServer, sets DB_URI, drops DB before suite
 ├── globalTeardown.ts     # stops MongoMemoryServer
-├── setupTests.ts         # jest.mock() for prisma + ALS, mongoose connect/disconnect
+├── setup-env.ts          # runs in jest.config.js#setupFiles — sets QUEUE_BACKEND=mock
+├── setupTests.ts         # jest.mock for provider-token-verifier + ALS reset, mongoose connect/disconnect
 ├── unit/                 # *.test.ts — mirrors src/main/<module>/<filename>.test.ts
-├── integration/          # *.test.ts — full-stack flows
+├── integration/          # *.test.ts — full-stack flows (require docker-compose for Postgres)
 └── __mocks__/
-    └── jose.ts           # CJS stub for ESM jose module
+    ├── jose.ts                       # CJS stub for ESM jose module
+    └── src/main/users/
+        └── custom-prisma-client.ts   # available Prisma mock (NOT auto-applied; tests opt in)
 ```
 
 Tests are colocated by mirror path:
@@ -53,7 +56,9 @@ module.exports = {
     },
     pathsToModuleNameMapper(compilerOptions.paths),
   ),
-  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setupTests.ts'],
+  setupFiles:       ['<rootDir>/src/__tests__/setup-env.ts'],     // runs before module load — sets QUEUE_BACKEND=mock
+  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setupTests.ts'],  // runs after Jest is set up — mocks + mongoose
+  openHandlesTimeout: 30000,                                      // wait up to 30s for Postgres/Prisma sockets to close
   coverageProvider: 'v8',
 };
 ```
@@ -61,7 +66,9 @@ module.exports = {
 Key points:
 - `maxWorkers: 1` — `MongoMemoryServer` shares one in-process instance. Running parallel workers produces cross-test pollution.
 - `moduleNameMapper` order matters: specific patterns (`^jose$`) must come BEFORE generic path alias patterns, otherwise the alias wins.
-- `setupFilesAfterEnv` runs `setupTests.ts` which wires global mocks.
+- `setupFiles` (runs before any module is loaded) sets `QUEUE_BACKEND=mock` so the DI container picks the in-memory `MockQueueAdapter` instead of opening real Redis/BullMQ connections.
+- `setupFilesAfterEnv` runs `setupTests.ts` which wires the global `jose`/`provider-token-verifier` mock and connects mongoose to `MongoMemoryServer`.
+- `openHandlesTimeout: 30000` — without this, Jest gives up at the default 1s and prints `Jest did not exit one second after the test run has completed.` because real Postgres + Prisma sockets take longer than 1s to close gracefully.
 
 ## ESM `jose` mocking
 
@@ -143,19 +150,56 @@ describe('POST /alarms', () => {
 
 ## Prisma mocks
 
-`setupTests.ts` mocks `@users/custom-prisma-client`. Use `jest.requireMock('src/main/users/prismaClient')` to access mock helpers and call `resetPrismaMocks()` between tests (already done by `setupTests.ts#beforeEach`).
+Prisma is **not** mocked globally. `setupTests.ts` only mocks `@shared/security/provider-token-verifier` (for the ESM `jose` workaround) and resets the ALS mock between tests.
+
+The mock file at `src/__tests__/__mocks__/src/main/users/custom-prisma-client.ts` provides a `jest.fn()`-backed stub for every model (`account`, `accountSubscription`, `alarm`, `alarmHistory`, `notification`, `plan`, `role`, `user`, `userIdentity`) plus `$transaction`, `$extends`, `$use`, `$connect`, `$disconnect`. It is **available** but not auto-applied — tests that need a mocked Prisma must opt in by adding their own `jest.mock('@users/custom-prisma-client', () => ({ ... }))` at the top of the file (the factories vary per test).
+
+**Integration tests** use the real Prisma against the real Postgres in `docker-compose`. They must NOT add `jest.mock('@users/custom-prisma-client')` — `account-register`, `scraping-jobs-authz`, `test-reset` insert rows via raw SQL (`pgDb.query(...)`) and expect Prisma to read them back.
+
+Common unit-test pattern (inline factory):
 
 ```typescript
-import prisma from '@users/custom-prisma-client';
-
-it('queries by tenant', async () => {
-  (prisma.alarm.findMany as jest.Mock).mockResolvedValue([{ id: 'a1' }]);
-  const result = await alarmService.list();
-  expect(result).toEqual([{ id: 'a1' }]);
-});
+jest.mock('@users/custom-prisma-client', () => ({
+  __esModule: true,
+  default: {
+    user: { findFirst: jest.fn() },
+    account: { findUnique: jest.fn() },
+    // ...only the methods this test exercises
+  },
+  isPrismaUniqueConstraintError: jest.fn(),
+}));
 ```
 
-**Never** import a real `PrismaClient` in a unit test. **Always** mock `@users/custom-prisma-client`.
+See `src/__tests__/unit/auth.middleware.test.ts`, `user.service.registerLocal.test.ts`, and `userRegisterWithProvider.test.ts` for full examples.
+
+**Never** import a real `PrismaClient` in a unit test. **Always** mock `@users/custom-prisma-client` with an inline factory in unit tests.
+
+## Integration test prerequisites
+
+Integration tests run the full App stack. They require a running **Postgres** instance (the others are mocked in-process):
+
+```bash
+# Before npm run test
+docker-compose up -d                    # or `up -d postgres` to skip Redis/Mongo
+pg_isready                              # confirm Postgres is accepting connections
+
+# Run the suite
+npm run test
+
+# After
+docker-compose down                     # optional — keeps volumes
+```
+
+What's mocked vs. real in integration tests:
+
+| Subsystem  | In tests | Why |
+|------------|----------|-----|
+| MongoDB    | `MongoMemoryServer` (in-process) | `globalSetup.ts` |
+| BullMQ / Redis | `MockQueueAdapter` (in-process) | `setup-env.ts` sets `QUEUE_BACKEND=mock` |
+| PostgreSQL | **REAL** (raw SQL + Prisma) | `docker-compose up -d postgres` |
+| Prisma     | **REAL** | Same — no global mock (see "Prisma mocks" above) |
+
+A test run is **not** considered clean if Jest prints `Jest did not exit one second after the test run has completed.` — that means real Postgres/Prisma sockets didn't close within the default 1s. `openHandlesTimeout: 30000` in `jest.config.js` already raises this to 30s. If you still see the warning, check `App.close()` (in `src/main/app.ts`) and the integration test's `afterAll` to confirm `await appInstance.close()` is called.
 
 ## TDD workflow (Red → Green → Refactor)
 

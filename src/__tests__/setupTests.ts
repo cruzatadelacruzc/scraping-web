@@ -21,13 +21,8 @@ afterAll(async () => {
 
 beforeEach((): void => {
   try {
-    jest.mock('src/main/users/custom-prisma-client');
-    jest.mock('src/main/shared/tenant-context-als');
-
-    const prismaMock = jest.requireMock('src/main/users/prismaClient') as any;
-    const tenantMock = jest.requireMock('src/main/shared/tenant-context-als') as any;
-
-    if (typeof prismaMock.resetPrismaMocks === 'function') prismaMock.resetPrismaMocks();
+    // Reset ALS mock state (mocked per-file by tests that opt in).
+    const tenantMock = jest.requireMock('@shared/tenant-context-als') as any;
     if (typeof tenantMock.resetMockTenantId === 'function') tenantMock.resetMockTenantId();
   } catch (err) {
     // If mocks are not present in the environment, ignore and continue.
@@ -42,8 +37,7 @@ beforeEach((): void => {
 afterEach((): void => {
   // ensure a clean slate after each test as well
   try {
-    jest.mock('src/main/shared/tenant-context-als');
-    const tenantMock = jest.requireMock('src/main/shared/tenant-context-als') as any;
+    const tenantMock = jest.requireMock('@shared/tenant-context-als') as any;
     if (typeof tenantMock.resetMockTenantId === 'function') tenantMock.resetMockTenantId();
   } catch (err) {
     if (err instanceof Error) console.log(err.message);

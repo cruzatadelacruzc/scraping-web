@@ -11,10 +11,16 @@ import { TYPES } from '@shared/types.container';
 import { PgDBContext } from '@config/pg-db';
 
 let app: any;
+let appInstance: App;
 
 beforeAll(async () => {
-  app = await new App().setup();
+  appInstance = new App();
+  app = await appInstance.setup();
 }, 30000);
+
+afterAll(async () => {
+  await appInstance.close();
+});
 
 it('provider non-existent account', async () => {
   const pgDb = container.get<PgDBContext>(TYPES.TenantDB);

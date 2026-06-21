@@ -103,9 +103,24 @@ Related references:
 ### Integration tests
 
 - [ ] Code under test is wrapped in `runWithRequestContext({ tenantId, userId }, async () => { ... })` so ALS has the correct tenant.
-- [ ] `MongoMemoryServer` is used (auto-started by `globalSetup.ts`) — never connect to a real DB from tests.
-- [ ] Mocks are reset in `beforeEach`: `resetPrismaMocks()` and `resetMockTenantId()` (already done by `setupTests.ts`).
+- [ ] `MongoMemoryServer` is used (auto-started by `globalSetup.ts`) — never connect to a real Mongo from tests.
+- [ ] Mocks are reset in `beforeEach`: `resetMockTenantId()` (done by `setupTests.ts`). Prisma is REAL in integration tests — see prerequisites below.
 - [ ] Tenant isolation is tested explicitly — write at least one test that proves another tenant's data is NOT visible.
+
+#### Prerequisites — docker-compose stack
+
+Integration tests that exercise the App end-to-end (`account-register`, `scraping-jobs-authz`, `test-reset`, etc.) insert rows via raw SQL (`pgDb.query(...)`) and read them back through Prisma. **Postgres must be reachable on `TENANT_DB_URL`.** Run `docker-compose up -d postgres` (or the full stack) before `npm run test`. Verify with `pg_isready` or `psql "${TENANT_DB_URL}" -c 'select 1'`. After the run, `docker-compose down` is optional but recommended to free ports — volumes persist unless you pass `-v` (irreversible).
+
+What is mocked and what is real in integration tests:
+
+| Subsystem | In tests | Why |
+|---|---|---|
+| MongoDB | Mocked via `MongoMemoryServer` (in-process) | `globalSetup.ts` |
+| BullMQ / Redis | Mocked via `QUEUE_BACKEND=mock` (`src/__tests__/setup-env.ts`) | `jest.config.js#setupFiles` |
+| PostgreSQL | **REAL** (docker-compose required) | Integration tests use raw SQL |
+| Prisma | **REAL** (no global mock) | Unit tests that need a mock provide their own factory inline |
+
+See @../skills/docker-dev/SKILL.md for the docker-compose workflow and @../skills/testing/SKILL.md for the test environment breakdown.
 
 ### TDD workflow
 
@@ -152,10 +167,11 @@ Related references:
 Run before `git commit`. The husky pre-commit hook (`.husky/pre-commit` →
 `lint-staged` in `package.json`) is a **safety net**, not a substitute.
 
+- [ ] `docker-compose up -d postgres` is running (integration tests need real Postgres). See "Prerequisites" under Integration tests above.
 - [ ] `npm run lint` passes with zero errors.
 - [ ] `npm run format && git diff --stat` is empty — prettier is separate
       from eslint; `lint:fix` does NOT run prettier.
-- [ ] `npm run test` passes (unit + integration).
+- [ ] `npm run test` passes (unit + integration). Confirm the final lines show `Ran all test suites.` with no `Jest did not exit` warning.
 - [ ] `npm run docs:generate` produces no diff (if DTOs/controllers/paths changed).
 - [ ] `npm run build` succeeds.
 - [ ] `git diff --name-only` shows only files relevant to the task.

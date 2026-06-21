@@ -33,6 +33,24 @@ Before claiming a task is done:
 - If the task added a public API surface, regenerate `swagger.json`.
 - If the task added a new dependency, run `npm install` and verify it lands in `package.json`.
 
+## Test environment prerequisites
+
+Integration tests require real services running locally. **Before `npm run test`:**
+
+```bash
+docker-compose up -d          # at minimum Postgres; full stack is fine
+pg_isready                    # or: psql "${TENANT_DB_URL}" -c 'select 1'
+```
+
+MongoDB and BullMQ/Redis are mocked in tests (MongoMemoryServer + `QUEUE_BACKEND=mock`), so the only docker-compose dependency is Postgres. **After the test run:**
+
+```bash
+docker-compose down           # optional — keeps volumes
+# docker-compose down -v      # FULL reset (irreversible)
+```
+
+A test run is considered clean only when the final lines show `Ran all test suites.` with **no** `Jest did not exit one second after the test run has completed.` warning. If you see that warning, see `.claude/skills/testing/SKILL.md` (open handles + `openHandlesTimeout`) and `.claude/skills/docker-dev/SKILL.md` (integration test environment).
+
 ## Where to find project-specific guidance
 
 This file covers the workflow. Project-specific knowledge lives in:
