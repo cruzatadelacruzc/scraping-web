@@ -1,34 +1,67 @@
 name: Deploy Scrapers API
 
+# Required GitHub secrets (Settings > Secrets and variables > Actions):
+#
+#   DOCKER_USERNAME            Quay.io robot account username
+#                              (e.g. gsi_cesar+ci — the "+" suffix is the
+#                              Quay.io convention for robot accounts)
+#   DOCKER_PASSWORD            Quay.io robot account token
+#   DB_URI                     MongoDB connection string
+#   PORT                       App internal port the container listens on
+#                              (host port 80 is mapped to this; the docker
+#                              run uses `-p 80:$PORT`)
+#   TIME_OUT                   Request timeout
+#   REDIS_URL                  Redis connection string
+#   BULL_BOARD_USER            Bull board basic-auth user
+#   BULL_BOARD_PASSWORD        Bull board basic-auth password
+#   BULL_ARENA_URL             Bull board mount path
+#   PRODUCT_URLS_BATCHSIZE     Scraper config
+#   PRODUCT_STORAGE_BATCHSIZE  Scraper config
+#
+# Security model
+# --------------
+# Runtime env vars are NOT baked into the Docker image. They are written
+# to a 0600 .env file on the self-hosted runner (which IS the production
+# host) and passed to the container via `--env-file`. Anyone with pull
+# access to quay.io/gsi_cesar/scrappers/main cannot extract secrets.
+#
+# Credentials: use a Quay.io robot account, not a personal password.
+# Create one at https://quay.io/organization/gsi_cesar/robots (or your
+# org's robots page), grant it write access to the `scrappers/main`
+# repository, and paste the token into DOCKER_PASSWORD.
+
 on:
   push:
     branches:
       - main
     tags:
       - 'v*.*.*'
+  # Manual deploy trigger — useful for verifying Quay.io credentials and
+  # for redeploying a specific tag without rebuilding (e.g. rollback).
+  # The image must already exist in quay.io/gsi_cesar/scrappers/main.
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+        type: string
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # never kill a deploy that is already running
 
 jobs:
   build:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
+    # Only build on push. On workflow_dispatch we redeploy an existing image.
+    if: github.event_name == 'push'
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Create .env file
-        run: |
-          echo "DB_URI=${{ secrets.DB_URI }}" >> .env
-          echo "PORT=${{ secrets.PORT }}" >> .env
-          echo "TIME_OUT=${{ secrets.TIME_OUT }}" >> .env
-          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
-          echo "BULL_BOARD_USER=${{ secrets.BULL_BOARD_USER }}" >> .env
-          echo "BULL_BOARD_PASSWORD=${{ secrets.BULL_BOARD_PASSWORD }}" >> .env
-          echo "BULL_ARENA_URL=${{ secrets.BULL_ARENA_URL }}" >> .env
-          echo "PRODUCT_URLS_BATCHSIZE=${{ secrets.PRODUCT_URLS_BATCHSIZE }}" >> .env
-          echo "PRODUCT_STORAGE_BATCHSIZE=${{ secrets.PRODUCT_STORAGE_BATCHSIZE }}" >> .env  
+        uses: actions/checkout@v7
 
       - name: Build & push Docker image to Quay.io
-        if: github.event_name != 'pull_request'
-        uses: mr-smithers-excellent/docker-build-push@v6
+        uses: mr-smithers-excellent/docker-build-push@v7
         with:
           image: gsi_cesar/scrappers/main
           addLatest: true
@@ -42,21 +75,61 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Login to Quay.io
-        run: docker login quay.io -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        run: docker login quay.io -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
-      - name: Pull image from Qua.io
-        run: docker pull quay.io/gsi_cesar/scrappers/main
-
-      - name: Delete old container
-        run: docker rm -f scrapper-revolico-api || true
-
-      - name: Delete old image
+      - name: Write runtime env file
+        # Lives only on the self-hosted runner / prod host. Never copied
+        # into the image. Mode 0600 = owner read/write only.
         run: |
-            docker images --filter "reference=quay.io/gsi_cesar/scrappers/main" --format "{{.ID}}" | xargs -r docker rmi -f
+          {
+            echo "DB_URI=${{ secrets.DB_URI }}"
+            echo "PORT=${{ secrets.PORT }}"
+            echo "TIME_OUT=${{ secrets.TIME_OUT }}"
+            echo "REDIS_URL=${{ secrets.REDIS_URL }}"
+            echo "BULL_BOARD_USER=${{ secrets.BULL_BOARD_USER }}"
+            echo "BULL_BOARD_PASSWORD=${{ secrets.BULL_BOARD_PASSWORD }}"
+            echo "BULL_ARENA_URL=${{ secrets.BULL_ARENA_URL }}"
+            echo "PRODUCT_URLS_BATCHSIZE=${{ secrets.PRODUCT_URLS_BATCHSIZE }}"
+            echo "PRODUCT_STORAGE_BATCHSIZE=${{ secrets.PRODUCT_STORAGE_BATCHSIZE }}"
+          } > .env
+          chmod 600 .env
 
+      - name: Stop and remove old container
+        run: docker rm -f scrapper-revolico-api 2>/dev/null || true
 
-      - name: Run docker container
+      - name: Pull new image
+        run: docker pull quay.io/gsi_cesar/scrappers/main:${{ inputs.image_tag || 'latest' }}
+
+      - name: Remove old images (keep last 2 for rollback)
         run: |
-          docker run -d -p 80:${{ secrets.PORT }} \
+          docker images --filter "reference=quay.io/gsi_cesar/scrappers/main" --format "{{.ID}} {{.CreatedAt}}" \
+            | sort -k2 -r \
+            | tail -n +4 \
+            | awk '{print $1}' \
+            | xargs -r docker rmi -f
+
+      - name: Run new container
+        run: |
+          docker run -d \
+            -p 80:${{ secrets.PORT }} \
             --network scrappers \
-            --name scrapper-revolico-api quay.io/gsi_cesar/scrappers/main
+            --env-file .env \
+            --restart unless-stopped \
+            --name scrapper-revolico-api \
+            quay.io/gsi_cesar/scrappers/main:${{ inputs.image_tag || 'latest' }}
+
+      - name: Smoke test
+        # Hit /api-docs — it should return 2xx/3xx once the app is up.
+        # 60s budget covers Puppeteer warm-up, queue init, etc.
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null -w "%{http_code}" http://localhost/api-docs | grep -qE '^[23]'; then
+              echo "Smoke test passed on attempt $i"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Smoke test FAILED: /api-docs never returned 2xx/3xx"
+          echo "--- container logs ---"
+          docker logs scrapper-revolico-api
+          exit 1
