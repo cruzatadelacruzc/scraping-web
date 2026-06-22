@@ -29,6 +29,21 @@ name: Deploy Scrapers API
 # Create one at https://quay.io/organization/gsi_cesar/robots (or your
 # org's robots page), grant it write access to the `scrappers/main`
 # repository, and paste the token into DOCKER_PASSWORD.
+#
+# Enabling production deploys (MVP gate)
+# --------------------------------------
+# Both build and deploy jobs are gated on the repository variable
+# `DEPLOY_ENABLED`. While the project is an MVP without a production host,
+# leave it unset (or set to anything other than `true`) and both jobs skip
+# themselves — the workflow still runs (so CI is green) but does no work.
+#
+# To enable production deploys later:
+#   1. Add the secrets listed above (Settings > Secrets and variables).
+#   2. Set repository variable `DEPLOY_ENABLED=true`
+#      (Settings > Secrets and variables > Actions > Variables tab).
+#   3. Register the self-hosted runner on the production EC2 host so the
+#      `runs-on: self-hosted` job has somewhere to land.
+# No code change is required at that point.
 
 on:
   push:
@@ -54,8 +69,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Only build on push. On workflow_dispatch we redeploy an existing image.
-    if: github.event_name == 'push'
+    # MVP gate: skip while DEPLOY_ENABLED is not 'true'. See workflow header.
+    # On workflow_dispatch we redeploy an existing image, so the build step
+    # is also skipped (only the deploy job runs).
+    if: github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -72,7 +89,8 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
-    if: github.event_name != 'pull_request'
+    # MVP gate: skip while DEPLOY_ENABLED is not 'true'. See workflow header.
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     steps:
       - name: Login to Quay.io
         run: docker login quay.io -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
