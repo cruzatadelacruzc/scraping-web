@@ -20,7 +20,7 @@ jobs:
     env:
       NODE_ENV: test
       QUEUE_BACKEND: mock
-      TENANT_DB_URL: postgresql://revolico:revolico@localhost:5432/revolico
+      TENANT_DB_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
       JWT_SECRET: ci-test-secret-not-for-production
       JWT_EXPIRATION: 1d
       DB_URI: mongodb://localhost:27017/jest
@@ -30,13 +30,13 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: revolico
-          POSTGRES_PASSWORD: revolico
-          POSTGRES_DB: revolico
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U revolico"
+          --health-cmd "pg_isready -U $POSTGRES_USER"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
