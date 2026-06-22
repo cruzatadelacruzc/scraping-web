@@ -12,6 +12,10 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 COPY package*.json ./
 RUN npm install
 COPY . .
+# Regenerate the Prisma client so @prisma/client exports the enums (e.g.
+# AlarmConditionType) declared in prisma/schema.prisma. npm install runs
+# before the schema is copied, so the prebuilt client ships without them.
+RUN npx prisma generate
 RUN npm run build
 
 # ── Stage 2: production runtime ─────────────────────────────────────────
