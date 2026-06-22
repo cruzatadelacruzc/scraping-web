@@ -19,6 +19,25 @@ npm run seed                    # default roles + SUPER_ADMIN
 npm run dev                     # hot-reload server
 ```
 
+## Deployment
+
+The `Deploy Scrapers API` workflow (`.github/workflows/ec2-deploy.yml`) builds the image, pushes it to Quay.io, and runs the container on a self-hosted runner on the production EC2 host. While the project is an MVP **without** a production host, both build and deploy jobs skip themselves — CI stays green and no work is performed.
+
+To enable production deploys later:
+
+1. **Add the runtime secrets** that the app reads on boot (`Settings > Secrets and variables > Actions`):
+   - `JWT_SECRET` — JWT signing secret. The app throws at boot if unset.
+   - `TENANT_DB_URL` — PostgreSQL connection string for Prisma.
+   - `JWT_EXPIRATION` — token lifetime (e.g. `1d`). Defaults to `1d`.
+   - `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` — seeded admin credentials.
+   - The remaining runtime vars (`DB_URI`, `REDIS_URL`, `PORT`, `TIME_OUT`, `BULL_BOARD_*`, `BULL_ARENA_URL`, `PRODUCT_URLS_BATCHSIZE`, `PRODUCT_STORAGE_BATCHSIZE`) and the Quay.io creds (`DOCKER_USERNAME`, `DOCKER_PASSWORD`) should already be configured — see the header comment in `ec2-deploy.yml` for the full list.
+2. **Set the gate** `Settings > Secrets and variables > Actions > Variables`: create variable `DEPLOY_ENABLED` with value `true`.
+3. **Register the self-hosted runner** on the production EC2 host so the `runs-on: self-hosted` job has somewhere to land (`Settings > Actions > Runners > New self-hosted runner`).
+
+After that, push to `main` triggers a full deploy. The container is named `scrapper-bazaarsentinel-api` and listens on host port `80`. The `workflow_dispatch` trigger is also available for re-deploying a specific Quay tag without rebuilding.
+
+No code change is required to flip from MVP mode to production.
+
 ## Documentation for AI agents
 
 The repository ships project-specific guidance for Claude Code (and other AI assistants):
