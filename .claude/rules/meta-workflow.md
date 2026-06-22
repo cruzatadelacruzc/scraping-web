@@ -33,6 +33,16 @@ Before claiming a task is done:
 - If the task added a public API surface, regenerate `swagger.json`.
 - If the task added a new dependency, run `npm install` and verify it lands in `package.json`.
 
+## Commit messages
+
+Before writing **any** commit message — whether via `git commit`, `gh pr merge`, or any other command that creates a commit — ALWAYS invoke the `git-commit` skill via the Skill tool first.
+
+The skill lives in user-global scope (`~/.claude/skills/git-commit/`) and Claude Code auto-loads it whenever the conversation mentions `git commit` or `/commit`. Even so:
+
+1. Invoke it explicitly with `Skill(skill="git-commit")` BEFORE writing the message — don't rely on the heuristic match, especially for `gh pr merge --merge` flows that don't surface the literal phrase "git commit".
+2. Let the skill analyze the diff and propose the message. Use its output verbatim, or apply user-requested edits on top of it — do NOT rewrite from scratch.
+3. The skill enforces: Conventional Commits format, present tense, imperative mood, <72-char subject, one logical change per commit. Don't bypass these to "be more descriptive" — the rationale belongs in the body, not the subject.
+
 ## Test environment prerequisites
 
 Integration tests require real services running locally. **Before `npm run test`:**
