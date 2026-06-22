@@ -36,6 +36,16 @@ on:
       - main
     tags:
       - 'v*.*.*'
+  # Manual deploy trigger — useful for verifying Quay.io credentials and
+  # for redeploying a specific tag without rebuilding (e.g. rollback).
+  # The image must already exist in quay.io/gsi_cesar/scrappers/main.
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+        type: string
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -44,7 +54,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    # Only build on push. On workflow_dispatch we redeploy an existing image.
+    if: github.event_name == 'push'
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -87,7 +98,7 @@ jobs:
         run: docker rm -f scrapper-revolico-api 2>/dev/null || true
 
       - name: Pull new image
-        run: docker pull quay.io/gsi_cesar/scrappers/main:latest
+        run: docker pull quay.io/gsi_cesar/scrappers/main:${{ inputs.image_tag || 'latest' }}
 
       - name: Remove old images (keep last 2 for rollback)
         run: |
@@ -105,7 +116,7 @@ jobs:
             --env-file .env \
             --restart unless-stopped \
             --name scrapper-revolico-api \
-            quay.io/gsi_cesar/scrappers/main:latest
+            quay.io/gsi_cesar/scrappers/main:${{ inputs.image_tag || 'latest' }}
 
       - name: Smoke test
         # Hit /api-docs — it should return 2xx/3xx once the app is up.
