@@ -7,6 +7,11 @@ name: Deploy Scrapers API
 #                              Quay.io convention for robot accounts)
 #   DOCKER_PASSWORD            Quay.io robot account token
 #   DB_URI                     MongoDB connection string
+#   TENANT_DB_URL              PostgreSQL connection string (Prisma)
+#   JWT_SECRET                 JWT signing secret — app throws at boot if unset
+#   JWT_EXPIRATION             Token lifetime (e.g. "1d"). Defaults to "1d".
+#   SUPER_ADMIN_EMAIL          Seeded admin email
+#   SUPER_ADMIN_PASSWORD       Seeded admin password
 #   PORT                       App internal port the container listens on
 #                              (host port 80 is mapped to this; the docker
 #                              run uses `-p 80:$PORT`)
@@ -29,6 +34,21 @@ name: Deploy Scrapers API
 # Create one at https://quay.io/organization/gsi_cesar/robots (or your
 # org's robots page), grant it write access to the `scrappers/main`
 # repository, and paste the token into DOCKER_PASSWORD.
+#
+# Enabling production deploys (MVP gate)
+# --------------------------------------
+# Both build and deploy jobs are gated on the repository variable
+# `DEPLOY_ENABLED`. While the project is an MVP without a production host,
+# leave it unset (or set to anything other than `true`) and both jobs skip
+# themselves — the workflow still runs (so CI is green) but does no work.
+#
+# To enable production deploys later:
+#   1. Add the secrets listed above (Settings > Secrets and variables).
+#   2. Set repository variable `DEPLOY_ENABLED=true`
+#      (Settings > Secrets and variables > Actions > Variables tab).
+#   3. Register the self-hosted runner on the production EC2 host so the
+#      `runs-on: self-hosted` job has somewhere to land.
+# No code change is required at that point.
 
 on:
   push:
@@ -54,8 +74,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Only build on push. On workflow_dispatch we redeploy an existing image.
-    if: github.event_name == 'push'
+    # MVP gate: skip while DEPLOY_ENABLED is not 'true'. See workflow header.
+    # On workflow_dispatch we redeploy an existing image, so the build step
+    # is also skipped (only the deploy job runs).
+    if: github.event_name == 'push' && vars.DEPLOY_ENABLED == 'true'
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -72,7 +94,8 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
-    if: github.event_name != 'pull_request'
+    # MVP gate: skip while DEPLOY_ENABLED is not 'true'. See workflow header.
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     steps:
       - name: Login to Quay.io
         run: docker login quay.io -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
@@ -83,6 +106,11 @@ jobs:
         run: |
           {
             echo "DB_URI=${{ secrets.DB_URI }}"
+            echo "TENANT_DB_URL=${{ secrets.TENANT_DB_URL }}"
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+            echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}"
+            echo "SUPER_ADMIN_EMAIL=${{ secrets.SUPER_ADMIN_EMAIL }}"
+            echo "SUPER_ADMIN_PASSWORD=${{ secrets.SUPER_ADMIN_PASSWORD }}"
             echo "PORT=${{ secrets.PORT }}"
             echo "TIME_OUT=${{ secrets.TIME_OUT }}"
             echo "REDIS_URL=${{ secrets.REDIS_URL }}"
@@ -95,7 +123,7 @@ jobs:
           chmod 600 .env
 
       - name: Stop and remove old container
-        run: docker rm -f scrapper-revolico-api 2>/dev/null || true
+        run: docker rm -f scrapper-bazaarsentinel-api 2>/dev/null || true
 
       - name: Pull new image
         run: docker pull quay.io/gsi_cesar/scrappers/main:${{ inputs.image_tag || 'latest' }}
@@ -115,7 +143,7 @@ jobs:
             --network scrappers \
             --env-file .env \
             --restart unless-stopped \
-            --name scrapper-revolico-api \
+            --name scrapper-bazaarsentinel-api \
             quay.io/gsi_cesar/scrappers/main:${{ inputs.image_tag || 'latest' }}
 
       - name: Smoke test
@@ -131,5 +159,5 @@ jobs:
           done
           echo "Smoke test FAILED: /api-docs never returned 2xx/3xx"
           echo "--- container logs ---"
-          docker logs scrapper-revolico-api
+          docker logs scrapper-bazaarsentinel-api
           exit 1
