@@ -7,6 +7,11 @@ name: Deploy Scrapers API
 #                              Quay.io convention for robot accounts)
 #   DOCKER_PASSWORD            Quay.io robot account token
 #   DB_URI                     MongoDB connection string
+#   TENANT_DB_URL              PostgreSQL connection string (Prisma)
+#   JWT_SECRET                 JWT signing secret — app throws at boot if unset
+#   JWT_EXPIRATION             Token lifetime (e.g. "1d"). Defaults to "1d".
+#   SUPER_ADMIN_EMAIL          Seeded admin email
+#   SUPER_ADMIN_PASSWORD       Seeded admin password
 #   PORT                       App internal port the container listens on
 #                              (host port 80 is mapped to this; the docker
 #                              run uses `-p 80:$PORT`)
@@ -101,6 +106,11 @@ jobs:
         run: |
           {
             echo "DB_URI=${{ secrets.DB_URI }}"
+            echo "TENANT_DB_URL=${{ secrets.TENANT_DB_URL }}"
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}"
+            echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}"
+            echo "SUPER_ADMIN_EMAIL=${{ secrets.SUPER_ADMIN_EMAIL }}"
+            echo "SUPER_ADMIN_PASSWORD=${{ secrets.SUPER_ADMIN_PASSWORD }}"
             echo "PORT=${{ secrets.PORT }}"
             echo "TIME_OUT=${{ secrets.TIME_OUT }}"
             echo "REDIS_URL=${{ secrets.REDIS_URL }}"
