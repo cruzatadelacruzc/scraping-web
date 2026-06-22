@@ -1,5 +1,5 @@
 # ── Stage 1: build ──────────────────────────────────────────────────────
-FROM node:20-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
 
 # Skip Puppeteer's postinstall Chrome download (Chromium is installed in the
@@ -15,7 +15,7 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2: production runtime ─────────────────────────────────────────
-FROM node:20-bookworm-slim AS production
+FROM node:24-bookworm-slim AS production
 WORKDIR /app
 
 # System deps for Chromium and the Node runtime.
@@ -59,7 +59,6 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist/main ./dist/main
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY .env ./
 
 EXPOSE 80
 
