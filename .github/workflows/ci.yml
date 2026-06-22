@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint, test, build
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      QUEUE_BACKEND: mock
+      TENANT_DB_URL: postgresql://revolico:revolico@localhost:5432/revolico
+      JWT_SECRET: ci-test-secret-not-for-production
+      JWT_EXPIRATION: 1d
+      DB_URI: mongodb://localhost:27017/jest
+      REDIS_URL: redis://localhost:6379
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revolico
+          POSTGRES_PASSWORD: revolico
+          POSTGRES_DB: revolico
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revolico"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+        env:
+          NODE_ENV: test
+
+      - name: Build
+        run: npm run build
