@@ -57,16 +57,8 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Apply database schema
-        # Uses `prisma db push` (not `prisma migrate deploy`) because the
-        # migration history is broken: the first migration
-        # (20250604000000_add_alarms_module) expects RoleType enum and Role
-        # table to exist, but they are created by the LATER migration
-        # 20250907014740_tenant_init. Fresh Postgres cannot run them in
-        # order. db push reads the schema directly and matches the dev DB.
-        # TODO: regenerate migrations with `prisma migrate reset` +
-        # `prisma migrate dev --name init` to fix the dependency chain.
-        run: npx prisma db push --skip-generate
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
       - name: Seed default roles
         run: npm run seed
