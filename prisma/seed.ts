@@ -5,6 +5,43 @@ const prisma = new PrismaClient();
 
 const DEFAULT_ROLES = ['ACCOUNT_OWNER', 'SUPER_ADMIN', 'MEMBER'] as const;
 
+// JSONata expressions for externalized scraping.
+// These are DRAFT and must be validated against real Revolico HTML.
+// If a JSONata fails, the failure is captured in Bull-Board's
+// failedReason + ctx.log() entries — see plan Phase D.
+const REVOLICO_LISTING_EXPRESSION = `(
+  $ ~> |$|{
+    "products":
+      $.**."div"."ul"."li"[
+        $."a"."@href" != undefined
+      ].{
+        "url":          $."a"."@href",
+        "description":  $."p".text,
+        "cost":         $."span".text,
+        "imageURL":     $."picture img"."@src",
+        "isOutstanding": $."div"."@class" = "dHRSzq"
+      }
+  }|
+)`;
+
+const REVOLICO_DETAIL_EXPRESSION = `(
+  $ ~> |$|{
+    "views":    $."div"."p"."@class" = "cZACiy" ? $."div"."p".text : "",
+    "location": $.**."p"."@data-cy" = "adLocation" ? $.**."p".text : "",
+    "seller": {
+      "name":     $.**."p"."@data-cy" = "adName" ? $.**."p".text : "",
+      "whatsapp": $.**."a"."@href" ~> /^https:\\/\\/wa\\.me\\// ? $replace($.**."a"."@href", /^https:\\/\\/wa\\.me\\/([0-9]+).*$/, "$1") : "",
+      "phone":    $.**."a"."@href" ~> /^tel:/ ? $replace($.**."a"."@href", /^tel:(.*)$/, "$1") : "",
+      "email":    $.**."a"."@href" ~> /^mailto:/ ? $replace($.**."a"."@href", /^mailto:(.*)$/, "$1") : ""
+    }
+  }|
+)`;
+
+const SCRAPER_CONFIGS = [
+  { storeKey: 'revolico:listing', expression: REVOLICO_LISTING_EXPRESSION },
+  { storeKey: 'revolico:detail', expression: REVOLICO_DETAIL_EXPRESSION },
+] as const;
+
 async function main(): Promise<void> {
   console.log('Seeding default roles...');
 
@@ -18,6 +55,18 @@ async function main(): Promise<void> {
       console.log(`  Role "${name}" created`);
     } else {
       console.log(`  Role "${name}" already exists`);
+    }
+  }
+
+  // ── ScraperConfig rows (externalized JSONata expressions) ───────
+  console.log('Seeding scraper configs...');
+  for (const cfg of SCRAPER_CONFIGS) {
+    const existing = await prisma.scraperConfig.findUnique({ where: { storeKey: cfg.storeKey } });
+    if (!existing) {
+      await prisma.scraperConfig.create({ data: cfg });
+      console.log(`  ScraperConfig "${cfg.storeKey}" created`);
+    } else {
+      console.log(`  ScraperConfig "${cfg.storeKey}" already exists`);
     }
   }
 
