@@ -19,6 +19,37 @@ npm run seed                    # default roles + SUPER_ADMIN
 npm run dev                     # hot-reload server
 ```
 
+## Scraper configuration with JSONata
+
+The Revolico scrapers (`products_scraping`, `product_scraping`) are **config-driven**: each worker's extraction logic lives as a JSONata expression in the `ScraperConfig` Postgres table, not as hardcoded TypeScript selectors. When Revolico changes its HTML, fix the broken expression with a SQL update — no redeploy.
+
+### Runtime flow
+
+1. Worker pulls the JSONata expression from `ScraperConfigRegistryService` (TTL 30s in-memory cache).
+2. Puppeteer renders the page; `page.evaluate()` (browser-side) serializes the selected DOM container into a JSON tree via `IFetchProductData.fetchRenderedJson<T>(url, selector, ctx)`. The HTML never leaves the browser.
+3. `JsonataRunnerService.run<T>(expression, tree, { timeoutMs: 5000 })` evaluates the expression against the tree. A 5s timeout guards against runaway expressions.
+4. Result is mapped to `IRevolicoProduct` and persisted to Mongo.
+
+### Editing expressions
+
+| Method                                                | When                                      |
+| ----------------------------------------------------- | ----------------------------------------- |
+| `psql -c 'UPDATE "ScraperConfig" SET expression=...'` | one-off, advanced                         |
+| `npm run seed`                                        | restore both defaults (idempotent upsert) |
+| Admin endpoint                                        | planned, not in MVP                       |
+
+`ScraperConfigRepository.upsert` validates the expression with `runner.validate()` before persisting. The registry's cache TTL is 30s — either wait or restart the worker for changes to take effect.
+
+### Failure handling
+
+On `JsonataExtractionError`, the worker logs three `[scraper-failure]` lines via `ctx.log()` before re-throwing. Bull-Board (`/arena`) shows them in the **Logs** tab of the failed job: `storeKey`, the full expression, and a 2KB slice of the input JSON tree the browser returned. Use this to iterate the expression without redeploy. The typed error codes are `TIMEOUT`, `EXPRESSION_ERROR`, `NOT_SERIALIZABLE`, `CONFIG_MISSING`, `CONFIG_DISABLED`.
+
+### Out of scope (MVP)
+
+- Per-tenant `ScraperConfig` — global rows only; per-tenant migration is non-breaking (`accountId` with default `null`).
+- Expression sandboxing (`isolated-vm`/`vm2`) — expressions are trusted (team-written). 5s timeout + validate-on-write are the MVP guardrails.
+- LLM auto-tuning of broken expressions — future evolution; manual iteration is the MVP workflow.
+
 ## Deployment
 
 The `Deploy Scrapers API` workflow (`.github/workflows/ec2-deploy.yml`) builds the image, pushes it to Quay.io, and runs the container on a self-hosted runner on the production EC2 host. While the project is an MVP **without** a production host, both build and deploy jobs skip themselves — CI stays green and no work is performed.
@@ -42,18 +73,18 @@ No code change is required to flip from MVP mode to production.
 
 The repository ships project-specific guidance for Claude Code (and other AI assistants):
 
-| Topic                          | Location                                                       |
-|--------------------------------|----------------------------------------------------------------|
-| Project spec, stack, roles     | [AGENTS.md](AGENTS.md)                                         |
-| Code patterns (DI, layers)     | [src/main/CLAUDE.md](src/main/CLAUDE.md)                       |
-| Folder structure (canonical)   | [.claude/rules/folder-structure.md](.claude/rules/folder-structure.md) |
-| Pre-merge checklist            | [.claude/rules/compliance-checklist.md](.claude/rules/compliance-checklist.md) |
-| Meta-workflow (planning mode)  | [.claude/rules/meta-workflow.md](.claude/rules/meta-workflow.md) |
-| Auth, JWT, tenant context      | [.claude/skills/security/SKILL.md](.claude/skills/security/SKILL.md) |
-| Docker dev environment         | [.claude/skills/docker-dev/SKILL.md](.claude/skills/docker-dev/SKILL.md) |
-| Testing patterns (Jest + ALS)  | [.claude/skills/testing/SKILL.md](.claude/skills/testing/SKILL.md) |
-| Add an alarm condition         | [.claude/skills/alarm-condition/SKILL.md](.claude/skills/alarm-condition/SKILL.md) |
-| TypeScript patterns            | [.claude/skills/typescript-best-practices/SKILL.md](.claude/skills/typescript-best-practices/SKILL.md) |
+| Topic                         | Location                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Project spec, stack, roles    | [AGENTS.md](AGENTS.md)                                                                                 |
+| Code patterns (DI, layers)    | [src/main/CLAUDE.md](src/main/CLAUDE.md)                                                               |
+| Folder structure (canonical)  | [.claude/rules/folder-structure.md](.claude/rules/folder-structure.md)                                 |
+| Pre-merge checklist           | [.claude/rules/compliance-checklist.md](.claude/rules/compliance-checklist.md)                         |
+| Meta-workflow (planning mode) | [.claude/rules/meta-workflow.md](.claude/rules/meta-workflow.md)                                       |
+| Auth, JWT, tenant context     | [.claude/skills/security/SKILL.md](.claude/skills/security/SKILL.md)                                   |
+| Docker dev environment        | [.claude/skills/docker-dev/SKILL.md](.claude/skills/docker-dev/SKILL.md)                               |
+| Testing patterns (Jest + ALS) | [.claude/skills/testing/SKILL.md](.claude/skills/testing/SKILL.md)                                     |
+| Add an alarm condition        | [.claude/skills/alarm-condition/SKILL.md](.claude/skills/alarm-condition/SKILL.md)                     |
+| TypeScript patterns           | [.claude/skills/typescript-best-practices/SKILL.md](.claude/skills/typescript-best-practices/SKILL.md) |
 
 ## Recommended Claude Code plugin: superpowers
 
