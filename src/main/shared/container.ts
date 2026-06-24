@@ -61,6 +61,11 @@ import { PriceChangesByPercentCondition } from '@alarms/conditions/price-changes
 import { ViewsExceedCondition } from '@alarms/conditions/views-exceed.condition';
 import { IsOutstandingCondition } from '@alarms/conditions/outstanding.condition.interface';
 import { SellerChangedCondition } from '@alarms/conditions/seller-changed.condition';
+import { JsonataRunnerService } from '@scrapers/revolico/services/scraping/jsonata-runner.service';
+import { ScraperConfigRepository } from '@scrapers/revolico/services/scraping/repositories/scraper-config.repository';
+import { ScraperConfigRegistryService } from '@scrapers/revolico/services/scraping/scraper-config-registry.service';
+import { GenericListingScraperService } from '@scrapers/revolico/services/scraping/generic-listing-scraper.service';
+import { GenericDetailScraperService } from '@scrapers/revolico/services/scraping/generic-detail-scraper.service';
 
 export const container = new Container();
 
@@ -140,6 +145,14 @@ container.bind(UserIdentityRepository).toSelf();
 container.bind(AccountRepository).toSelf();
 container.bind(AlarmRepository).toSelf();
 container.bind(NotificationRepository).toSelf();
+container.bind(ScraperConfigRepository).toSelf();
+container.bind(TYPES.ScraperConfigRepository).to(ScraperConfigRepository);
+
+// JSONata-driven scraping
+container.bind<JsonataRunnerService>(TYPES.JsonataRunner).to(JsonataRunnerService).inSingletonScope();
+container.bind<ScraperConfigRegistryService>(TYPES.ScraperConfigRegistry).to(ScraperConfigRegistryService).inSingletonScope();
+container.bind<GenericListingScraperService>(TYPES.GenericListingScraper).to(GenericListingScraperService);
+container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(GenericDetailScraperService);
 
 //middlewares
 container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware);

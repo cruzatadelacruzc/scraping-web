@@ -14,6 +14,7 @@ import { progressCalculate } from '@utils/queue.util';
 import { extractDataFromUrl } from '../utils/extract-data.util';
 import { IProductDetails } from '@shared/product-base.interface';
 import { ElementHandle } from 'puppeteer-core';
+import { DOM_TO_JSON_SOURCE } from './scraping/utils/dom-to-json.util';
 
 @injectable()
 export class RevolicoFetchDataService implements IFetchProductData {
@@ -32,6 +33,53 @@ export class RevolicoFetchDataService implements IFetchProductData {
     const url = `${this._baseURL}/search?${params}`;
     this._log.debug(`Fetching products from: ${url}`);
     return url;
+  }
+
+  /**
+   * Navigate to `url` and serialize the DOM subtree(s) matching `selector`
+   * into a JSON tree, returned to Node. The HTML never crosses the
+   * Puppeteer→Node bridge.
+   *
+   * Browser-side, the helper `domToJson` (declared in `DOM_TO_JSON_SOURCE`)
+   * walks `document.querySelectorAll(selector)` and produces a tree of
+   * `{ tag, attrs, children, text? }` nodes. When a single element matches
+   * we return that node directly; when multiple match, we return the array.
+   *
+   * Implementation note: per-call browser launch. Fine for the MVP scrape
+   * volume; a future optimization may pool browsers per worker.
+   *
+   * @param {string} url - Fully-qualified URL to load.
+   * @param {string} selector - CSS selector matched inside the rendered page.
+   * @param {IJobContext} [ctx] - Optional job context for progress + logging.
+   * @returns {Promise<T>} Serialized DOM tree(s), typed by the caller.
+   */
+  public async fetchRenderedJson<T>(url: string, selector: string, ctx?: IJobContext): Promise<T> {
+    if (!url) throw new InvalidParameterError('url');
+    if (!selector) throw new InvalidParameterError('selector');
+
+    puppeteer.use(StealthPlugin());
+    const browser = await puppeteer.launch(CONFIG);
+
+    try {
+      const page = await browser.newPage();
+      page.setDefaultTimeout(TIME_OUT);
+      page.setViewport(VIEW_PORT);
+
+      const response = await page.goto(url, { waitUntil: 'networkidle2' });
+      if (response?.status() !== 200) {
+        throw new PageLoadError(response?.status(), url);
+      }
+
+      await ctx?.log(`Navigated to ${url}`);
+
+      const evalBody = `${DOM_TO_JSON_SOURCE}\nreturn (function(){ var els = document.querySelectorAll(sel); var out = []; for (var i = 0; i < els.length; i++) { var n = domToJson(els[i]); if (n !== null) out.push(n); } return out.length === 1 ? out[0] : out; })();`;
+      const runner = new Function('sel', evalBody) as (sel: string) => unknown;
+      const result = await page.evaluate(runner, selector);
+
+      return result as T;
+    } finally {
+      await browser.close();
+    }
   }
 
   public async fetchProductInfoByCategory<IRevolicoProduct>(
