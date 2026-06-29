@@ -69,6 +69,34 @@ export class PathBuilder {
     return this;
   }
 
+  /**
+   * Path parameter variant for non-UUID string values (e.g. `storeKey` like
+   * `revolico:listing`). Use when the URL segment is a logical key rather
+   * than a database-generated UUID. Optional `pattern` adds a regex constraint.
+   */
+  public pathParamString(name: string, description: string, pattern?: string): this {
+    if (!this._config.request) {
+      this._config.request = {};
+    }
+    if (!this._config.request.params) {
+      this._config.request.params = z.object({});
+    }
+    let paramSchema = z.string();
+    if (pattern) {
+      paramSchema = paramSchema.regex(new RegExp(pattern));
+    }
+    const annotated = paramSchema.openapi({
+      param: { name, in: 'path', description },
+      description,
+    });
+    (this._config.request.params as z.ZodObject<Record<string, z.ZodString>>) = (
+      this._config.request.params as z.ZodObject<Record<string, z.ZodString>>
+    ).extend({
+      [name]: annotated,
+    });
+    return this;
+  }
+
   public requestBody(schema: z.ZodTypeAny, description?: string): this {
     this._config.request = {
       ...(this._config.request || {}),

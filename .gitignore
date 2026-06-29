@@ -20,3 +20,5 @@ tmp/
 
 ############# Local resources AI Agents ###########
 .plans
+.firecrawl/
+.playwright-cli/

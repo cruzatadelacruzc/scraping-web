@@ -1,4 +1,4 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Job as BullMQJob, Queue, Worker, BackoffOptions } from 'bullmq';
 import {
   CompletedListener,
@@ -16,6 +16,8 @@ import {
 } from '@shared/queue/port/queue-adapter.interfaces';
 import { buildBullMQConnection } from './bullmq-connection';
 import { BullMQJobContext } from './bullmq-job.context';
+import { ILogger } from '@shared/logger.interface';
+import { TYPES } from '@shared/types.container';
 
 interface IQueueBundle {
   queue: Queue;
@@ -45,7 +47,8 @@ export class BullMQQueueAdapter implements IQueueAdapter {
   private readonly prefix: string;
   private shuttingDown = false;
 
-  public constructor() {
+  public constructor(@inject(TYPES.Logger) private readonly _log: ILogger) {
+    this._log.context = BullMQQueueAdapter.name;
     this.prefix = process.env.BULLMQ_PREFIX ?? DEFAULT_PREFIX;
   }
 
@@ -91,7 +94,10 @@ export class BullMQQueueAdapter implements IQueueAdapter {
     worker.on('error', err => {
       // BullMQ throws if no error handler is attached; logging is the
       // app's responsibility (subscribe via onFailed / container logger).
-      console.error(`[BullMQQueueAdapter] worker error on queue "${queueName}":`, err);
+      this._log.error(`[BullMQQueueAdapter] worker error on queue "${queueName}": ${err instanceof Error ? err.message : String(err)}`, {
+        queueName,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
     });
 
     worker.on('completed', (job: BullMQJob<TData>, returnvalue: TResult) => {
@@ -114,6 +120,7 @@ export class BullMQQueueAdapter implements IQueueAdapter {
         name: job?.name,
         reason: err?.message ?? String(err),
         data: job?.data,
+        error: err,
       };
       void Promise.all(b.failedListeners.map(l => Promise.resolve(l(event))));
     });

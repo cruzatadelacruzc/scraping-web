@@ -71,4 +71,12 @@ export const TYPES = {
   SQSAdapter: Symbol.for('SQSAdapter'),
   MockAdapter: Symbol.for('MockAdapter'),
   QueueDashboardService: Symbol.for('QueueDashboardService'),
+  // JSONata-driven scraping
+  JsonataRunner: Symbol.for('JsonataRunner'),
+  ScraperConfigRepository: Symbol.for('ScraperConfigRepository'),
+  ScraperConfigRegistry: Symbol.for('ScraperConfigRegistry'),
+  ScraperConfigService: Symbol.for('ScraperConfigService'),
+  ScraperConfigController: Symbol.for('ScraperConfigController'),
+  GenericListingScraper: Symbol.for('GenericListingScraper'),
+  GenericDetailScraper: Symbol.for('GenericDetailScraper'),
 };

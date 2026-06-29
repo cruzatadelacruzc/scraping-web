@@ -66,6 +66,40 @@ const ScrapingProductJobSchema = z.object({
   id: z.string().min(1).openapi({ description: 'Product ID to scrape', example: '12345678' }),
 });
 
+const ScraperConfigResponseSchema = z.object({
+  id: uuid('ScraperConfig unique identifier'),
+  storeKey: z.string().openapi({
+    description: 'Logical key identifying the scraping target',
+    example: 'revolico:listing',
+  }),
+  expression: z.string().openapi({
+    description: 'JSONata expression evaluated against the scraped DOM tree',
+    example: '$ ~> | $ | { "products": $ | [*] } |',
+  }),
+  version: z.number().int().openapi({ description: 'Monotonic version counter', example: 1 }),
+  enabled: z.boolean().openapi({ description: 'Whether the worker should use this row', example: true }),
+  createdAt: timestamp('Creation timestamp'),
+  updatedAt: timestamp('Last update timestamp'),
+});
+
+const ScraperConfigCreateSchema = z.object({
+  storeKey: z.string().min(1).openapi({
+    description: 'Logical key identifying the scraping target (must be unique)',
+    example: 'revolico:listing',
+  }),
+  expression: z.string().min(1).openapi({
+    description: 'JSONata expression to persist',
+    example: '$ ~> | $ | { "products": $ | [*] } |',
+  }),
+});
+
+const ScraperConfigUpdateSchema = z.object({
+  expression: z.string().min(1).openapi({
+    description: 'New JSONata expression',
+    example: '$ ~> | $ | { "products": $ | [*] } |',
+  }),
+});
+
 // ── Exported schema registry (populated by registerAllSchemas) ───────
 export const Schemas: Record<string, z.ZodTypeAny> = {};
 
@@ -85,4 +119,7 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
   Schemas.NotificationDTO = registry.register('NotificationDTO', NotificationSchema);
   Schemas.ScrapingProductsDTO = registry.register('ScrapingProductsDTO', ScrapingProductsJobSchema);
   Schemas.ScrapingProductDTO = registry.register('ScrapingProductDTO', ScrapingProductJobSchema);
+  Schemas.ScraperConfigResponseDTO = registry.register('ScraperConfigResponseDTO', ScraperConfigResponseSchema);
+  Schemas.ScraperConfigCreateDTO = registry.register('ScraperConfigCreateDTO', ScraperConfigCreateSchema);
+  Schemas.ScraperConfigUpdateDTO = registry.register('ScraperConfigUpdateDTO', ScraperConfigUpdateSchema);
 }

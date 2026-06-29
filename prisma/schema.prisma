@@ -259,3 +259,16 @@ model BotConversation {
   @@index([accountId, userId])
   @@map("bot_conversations")
 }
+
+// -----------------------------------------------------------------------------
+// Scraper Config — externalized JSONata expressions per storeKey
+// -----------------------------------------------------------------------------
+model ScraperConfig {
+  id         String   @id @default(uuid())
+  storeKey   String   @unique
+  expression String
+  version    Int      @default(1)
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

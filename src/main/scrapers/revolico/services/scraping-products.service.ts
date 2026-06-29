@@ -3,11 +3,9 @@ import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { injectable, inject } from 'inversify';
 import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
-import { IFetchProductData } from '@shared/fetch-product-data.interface';
-import { IJobContext } from '@shared/queue/port/job-context.interfaces';
+import { IRevolicoProduct } from '@scrapers/revolico/models/product.model';
 import { ProductService } from './product.service';
 import { QUEUE_NAME } from '../queues';
-import { IRevolicoProduct } from '@scrapers/revolico/models/product.model';
 
 @injectable()
 export class ScrapingProductsService {
@@ -15,40 +13,8 @@ export class ScrapingProductsService {
     @inject(QueueContext) private _qContext: QueueContext,
     @inject(TYPES.ProductService) private _productService: ProductService,
     @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(TYPES.RevolicoData) private readonly _revolicoProductData: IFetchProductData,
   ) {
     this._log.context = ScrapingProductsService.name;
-  }
-
-  /**
-   * Processes the scraping job by fetching products data from Revolico.
-   * It extracts the product data from the job, passes it to the IFetchProductData,
-   * and logs the result.
-   *
-   * @param {IJobContext<ScrapingProductsType>} ctx - Backend-agnostic job context.
-   * @returns {Promise<IRevolicoProduct[]>} - The result of fetching the products data from Revolico.
-   * @throws {Error} - Throws an error if the job processing fails.
-   */
-  public async processor(ctx: IJobContext<ScrapingProductsType>): Promise<IRevolicoProduct[]> {
-    this._log.debug(`Processing scraping job ID(${ctx.id}) with data: `, ctx.data);
-    const { category, subcategory, pageNumber, totalPages } = ctx.data;
-    try {
-      const data = await this._revolicoProductData.fetchProductInfoByCategory<IRevolicoProduct>(
-        category,
-        subcategory,
-        pageNumber,
-        totalPages,
-        ctx,
-      );
-      const logMsg = `Processed products qty: ${data.length}`;
-      this._log.debug(logMsg);
-      await ctx.log(logMsg);
-      return data;
-    } catch (error) {
-      this._log.error(`Failed to process job with id: ${ctx.id}`, error);
-      await ctx.log(`Product data retrieval and storage failed`);
-      throw error;
-    }
   }
 
   /**

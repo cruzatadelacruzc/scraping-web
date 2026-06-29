@@ -1,5 +1,6 @@
 import { Container } from 'inversify';
 import { ScrapingController } from '@scrapers/revolico/controllers/scraping.controller';
+import { ScraperConfigController } from '@scrapers/revolico/controllers/scraper-config.controller';
 import { Logger } from '@shared/logger';
 import { RevolicoFetchDataService } from '@scrapers/revolico/services/fetch-data.service';
 import { DBContext } from '@config/db-config';
@@ -61,6 +62,12 @@ import { PriceChangesByPercentCondition } from '@alarms/conditions/price-changes
 import { ViewsExceedCondition } from '@alarms/conditions/views-exceed.condition';
 import { IsOutstandingCondition } from '@alarms/conditions/outstanding.condition.interface';
 import { SellerChangedCondition } from '@alarms/conditions/seller-changed.condition';
+import { JsonataRunnerService } from '@scrapers/revolico/services/scraping/jsonata-runner.service';
+import { ScraperConfigRepository } from '@scrapers/revolico/services/scraping/repositories/scraper-config.repository';
+import { ScraperConfigRegistryService } from '@scrapers/revolico/services/scraping/scraper-config-registry.service';
+import { ScraperConfigService } from '@scrapers/revolico/services/scraping/scraper-config.service';
+import { GenericListingScraperService } from '@scrapers/revolico/services/scraping/generic-listing-scraper.service';
+import { GenericDetailScraperService } from '@scrapers/revolico/services/scraping/generic-detail-scraper.service';
 
 export const container = new Container();
 
@@ -95,7 +102,7 @@ container
 container.bind<IFetchProductData>(TYPES.RevolicoData).to(RevolicoFetchDataService);
 container.bind(TYPES.ScrapingManyProduct).to(ScrapingProductsService);
 container.bind(TYPES.ScrapingOneProduct).to(ScrapingProductService);
-container.bind(TYPES.ProductService).to(ProductService);
+container.bind(TYPES.ProductService).to(ProductService).inSingletonScope();
 container.bind<IQueueModule>(TYPES.RevolicoQueues).to(RevolicoQueues).inSingletonScope();
 container.bind(TYPES.UserService).to(UserService);
 container.bind(TYPES.AuthService).to(AuthService);
@@ -123,6 +130,7 @@ container.bind(TYPES.NotificationMapper).to(NotificationMapper);
 
 //controllers
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
+container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<PlanController>(TYPES.PlanController).to(PlanController);
 container.bind<AccountController>(TYPES.AccountController).to(AccountController);
@@ -140,6 +148,15 @@ container.bind(UserIdentityRepository).toSelf();
 container.bind(AccountRepository).toSelf();
 container.bind(AlarmRepository).toSelf();
 container.bind(NotificationRepository).toSelf();
+container.bind(ScraperConfigRepository).toSelf();
+container.bind(TYPES.ScraperConfigRepository).to(ScraperConfigRepository);
+
+// JSONata-driven scraping
+container.bind<JsonataRunnerService>(TYPES.JsonataRunner).to(JsonataRunnerService).inSingletonScope();
+container.bind<ScraperConfigRegistryService>(TYPES.ScraperConfigRegistry).to(ScraperConfigRegistryService).inSingletonScope();
+container.bind<ScraperConfigService>(TYPES.ScraperConfigService).to(ScraperConfigService).inSingletonScope();
+container.bind<GenericListingScraperService>(TYPES.GenericListingScraper).to(GenericListingScraperService).inSingletonScope();
+container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(GenericDetailScraperService).inSingletonScope();
 
 //middlewares
 container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware);

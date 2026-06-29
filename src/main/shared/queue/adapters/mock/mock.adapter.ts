@@ -19,6 +19,7 @@ import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 interface IMockJob<TData = unknown> {
   id: string;
   name: string;
+  queueName: string;
   data: TData;
   attemptsMade: number;
   maxAttempts: number;
@@ -69,6 +70,7 @@ export class MockQueueAdapter implements IQueueAdapter {
     const job: IMockJob<TData> = {
       id: opts?.jobId ?? randomUUID(),
       name: opts?.name ?? '__default__',
+      queueName,
       data,
       attemptsMade: 0,
       maxAttempts: opts?.attempts ?? 1,
@@ -136,6 +138,13 @@ export class MockQueueAdapter implements IQueueAdapter {
     return this.jobs.map(j => ({ ...j, logs: [...j.logs] }));
   }
 
+  /** Test helper — clears the job log but keeps workers, listeners, and the
+   * adapter's `shuttingDown` flag intact. Lets a test reset state without
+   * tearing down the queue wiring that {@link initializeQueues} set up. */
+  public reset(): void {
+    this.jobs.length = 0;
+  }
+
   private getOrCreateState(queueName: string): IQueueState {
     let state = this.queues.get(queueName);
     if (!state) {
@@ -192,7 +201,7 @@ export class MockQueueAdapter implements IQueueAdapter {
       }
       job.status = 'failed';
       job.reason = err instanceof Error ? err.message : String(err);
-      const event: IQueueFailedEvent = { jobId: job.id, name: job.name, reason: job.reason, data: job.data };
+      const event: IQueueFailedEvent = { jobId: job.id, name: job.name, reason: job.reason, data: job.data, error: err };
       await Promise.all(state.failedListeners.map(l => Promise.resolve(l(event))));
     }
   }

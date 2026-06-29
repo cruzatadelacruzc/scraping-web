@@ -3,14 +3,12 @@ import { container } from '@shared/container';
 import { IFetchProductData } from '@shared/fetch-product-data.interface';
 
 describe('Inversify Container', () => {
-  it('should resolve the service correctly from the container', async () => {
+  it('should resolve the Revolico fetch service correctly from the container', async () => {
     const service: IFetchProductData = container.get<IFetchProductData>(TYPES.RevolicoData);
 
-    // Verify service definition
     expect(service).toBeDefined();
-    // Verify that the attribute exists
     expect(service).toHaveProperty('_baseURL');
-    // Verify that the method exists
-    expect(service.fetchProductInfoByCategory).toBeInstanceOf(Function);
+    expect(typeof service.buildURL).toBe('function');
+    expect(typeof service.fetchRenderedJson).toBe('function');
   });
 });
