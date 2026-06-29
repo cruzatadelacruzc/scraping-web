@@ -163,3 +163,4 @@ Run before `git commit` — see @.claude/rules/compliance-checklist.md for the f
 | Queue dashboard (`@bull-board`)             | `src/main/shared/queue-dashboard/`                  |
 | DB utility scripts                          | `scripts/`                                          |
 | Environment setup                           | `.env.example`                                      |
+| Super Admin SPA module guide                | `apps/admin-web/CLAUDE.md`                          |
