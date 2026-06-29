@@ -7,6 +7,14 @@ import { JsonataExtractionError, buildJsonataError, type JsonataErrorCode } from
 export interface IJsonataRunOptions {
   /** Maximum evaluation time in ms. Defaults to 5000. */
   timeoutMs?: number;
+  /**
+   * The ScraperConfig storeKey that requested this evaluation
+   * (e.g. `revolico:listing`). Propagated into the resulting error so the
+   * `failedReason` and Bull-Board row tell the user WHICH config is broken,
+   * not just "the runner". Defaults to `__runner__` for callers that don't
+   * have a config context (tests, ad-hoc invocations).
+   */
+  storeKey?: string;
 }
 
 export type JsonataValidationResult = { ok: true } | { ok: false; error: string };
@@ -42,6 +50,8 @@ export class JsonataRunnerService {
    *   by `page.evaluate()` in Puppeteer).
    * @param {IJsonataRunOptions} [opts] - Optional tuning knobs.
    * @param {number} [opts.timeoutMs=5000] - Maximum evaluation time in ms.
+   * @param {string} [opts.storeKey] - ScraperConfig storeKey forwarded into the
+   *   thrown error so Bull-Board shows which config failed.
    * @returns {Promise<T>} The JSONata result, cast to the caller's type.
    * @throws {JsonataExtractionError} with code `EXPRESSION_ERROR` on parse/eval failure,
    *   `TIMEOUT` on deadline expiry, or `NOT_SERIALIZABLE` if the result contains a
@@ -49,12 +59,18 @@ export class JsonataRunnerService {
    */
   public async run<T>(expression: string, input: unknown, opts: IJsonataRunOptions = {}): Promise<T> {
     const timeoutMs = opts.timeoutMs ?? 5000;
+    const storeKey = opts.storeKey ?? '__runner__';
 
     let expr: jsonata.Expression;
     try {
       expr = jsonata(expression);
     } catch (e) {
-      throw this._toError('EXPRESSION_ERROR', expression, input, e);
+      this._log.error('[jsonata-runner] EXPRESSION_ERROR while compiling expression', {
+        storeKey,
+        expression,
+        cause: e instanceof Error ? e.message : String(e),
+      });
+      throw this._toError('EXPRESSION_ERROR', expression, input, e, storeKey);
     }
 
     let evaluationSettled = false;
@@ -74,9 +90,19 @@ export class JsonataRunnerService {
       evaluationSettled = true;
       if (timer) clearTimeout(timer);
       if (e instanceof Error && e.message === '__jsonata_timeout__') {
-        throw this._toError('TIMEOUT', expression, input, e, { ms: timeoutMs });
+        this._log.error('[jsonata-runner] TIMEOUT while evaluating expression', {
+          storeKey,
+          timeoutMs,
+          expression,
+        });
+        throw this._toError('TIMEOUT', expression, input, e, storeKey, { ms: timeoutMs });
       }
-      throw this._toError('EXPRESSION_ERROR', expression, input, e);
+      this._log.error('[jsonata-runner] EXPRESSION_ERROR while evaluating expression', {
+        storeKey,
+        expression,
+        cause: e instanceof Error ? e.message : String(e),
+      });
+      throw this._toError('EXPRESSION_ERROR', expression, input, e, storeKey);
     }
 
     if (timer) clearTimeout(timer);
@@ -84,7 +110,12 @@ export class JsonataRunnerService {
     try {
       JSON.stringify(result);
     } catch (e) {
-      throw this._toError('NOT_SERIALIZABLE', expression, input, e);
+      this._log.error('[jsonata-runner] NOT_SERIALIZABLE — JSONata result is not JSON-serializable', {
+        storeKey,
+        expression,
+        cause: e instanceof Error ? e.message : String(e),
+      });
+      throw this._toError('NOT_SERIALIZABLE', expression, input, e, storeKey);
     }
 
     return result as T;
@@ -112,6 +143,7 @@ export class JsonataRunnerService {
     expression: string,
     inputJson: unknown,
     cause: unknown,
+    storeKey: string,
     extras: { ms?: number } = {},
   ): JsonataExtractionError {
     const jsonataMsg = cause instanceof Error ? cause.message : undefined;
@@ -121,6 +153,6 @@ export class JsonataRunnerService {
     };
     if (jsonataMsg !== undefined) opts.jsonataMsg = jsonataMsg;
     if (extras.ms !== undefined) opts.ms = extras.ms;
-    return buildJsonataError(code, '__runner__', opts);
+    return buildJsonataError(code, storeKey, opts);
   }
 }

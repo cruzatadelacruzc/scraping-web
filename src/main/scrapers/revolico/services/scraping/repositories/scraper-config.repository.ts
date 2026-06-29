@@ -54,6 +54,17 @@ export class ScraperConfigRepository {
   }
 
   /**
+   * List every row in `scraperConfig`, both enabled and disabled, sorted by
+   * `storeKey` so the admin UI gets a stable ordering. Used by the GET list
+   * endpoint — never on the worker hot-path.
+   *
+   * @returns {Promise<ScraperConfigModel[]>} All rows, ascending by storeKey.
+   */
+  public async findAll(): Promise<ScraperConfigModel[]> {
+    return this._prisma.scraperConfig.findMany({ orderBy: { storeKey: 'asc' } });
+  }
+
+  /**
    * Insert-or-update a row. Defense-in-depth: parses the expression via
    * `JsonataRunnerService.validate` BEFORE persisting. Throws if invalid so a
    * broken expression cannot land in the table and poison the next job.

@@ -8,8 +8,10 @@ export interface IRevolicoProduct extends IProductBase, IProductDetails {
   currency: string;
   price: number;
   isOutstanding: boolean;
+  isPromoted?: boolean;
   priceHistory?: { value: number; updatedAt: Date }[];
   isOutstandingHistory?: { value: boolean; updatedAt: Date }[];
+  isPromotedHistory?: { value: boolean; updatedAt: Date }[];
   locationHistory?: { value: { state: string; municipality: string }; updatedAt: Date }[];
   viewsHistory?: { value: number; updatedAt: Date }[];
 }
@@ -60,6 +62,15 @@ export const productSchema = new Schema<IRevolicoProduct>(
       default: false,
     },
     isOutstandingHistory: {
+      type: [{ value: { type: Boolean }, updatedAt: { type: Date, default: Date.now } }],
+      default: (): Array<any> => [],
+      _id: false,
+    },
+    isPromoted: {
+      type: Boolean,
+      default: false,
+    },
+    isPromotedHistory: {
       type: [{ value: { type: Boolean }, updatedAt: { type: Date, default: Date.now } }],
       default: (): Array<any> => [],
       _id: false,

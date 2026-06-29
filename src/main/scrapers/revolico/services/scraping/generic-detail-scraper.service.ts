@@ -4,7 +4,7 @@ import { ILogger } from '@shared/logger.interface';
 import { IFetchProductData } from '@shared/fetch-product-data.interface';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { parseLocation, parseViews } from '@utils/normalize-data.util';
-import { JsonataExtractionError } from '@scrapers/revolico/errors/jsonata-extraction.error';
+import { buildJsonataError, JsonataExtractionError } from '@scrapers/revolico/errors/jsonata-extraction.error';
 import { JsonataRunnerService } from '@scrapers/revolico/services/scraping/jsonata-runner.service';
 import { ScraperConfigRegistryService } from '@scrapers/revolico/services/scraping/scraper-config-registry.service';
 import { ProductRepository } from '@scrapers/revolico/repositories/product.repository';
@@ -75,7 +75,7 @@ export class GenericDetailScraperService {
   public async processor(ctx: IJobContext<{ url: string }[]>): Promise<string> {
     const urls = ctx.data ?? [];
     let remaining = urls.length;
-    this._log.debug(`GenericDetail job ${ctx.id}: ${urls.length} URLs`);
+    this._log.info(`[revolico] detail job ${ctx.id} started: ${urls.length} URLs`);
 
     const cfg = await this._registry.get(GenericDetailScraperService.STORE_KEY);
 
@@ -89,8 +89,28 @@ export class GenericDetailScraperService {
           continue;
         }
 
+        this._log.info(`[revolico] fetching detail: ${url}`);
         const tree = await this._revolicoData.fetchRenderedJson<unknown>(url, GenericDetailScraperService.DETAIL_SELECTOR, ctx);
-        const row = await this._runner.run<IDetailRow>(cfg.expression, tree, { timeoutMs: 5000 });
+        if (Array.isArray(tree) && tree.length === 0) {
+          this._log.warn('[revolico] empty DOM tree — CSS selector matched 0 elements; site HTML structure likely changed', {
+            url,
+            selector: GenericDetailScraperService.DETAIL_SELECTOR,
+            storeKey: cfg.storeKey,
+          });
+          await ctx.log(
+            `[scraper-failure] empty DOM tree at ${url} — selector "${GenericDetailScraperService.DETAIL_SELECTOR}" matched 0 elements. The site's HTML structure likely changed; update the selector or the JSONata expression in ScraperConfig.`,
+          );
+          throw buildJsonataError('EMPTY_TREE', cfg.storeKey, {
+            url,
+            selector: GenericDetailScraperService.DETAIL_SELECTOR,
+            expression: cfg.expression,
+            inputJson: tree,
+          });
+        }
+        const row = await this._runner.run<IDetailRow>(cfg.expression, tree, {
+          timeoutMs: 5000,
+          storeKey: cfg.storeKey,
+        });
 
         const update = this._mapRow(row);
         await this._repository.update(product._id, update);
@@ -101,8 +121,23 @@ export class GenericDetailScraperService {
 
         await delayRandom(1000, 3000);
       } catch (err) {
+        this._log.error('[revolico] detail scraper failed', {
+          jobId: ctx.id,
+          url,
+          storeKey: cfg.storeKey,
+          errName: err instanceof Error ? err.name : typeof err,
+          errMessage: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        });
+        // Send error context to BullMQ's job log buffer so it shows under
+        // the LOGS tab in Bull-Board alongside `failedReason`.
+        await ctx.log(`[scraper-failure] errName=${err instanceof Error ? err.name : typeof err}`);
+        await ctx.log(`[scraper-failure] message=${err instanceof Error ? err.message : String(err)}`);
+        if (err instanceof Error && err.stack) {
+          await ctx.log(`[scraper-failure] stack=${err.stack}`);
+        }
         if (err instanceof JsonataExtractionError) {
-          await ctx.log(`[scraper-failure] storeKey=${cfg.storeKey}`);
+          await ctx.log(`[scraper-failure] code=${err.code} storeKey=${cfg.storeKey}`);
           await ctx.log(`[scraper-failure] expression: ${cfg.expression}`);
           await ctx.log(`[scraper-failure] input-json (first 2KB): ${JSON.stringify(err.inputJson).slice(0, 2048)}`);
         }
@@ -110,6 +145,7 @@ export class GenericDetailScraperService {
       }
     }
 
+    this._log.info(`[revolico] detail job ${ctx.id} completed: ${urls.length - remaining}/${urls.length} URLs processed`);
     await ctx.progress(100);
     return `Processed ${urls.length} product URLs`;
   }

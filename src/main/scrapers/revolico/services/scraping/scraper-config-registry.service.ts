@@ -57,9 +57,11 @@ export class ScraperConfigRegistryService {
 
     const row = await this._repo.findByKey(storeKey);
     if (!row) {
+      this._log.warn('[scraper-config-registry] ScraperConfig row not found in DB', { storeKey });
       throw buildJsonataError('CONFIG_MISSING', storeKey);
     }
     if (!row.enabled) {
+      this._log.warn('[scraper-config-registry] ScraperConfig row exists but is disabled', { storeKey });
       throw buildJsonataError('CONFIG_DISABLED', storeKey);
     }
 

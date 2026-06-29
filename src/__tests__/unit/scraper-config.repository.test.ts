@@ -23,15 +23,16 @@ const makeConfig = (overrides: Partial<IFakeScraperConfig> = {}): IFakeScraperCo
 });
 
 type PrismaMock = {
-  scraperConfig: { findUnique: jest.Mock; upsert: jest.Mock };
+  scraperConfig: { findUnique: jest.Mock; upsert: jest.Mock; findMany: jest.Mock };
   __esModule: true;
-  default: { scraperConfig: { findUnique: jest.Mock; upsert: jest.Mock } };
+  default: { scraperConfig: { findUnique: jest.Mock; upsert: jest.Mock; findMany: jest.Mock } };
 };
 
 const buildPrismaMock = (): PrismaMock => {
   const scraperConfig = {
     findUnique: jest.fn(),
     upsert: jest.fn(),
+    findMany: jest.fn(),
   };
   return {
     scraperConfig,
@@ -113,6 +114,21 @@ describe('ScraperConfigRepository', () => {
         create: { storeKey: 'revolico:listing', expression: '{ "a": 1 }' },
         update: { expression: '{ "a": 1 }' },
       });
+    });
+  });
+
+  describe('findAll', () => {
+    it('returns rows ordered by storeKey ascending', async () => {
+      const rows = [makeConfig({ storeKey: 'revolico:detail' }), makeConfig({ storeKey: 'revolico:listing' })];
+      prismaMock.scraperConfig.findMany.mockResolvedValueOnce(rows);
+      const result = await repo.findAll();
+      expect(result).toEqual(rows);
+      expect(prismaMock.scraperConfig.findMany).toHaveBeenCalledWith({ orderBy: { storeKey: 'asc' } });
+    });
+
+    it('returns an empty array when there are no rows', async () => {
+      prismaMock.scraperConfig.findMany.mockResolvedValueOnce([]);
+      await expect(repo.findAll()).resolves.toEqual([]);
     });
   });
 });

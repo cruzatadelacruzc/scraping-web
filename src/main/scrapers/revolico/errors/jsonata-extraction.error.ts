@@ -3,7 +3,14 @@
  * `failedReason` string visible in Bull-Board, and to discriminate error
  * shapes in tests (`err instanceof JsonataExtractionError`).
  */
-export type JsonataErrorCode = 'TIMEOUT' | 'EXPRESSION_ERROR' | 'NOT_SERIALIZABLE' | 'CONFIG_MISSING' | 'CONFIG_DISABLED';
+export type JsonataErrorCode =
+  | 'TIMEOUT'
+  | 'EXPRESSION_ERROR'
+  | 'NOT_SERIALIZABLE'
+  | 'CONFIG_MISSING'
+  | 'CONFIG_DISABLED'
+  | 'EMPTY_TREE'
+  | 'NO_PRODUCTS_EXTRACTED';
 
 /**
  * Thrown when a JSONata expression fails to evaluate against the JSON tree
@@ -43,12 +50,14 @@ export class JsonataExtractionError extends Error {
  * @param {string} [opts.jsonataMsg] - Native JSONata library message.
  * @param {string} [opts.expression] - The JSONata source that failed.
  * @param {unknown} [opts.inputJson] - The input JSON tree at evaluation time.
+ * @param {string} [opts.url] - The URL that produced the empty tree (EMPTY_TREE).
+ * @param {string} [opts.selector] - The CSS selector that matched 0 elements (EMPTY_TREE).
  * @returns {JsonataExtractionError}
  */
 export function buildJsonataError(
   code: JsonataErrorCode,
   storeKey: string,
-  opts: { ms?: number; path?: string; jsonataMsg?: string; expression?: string; inputJson?: unknown } = {},
+  opts: { ms?: number; path?: string; jsonataMsg?: string; expression?: string; inputJson?: unknown; url?: string; selector?: string } = {},
 ): JsonataExtractionError {
   let message: string;
   switch (code) {
@@ -66,6 +75,12 @@ export function buildJsonataError(
       break;
     case 'CONFIG_DISABLED':
       message = `ScraperConfig disabled for storeKey=${storeKey}`;
+      break;
+    case 'EMPTY_TREE':
+      message = `Empty DOM tree at storeKey=${storeKey} — CSS selector matched 0 elements. The site's HTML structure likely changed; update the selector or the JSONata expression in ScraperConfig.`;
+      break;
+    case 'NO_PRODUCTS_EXTRACTED':
+      message = `No products extracted at storeKey=${storeKey} — JSONata expression evaluated against a non-empty DOM tree but returned 0 rows. The selector matched elements but the JSONata expression path does not match the actual structure; update the ScraperConfig expression.`;
       break;
     default: {
       const _exhaustive: never = code;

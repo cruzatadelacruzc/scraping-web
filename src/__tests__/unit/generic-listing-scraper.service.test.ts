@@ -81,7 +81,7 @@ describe('GenericListingScraperService', () => {
         isOutstanding: true,
       },
     ];
-    runner.run.mockResolvedValueOnce({ products: rows });
+    runner.run.mockResolvedValueOnce({ products: rows, promoted: [] });
 
     const ctx = makeCtx({ category: 'inmuebles', subcategory: 'apartamentos', pageNumber: 1, totalPages: 1 });
     const result = await service.processor(ctx);
@@ -90,10 +90,10 @@ describe('GenericListingScraperService', () => {
     expect(revolicoData.buildURL).toHaveBeenCalledWith('inmuebles', 'apartamentos', 1);
     expect(revolicoData.fetchRenderedJson).toHaveBeenCalledWith(
       'https://www.revolico.com/search?category=inmuebles&page=1',
-      'div.ybloC ul > li',
+      'div[class*="GridList__CardsContainer"]',
       ctx,
     );
-    expect(runner.run).toHaveBeenCalledWith('{ "products": $ }', tree, { timeoutMs: 5000 });
+    expect(runner.run).toHaveBeenCalledWith('{ "products": $ }', tree, { timeoutMs: 5000, storeKey: 'revolico:listing' });
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       ID: '12345',
@@ -106,19 +106,21 @@ describe('GenericListingScraperService', () => {
       description: 'Like new',
       imageURL: 'https://img/1.jpg',
       isOutstanding: true,
+      isPromoted: false,
     });
   });
 
   it('skips rows missing required fields (cost, imageURL, ID)', async () => {
     registry.get.mockResolvedValueOnce(cfg());
     revolicoData.buildURL.mockReturnValue('u');
-    revolicoData.fetchRenderedJson.mockResolvedValueOnce([]);
+    revolicoData.fetchRenderedJson.mockResolvedValueOnce([{ tag: 'li' }]);
     runner.run.mockResolvedValueOnce({
       products: [
         { url: '/x-1', cost: '5 USD', imageURL: 'i' },
         { url: '/x-2', cost: '', imageURL: 'i' },
         { url: '/x-3', cost: '5 USD', imageURL: '' },
       ],
+      promoted: [],
     });
 
     const result = await service.processor(makeCtx({ category: 'c', pageNumber: 1, totalPages: 1 }));
@@ -129,20 +131,35 @@ describe('GenericListingScraperService', () => {
   it('iterates over multiple pages when totalPages > 1', async () => {
     registry.get.mockResolvedValue(cfg());
     revolicoData.buildURL.mockImplementation((_c, _s, page) => `https://revolico/page-${page}`);
-    revolicoData.fetchRenderedJson.mockResolvedValue([]);
-    runner.run.mockResolvedValue({ products: [] });
+    revolicoData.fetchRenderedJson.mockResolvedValue([{ tag: 'li' }]);
+    runner.run.mockResolvedValue({ products: [{ url: '/p-1', cost: '1 USD', imageURL: 'i' }], promoted: [] });
 
     await service.processor(makeCtx({ category: 'c', pageNumber: 1, totalPages: 3 }));
     expect(revolicoData.fetchRenderedJson).toHaveBeenCalledTimes(3);
-    expect(revolicoData.fetchRenderedJson).toHaveBeenNthCalledWith(1, 'https://revolico/page-1', 'div.ybloC ul > li', expect.anything());
-    expect(revolicoData.fetchRenderedJson).toHaveBeenNthCalledWith(2, 'https://revolico/page-2', 'div.ybloC ul > li', expect.anything());
-    expect(revolicoData.fetchRenderedJson).toHaveBeenNthCalledWith(3, 'https://revolico/page-3', 'div.ybloC ul > li', expect.anything());
+    expect(revolicoData.fetchRenderedJson).toHaveBeenNthCalledWith(
+      1,
+      'https://revolico/page-1',
+      'div[class*="GridList__CardsContainer"]',
+      expect.anything(),
+    );
+    expect(revolicoData.fetchRenderedJson).toHaveBeenNthCalledWith(
+      2,
+      'https://revolico/page-2',
+      'div[class*="GridList__CardsContainer"]',
+      expect.anything(),
+    );
+    expect(revolicoData.fetchRenderedJson).toHaveBeenNthCalledWith(
+      3,
+      'https://revolico/page-3',
+      'div[class*="GridList__CardsContainer"]',
+      expect.anything(),
+    );
   });
 
-  it('re-throws JsonataExtractionError after logging diagnostics via ctx.log', async () => {
+  it('re-throws JsonataExtractionError after logging diagnostics via ctx.log and _log.error', async () => {
     registry.get.mockResolvedValueOnce(cfg());
     revolicoData.buildURL.mockReturnValue('u');
-    revolicoData.fetchRenderedJson.mockResolvedValueOnce([]);
+    revolicoData.fetchRenderedJson.mockResolvedValueOnce([{ tag: 'li' }]);
     const err = new JsonataExtractionError({
       code: 'EXPRESSION_ERROR',
       message: 'Jsonata EXPRESSION_ERROR at storeKey=revolico:listing | Path: $.products | JSONata: oops',
@@ -154,9 +171,24 @@ describe('GenericListingScraperService', () => {
     const ctx = makeCtx({ category: 'c', pageNumber: 1, totalPages: 1 });
     await expect(service.processor(ctx)).rejects.toBe(err);
 
-    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] storeKey=revolico:listing/));
+    // ctx.log entries — visible in Bull-Board's LOGS tab for the failed job.
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] errName=JsonataExtractionError/));
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] message=.*EXPRESSION_ERROR/));
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] stack=/));
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] code=EXPRESSION_ERROR storeKey=revolico:listing/));
     expect(ctx.log).toHaveBeenCalledWith(expect.stringContaining('expression:'));
     expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/input-json/));
+
+    // _log.error — visible in stdout / file logs.
+    expect(loggerStub.error).toHaveBeenCalledWith(
+      expect.stringContaining('[revolico] listing scraper failed'),
+      expect.objectContaining({
+        jobId: ctx.id,
+        storeKey: 'revolico:listing',
+        errName: 'JsonataExtractionError',
+        errMessage: expect.stringContaining('EXPRESSION_ERROR'),
+      }),
+    );
   });
 
   it('throws when registry.get reports CONFIG_MISSING (no DB row)', async () => {
@@ -167,5 +199,66 @@ describe('GenericListingScraperService', () => {
     registry.get.mockRejectedValueOnce(err);
 
     await expect(service.processor(makeCtx({ category: 'c', pageNumber: 1, totalPages: 1 }))).rejects.toBe(err);
+  });
+
+  it('logs URL at info level before fetching each listing page', async () => {
+    registry.get.mockResolvedValue(cfg());
+    revolicoData.buildURL.mockImplementation((_c, _s, page) => `https://revolico/page-${page}`);
+    revolicoData.fetchRenderedJson.mockResolvedValue([{ tag: 'li' }]);
+    runner.run.mockResolvedValue({ products: [{ url: '/p-1', cost: '1 USD', imageURL: 'i' }], promoted: [] });
+
+    await service.processor(makeCtx({ category: 'c', pageNumber: 1, totalPages: 2 }));
+
+    expect(loggerStub.info).toHaveBeenCalledWith(
+      expect.stringMatching(/\[revolico\] fetching listing page 1\/2: https:\/\/revolico\/page-1/),
+    );
+    expect(loggerStub.info).toHaveBeenCalledWith(
+      expect.stringMatching(/\[revolico\] fetching listing page 2\/2: https:\/\/revolico\/page-2/),
+    );
+  });
+
+  it('throws JsonataExtractionError(EMPTY_TREE) and warns when fetchRenderedJson returns an empty array', async () => {
+    registry.get.mockResolvedValueOnce(cfg());
+    revolicoData.buildURL.mockReturnValue('https://revolico/x');
+    revolicoData.fetchRenderedJson.mockResolvedValueOnce([]);
+
+    const ctx = makeCtx({ category: 'c', pageNumber: 1, totalPages: 1 });
+    await expect(service.processor(ctx)).rejects.toMatchObject({
+      name: 'JsonataExtractionError',
+      code: 'EMPTY_TREE',
+    });
+
+    expect(loggerStub.warn).toHaveBeenCalledWith(
+      expect.stringContaining('[revolico] empty DOM tree'),
+      expect.objectContaining({
+        url: 'https://revolico/x',
+        selector: 'div[class*="GridList__CardsContainer"]',
+        storeKey: 'revolico:listing',
+      }),
+    );
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] empty DOM tree at https:\/\/revolico\/x/));
+  });
+
+  it('throws JsonataExtractionError(NO_PRODUCTS_EXTRACTED) and warns when JSONata returns 0 products against a non-empty tree', async () => {
+    registry.get.mockResolvedValueOnce(cfg());
+    revolicoData.buildURL.mockReturnValue('https://revolico/x');
+    revolicoData.fetchRenderedJson.mockResolvedValueOnce([{ tag: 'li' }, { tag: 'li' }]);
+    runner.run.mockResolvedValueOnce({ products: [], promoted: [] });
+
+    const ctx = makeCtx({ category: 'c', pageNumber: 1, totalPages: 1 });
+    await expect(service.processor(ctx)).rejects.toMatchObject({
+      name: 'JsonataExtractionError',
+      code: 'NO_PRODUCTS_EXTRACTED',
+    });
+
+    expect(loggerStub.warn).toHaveBeenCalledWith(
+      expect.stringContaining('[revolico] JSONata expression extracted 0 products'),
+      expect.objectContaining({
+        url: 'https://revolico/x',
+        treeLength: 2,
+        storeKey: 'revolico:listing',
+      }),
+    );
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] no products extracted at https:\/\/revolico\/x/));
   });
 });

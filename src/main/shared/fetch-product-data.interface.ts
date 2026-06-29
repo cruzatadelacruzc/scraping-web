@@ -1,5 +1,3 @@
-import { ScrapingProductsType } from '@scrapers/revolico/services/dto';
-import { IProductBase, IProductDetails } from '@shared/product-base.interface';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 
 export interface IFetchProductData {
@@ -31,37 +29,4 @@ export interface IFetchProductData {
    * @returns {Promise<T>} The serialized tree, typed by the caller.
    */
   fetchRenderedJson<T>(url: string, selector: string, ctx?: IJobContext): Promise<T>;
-
-  /**
-   * Fetches products information by category and subcategory.
-   *
-   * @param category The category to fetch products from.
-   * @param subcategory The subcategory to fetch products from.
-   * @param pageNumber The page number for the request.
-   * @param totalPages The number of pages to scrape.
-   * @param job Backend-agnostic job context used for progress and logging.
-   * @returns {Promise<T[]>} A promise that resolves to an array of products.
-   * @deprecated Replaced by the JSONata-driven `GenericListingScraperService`,
-   *   which uses `fetchRenderedJson` and evaluates a `ScraperConfig` expression.
-   *   Kept temporarily for the migration window; will be removed once the
-   *   generic scrapers are wired into all queues.
-   */
-  fetchProductInfoByCategory<T extends IProductBase>(
-    category: string,
-    subcategory?: string,
-    pageNumber?: number,
-    totalPages?: number,
-    job?: IJobContext<ScrapingProductsType>,
-  ): Promise<T[]>;
-
-  /**
-   * Fetch product information
-   *
-   * @param url The URL to fetch product from.
-   * @param job Backend-agnostic job context used for progress and logging.
-   * @returns {Promise<IProductDetails>} A promise that resolves the product details.
-   * @deprecated Replaced by the JSONata-driven `GenericDetailScraperService`,
-   *   which uses `fetchRenderedJson` and evaluates a `ScraperConfig` expression.
-   */
-  fetchProductDetails(url: string, job: IJobContext<{ url: string }[]>): Promise<IProductDetails | null>;
 }

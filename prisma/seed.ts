@@ -6,23 +6,53 @@ const prisma = new PrismaClient();
 const DEFAULT_ROLES = ['ACCOUNT_OWNER', 'SUPER_ADMIN', 'MEMBER'] as const;
 
 // JSONata expressions for externalized scraping.
-// These are DRAFT and must be validated against real Revolico HTML.
-// If a JSONata fails, the failure is captured in Bull-Board's
-// failedReason + ctx.log() entries — see plan Phase D.
-const REVOLICO_LISTING_EXPRESSION = `(
-  $ ~> |$|{
-    "products":
-      $.**."div"."ul"."li"[
-        $."a"."@href" != undefined
-      ].{
-        "url":          $."a"."@href",
-        "description":  $."p".text,
-        "cost":         $."span".text,
-        "imageURL":     $."picture img"."@src",
-        "isOutstanding": $."div"."@class" = "dHRSzq"
+//
+// The input to each expression is the DOM tree produced by
+// `RevolicoFetchDataService.fetchRenderedJson(url, selector, ctx)`. For
+// `revolico:listing` the page-level selector is
+// `div[class*="GridList__CardsContainer"]`, so the input is the single
+// container subtree. The expression walks down to `CardsList` (regular
+// grid) and `PromotedsContainer` (promoted carousel) and returns two
+// arrays. The shape of each element is the `domToJson` output from
+// `services/scraping/utils/dom-to-json.util.ts`:
+//
+//   { tag: string, attrs: Record<string, string>, children: DomNode[], text?: string }
+//
+// Validate against the latest Revolico HTML before bumping. Failures surface
+// as JsonataExtractionError in Bull-Board's failedReason + ctx.log() entries.
+const REVOLICO_LISTING_EXPRESSION = `{
+  "products": $map(
+    $.**[ $.tag = "ul" and $count($.attrs.*[ $contains($, "GridList__CardsList") ]) > 0 ]
+            .children[ $.tag = "li" and $count($.children[ $.tag = "a" ]) > 0 ]
+            .children[ $.tag = "a" ],
+    function($a) {
+      {
+        "url":           $a.attrs.href,
+        "description":   $a.children[ $.tag = "div" ][1].children[ $.tag = "p" ][0].text,
+        "cost":          $exists($a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text)
+                          ? $a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text
+                          : "",
+        "imageURL":      $a.children[ $.tag = "div" ][0].children[ $.tag = "picture" ][0].children[ $.tag = "source" ][0].attrs.srcset,
+        "isOutstanding": $count($a.**[ $.tag = "div" and $.attrs.title = "Anuncio destacado" ]) > 0
       }
-  }|
-)`;
+    }
+  ),
+  "promoted": $map(
+    $.**[ $.tag = "div" and $count($.attrs.*[ $contains($, "GridList__PromotedsContainer") ]) > 0 ]
+            .**[ $.tag = "a" and $contains($.attrs.href, "/item/") ],
+    function($a) {
+      {
+        "url":           $a.attrs.href,
+        "description":   $a.children[ $.tag = "div" ][1].children[ $.tag = "p" ][0].text,
+        "cost":          $exists($a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text)
+                          ? $a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text
+                          : "",
+        "imageURL":      $a.children[ $.tag = "div" ][0].children[ $.tag = "picture" ][0].children[ $.tag = "source" ][0].attrs.srcset,
+        "isOutstanding": $count($a.**[ $.tag = "div" and $.attrs.title = "Anuncio destacado" ]) > 0
+      }
+    }
+  )
+}`;
 
 const REVOLICO_DETAIL_EXPRESSION = `(
   $ ~> |$|{
@@ -65,8 +95,14 @@ async function main(): Promise<void> {
     if (!existing) {
       await prisma.scraperConfig.create({ data: cfg });
       console.log(`  ScraperConfig "${cfg.storeKey}" created`);
+    } else if (existing.expression !== cfg.expression) {
+      await prisma.scraperConfig.update({
+        where: { storeKey: cfg.storeKey },
+        data: { expression: cfg.expression, version: { increment: 1 } },
+      });
+      console.log(`  ScraperConfig "${cfg.storeKey}" updated (expression changed, version bumped)`);
     } else {
-      console.log(`  ScraperConfig "${cfg.storeKey}" already exists`);
+      console.log(`  ScraperConfig "${cfg.storeKey}" already up to date`);
     }
   }
 

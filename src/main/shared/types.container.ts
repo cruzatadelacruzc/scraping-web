@@ -75,6 +75,8 @@ export const TYPES = {
   JsonataRunner: Symbol.for('JsonataRunner'),
   ScraperConfigRepository: Symbol.for('ScraperConfigRepository'),
   ScraperConfigRegistry: Symbol.for('ScraperConfigRegistry'),
+  ScraperConfigService: Symbol.for('ScraperConfigService'),
+  ScraperConfigController: Symbol.for('ScraperConfigController'),
   GenericListingScraper: Symbol.for('GenericListingScraper'),
   GenericDetailScraper: Symbol.for('GenericDetailScraper'),
 };

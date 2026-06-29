@@ -83,7 +83,7 @@ describe('GenericDetailScraperService', () => {
 
     expect(registry.get).toHaveBeenCalledWith('revolico:detail');
     expect(revolicoData.fetchRenderedJson).toHaveBeenCalledWith('https://www.revolico.com/ad/x-1', 'main', ctx);
-    expect(runner.run).toHaveBeenCalledWith(cfg().expression, { tag: 'main' }, { timeoutMs: 5000 });
+    expect(runner.run).toHaveBeenCalledWith(cfg().expression, { tag: 'main' }, { timeoutMs: 5000, storeKey: 'revolico:detail' });
     expect(repo.findOne).toHaveBeenCalledWith({ url: 'https://www.revolico.com/ad/x-1' }, { _id: 1 });
     expect(repo.update).toHaveBeenCalledWith('p1', {
       views: 153,
@@ -132,8 +132,60 @@ describe('GenericDetailScraperService', () => {
     const ctx = makeCtx([{ url: 'https://x/a-1' }]);
     await expect(service.processor(ctx)).rejects.toBe(err);
 
-    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] storeKey=revolico:detail/));
+    // ctx.log entries — visible in Bull-Board's LOGS tab for the failed job.
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] errName=JsonataExtractionError/));
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] message=.*EXPRESSION_ERROR/));
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] stack=/));
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] code=EXPRESSION_ERROR storeKey=revolico:detail/));
     expect(ctx.log).toHaveBeenCalledWith(expect.stringContaining('expression:'));
     expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/input-json/));
+
+    // _log.error — visible in stdout / file logs.
+    expect(loggerStub.error).toHaveBeenCalledWith(
+      expect.stringContaining('[revolico] detail scraper failed'),
+      expect.objectContaining({
+        jobId: ctx.id,
+        url: 'https://x/a-1',
+        storeKey: 'revolico:detail',
+        errName: 'JsonataExtractionError',
+        errMessage: expect.stringContaining('EXPRESSION_ERROR'),
+      }),
+    );
+  });
+
+  it('logs URL at info level before fetching each detail page', async () => {
+    registry.get.mockResolvedValue(cfg());
+    revolicoData.fetchRenderedJson.mockResolvedValue({ tag: 'main' });
+    runner.run.mockResolvedValue({ views: '0', location: '', seller: { name: '', whatsapp: '', phone: '', email: '' } });
+    repo.findOne.mockImplementation(async filter => ({ _id: (filter as { url?: string }).url }) as unknown as IRevolicoProduct);
+    repo.update.mockResolvedValue({} as IRevolicoProduct);
+
+    const urls = [{ url: 'https://x/a-1' }, { url: 'https://x/a-2' }];
+    await service.processor(makeCtx(urls));
+
+    expect(loggerStub.info).toHaveBeenCalledWith(expect.stringMatching(/\[revolico\] fetching detail: https:\/\/x\/a-1/));
+    expect(loggerStub.info).toHaveBeenCalledWith(expect.stringMatching(/\[revolico\] fetching detail: https:\/\/x\/a-2/));
+  });
+
+  it('throws JsonataExtractionError(EMPTY_TREE) and warns when fetchRenderedJson returns an empty array', async () => {
+    registry.get.mockResolvedValueOnce(cfg());
+    repo.findOne.mockResolvedValueOnce({ _id: 'p1' } as unknown as IRevolicoProduct);
+    revolicoData.fetchRenderedJson.mockResolvedValueOnce([]);
+
+    const ctx = makeCtx([{ url: 'https://x/a-1' }]);
+    await expect(service.processor(ctx)).rejects.toMatchObject({
+      name: 'JsonataExtractionError',
+      code: 'EMPTY_TREE',
+    });
+
+    expect(loggerStub.warn).toHaveBeenCalledWith(
+      expect.stringContaining('[revolico] empty DOM tree'),
+      expect.objectContaining({
+        url: 'https://x/a-1',
+        selector: 'main',
+        storeKey: 'revolico:detail',
+      }),
+    );
+    expect(ctx.log).toHaveBeenCalledWith(expect.stringMatching(/\[scraper-failure\] empty DOM tree at https:\/\/x\/a-1/));
   });
 });
