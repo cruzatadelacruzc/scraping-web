@@ -58,7 +58,7 @@ export const TYPES = {
   I18nService: Symbol.for('I18nService'),
   BotQueues: Symbol.for('BotQueues'),
   WhatsAppProvider: Symbol.for('WhatsAppProvider'),
-  TelegramProviderStub: Symbol.for('TelegramProviderStub'),
+  TelegramProvider: Symbol.for('TelegramProvider'),
   TenantMemoryFactory: Symbol.for('TenantMemoryFactory'),
   SystemPromptFactory: Symbol.for('SystemPromptFactory'),
   LangChainConfig: Symbol.for('LangChainConfig'),

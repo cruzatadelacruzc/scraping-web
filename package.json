@@ -59,6 +59,7 @@
     "typescript-eslint": "^8.9.0"
   },
   "dependencies": {
+    "@builderbot-plugins/telegram": "^2.0.0",
     "@builderbot/bot": "^1.2.0",
     "@builderbot/provider-baileys": "^1.2.0",
     "@bull-board/api": "^5.23.0",

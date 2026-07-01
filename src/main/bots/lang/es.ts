@@ -58,6 +58,9 @@ export const es = {
     email: (e: string) => `Email: ${e}`,
     displayName: (d: string) => `Nombre: ${d}`,
   },
+  status: {
+    online: 'El bot está en línea y funcionando.',
+  },
   errors: {
     internal: 'Lo siento, algo salió mal de nuestro lado.',
     unlinked: 'No estás vinculado. Abre la web para generar un código de vínculo.',

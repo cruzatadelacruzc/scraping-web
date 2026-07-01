@@ -58,6 +58,9 @@ export const en = {
     email: (e: string) => `Email: ${e}`,
     displayName: (d: string) => `Display name: ${d}`,
   },
+  status: {
+    online: 'Bot is online and running.',
+  },
   errors: {
     internal: 'Sorry, something went wrong on our side.',
     unlinked: 'You are not linked. Open the web app to generate a link code.',
