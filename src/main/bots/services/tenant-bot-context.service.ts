@@ -15,7 +15,7 @@ export interface IBotContext {
 export class TenantBotContextService {
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(BotConversationRepository) private readonly _repo: BotConversationRepository,
+    @inject(TYPES.BotConversationRepository) private readonly _repo: BotConversationRepository,
   ) {
     this._log.context = TenantBotContextService.name;
   }

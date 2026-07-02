@@ -24,9 +24,9 @@ export class BotService {
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.WhatsAppProvider) private readonly _whatsapp: WhatsAppProvider,
     @inject(TYPES.TelegramProvider) private readonly _telegram: TelegramProvider,
-    @inject(TenantBotContextService) private readonly _tenantCtx: TenantBotContextService,
-    @inject(MessageRouterService) private readonly _router: MessageRouterService,
-    @inject(LinkCodeService) private readonly _linkCode: LinkCodeService,
+    @inject(TYPES.TenantBotContextService) private readonly _tenantCtx: TenantBotContextService,
+    @inject(TYPES.MessageRouterService) private readonly _router: MessageRouterService,
+    @inject(TYPES.LinkCodeService) private readonly _linkCode: LinkCodeService,
   ) {
     this._log.context = BotService.name;
   }

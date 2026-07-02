@@ -15,8 +15,8 @@ import { ILinkStatusResponse } from '@bots/services/dto/link-status.dto';
 export class BotController {
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(LinkCodeService) private readonly _linkCode: LinkCodeService,
-    @inject(TenantContext) private readonly _tenantCtx: TenantContext,
+    @inject(TYPES.LinkCodeService) private readonly _linkCode: LinkCodeService,
+    @inject(TYPES.TenantContext) private readonly _tenantCtx: TenantContext,
   ) {
     this._log.context = BotController.name;
   }

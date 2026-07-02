@@ -11,7 +11,7 @@ export class LinkCodeService {
 
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(LinkCodeRepository) private readonly _repo: LinkCodeRepository,
+    @inject(TYPES.LinkCodeRepository) private readonly _repo: LinkCodeRepository,
   ) {
     this._log.context = LinkCodeService.name;
     this._ttlMinutes = parseInt(process.env.BOT_LINK_CODE_TTL_MINUTES ?? '10', 10);
