@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { createBot, MemoryDB } from '@builderbot/bot';
+import { createBot, MemoryDB, type CoreClass } from '@builderbot/bot';
 import type { ProviderClass } from '@builderbot/bot';
 import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
@@ -10,10 +10,14 @@ import { MessageRouterService } from './message-router.service';
 import { LinkCodeService } from './link-code.service';
 import { mainFlow } from '@bots/flows';
 
+/** Base port for bot HTTP servers — one per provider, each gets basePort + index. */
+const BOT_HTTP_BASE_PORT = parseInt(process.env.BOT_HTTP_PORT ?? '3001', 10);
+
 /** Internal record of a running bot instance. */
 interface IBotInstance {
   name: string;
   provider: ProviderClass;
+  instance: CoreClass;
 }
 
 @injectable()
@@ -54,14 +58,14 @@ export class BotService {
       return;
     }
 
-    for (const { name, factory } of factories) {
+    for (const [index, { name, factory }] of factories.entries()) {
       try {
         const provider = factory.createProviderInstance();
         const adapter = new MemoryDB();
 
         // extensions.tenantResolver is called by flows to resolve
         // tenant context on-demand before executing gated logic.
-        await createBot(
+        const instance = await createBot(
           {
             flow: mainFlow,
             provider,
@@ -75,7 +79,13 @@ export class BotService {
           },
         );
 
-        this._bots.push({ name, provider });
+        // httpServer triggers initAll → initVendor → launch(), which starts
+        // the underlying message listener (polling for Telegram, WebSocket
+        // for WhatsApp). Each provider needs a unique port.
+        const port = BOT_HTTP_BASE_PORT + index;
+        instance.httpServer(port);
+
+        this._bots.push({ name, provider, instance });
         this._log.info(`Bot provider "${name}" started`);
       } catch (e: unknown) {
         this._log.error(`Failed to start bot provider "${name}"`, e as Error);
