@@ -7,7 +7,7 @@ import { requireLinkedUser, unlinkedMessage } from './shared/auth.guard';
  * /profile flow — shows display name and email for the linked user.
  * Data is fetched via `methods.extensions.profileProvider`.
  */
-export const profileFlow = addKeyword(['/profile'], { sensitive: true }).addAction(async (ctx, methods) => {
+export const profileFlow = addKeyword(['/profile']).addAction(async (ctx, methods) => {
   const botCtx = await resolveTenant(ctx, methods);
   const lang = botCtx.preferredLang;
   const profileProvider = methods.extensions?.profileProvider as

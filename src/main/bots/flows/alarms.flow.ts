@@ -7,7 +7,7 @@ import { requireLinkedUser, unlinkedMessage } from './shared/auth.guard';
  * /alarms flow — lists active alarms for the linked user.
  * The alarm data is fetched via `methods.extensions.alarmProvider`.
  */
-export const alarmsFlow = addKeyword(['/alarms'], { sensitive: true }).addAction(async (ctx, methods) => {
+export const alarmsFlow = addKeyword(['/alarms']).addAction(async (ctx, methods) => {
   const botCtx = await resolveTenant(ctx, methods);
   const lang = botCtx.preferredLang;
   const alarmProvider = methods.extensions?.alarmProvider as

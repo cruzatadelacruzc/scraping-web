@@ -5,7 +5,7 @@ import { resolveTenant } from './shared/resolve-tenant';
 /**
  * /help flow — lists available commands and account-linking instructions.
  */
-export const helpFlow = addKeyword(['/help'], { sensitive: true }).addAction(async (ctx, methods) => {
+export const helpFlow = addKeyword(['/help']).addAction(async (ctx, methods) => {
   const botCtx = await resolveTenant(ctx, methods);
   const lang = botCtx.preferredLang;
 
