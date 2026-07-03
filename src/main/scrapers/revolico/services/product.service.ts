@@ -32,22 +32,21 @@ export class ProductService {
     const errors: Error[] = [];
     const invalidProductInfo: IRevolicoProduct[] = [];
 
-    const productsPromises = batchProducts.map(product =>
-      this._repository.bulkInsertOrUpdate(product, ['url']).then(
-        result => {
-          if (result?.url) {
-            processedUrls.push(result.url);
-          }
-        },
-        error => {
-          Object.values(error.errors).forEach((err: any) => err && err.message && errors.push(err.message));
-          this._log.warn(`Failed to process product with URL: ${product.url}`);
-          invalidProductInfo.push(product);
-        },
-      ),
-    );
+    // Use allSettled to collect results in input order — the returned
+    // urls array must match the order of batchProducts so callers can
+    // rely on url[i] corresponding to batchProducts[i].
+    const results = await Promise.allSettled(batchProducts.map(product => this._repository.bulkInsertOrUpdate(product, ['url'])));
 
-    await Promise.allSettled(productsPromises);
+    for (const [i, result] of results.entries()) {
+      if (result.status === 'fulfilled' && result.value?.url) {
+        processedUrls.push(result.value.url);
+      } else if (result.status === 'rejected') {
+        const error = result.reason as { errors?: Record<string, { message?: string }> };
+        Object.values(error.errors ?? {}).forEach((err: any) => err?.message && errors.push(err.message));
+        this._log.warn(`Failed to process product with URL: ${batchProducts[i].url}`);
+        invalidProductInfo.push(batchProducts[i]);
+      }
+    }
 
     return { urls: processedUrls, invalidProductInfo, errors };
   }
