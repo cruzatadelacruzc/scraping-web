@@ -8,6 +8,7 @@ import { ResponseHandler } from '@shared/response-handler';
 import { ValidateRequestMiddleware } from '@shared/middleware/validate-request.middleware';
 import { TenantContext } from '@shared/tenant-context-als';
 import { LinkCodeService } from '@bots/services/link-code.service';
+import { BotMenuService } from '@bots/services/bot-menu.service';
 import { GenerateLinkCodeDTO } from '@bots/services/dto/generate-link-code.dto';
 import { ILinkStatusResponse } from '@bots/services/dto/link-status.dto';
 
@@ -16,6 +17,7 @@ export class BotController {
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.LinkCodeService) private readonly _linkCode: LinkCodeService,
+    @inject(TYPES.BotMenuService) private readonly _menu: BotMenuService,
     @inject(TYPES.TenantContext) private readonly _tenantCtx: TenantContext,
   ) {
     this._log.context = BotController.name;
@@ -49,8 +51,13 @@ export class BotController {
    */
   @httpDelete('/link', AuthMiddleware.forRoles('ACCOUNT_OWNER'))
   public async unlink(req: Request, res: Response): Promise<void> {
-    // TODO: clear userId on BotConversation records for this user
-    this._log.debug('Unlink requested', { userId: req.user!.user.id });
+    // TODO: clear userId on BotConversation records for this user and
+    // look up the chatId from the BotConversation record(s)
+    const chatId = req.body?.chatId as string | number | undefined;
+    if (chatId) {
+      await this._menu.applyCommands(chatId, false);
+    }
+    this._log.debug('Unlink requested', { userId: req.user!.user.id, chatId });
     ResponseHandler.ok(res, { message: 'Unlinked' });
   }
 }

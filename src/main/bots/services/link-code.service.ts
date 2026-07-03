@@ -4,6 +4,7 @@ import { BotLinkCode } from '@prisma/client';
 import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { LinkCodeRepository } from '@bots/repositories/link-code.repository';
+import { BotMenuService } from '@bots/services/bot-menu.service';
 
 @injectable()
 export class LinkCodeService {
@@ -12,6 +13,7 @@ export class LinkCodeService {
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.LinkCodeRepository) private readonly _repo: LinkCodeRepository,
+    @inject(TYPES.BotMenuService) private readonly _menu: BotMenuService,
   ) {
     this._log.context = LinkCodeService.name;
     this._ttlMinutes = parseInt(process.env.BOT_LINK_CODE_TTL_MINUTES ?? '10', 10);
@@ -41,5 +43,21 @@ export class LinkCodeService {
   public async consume(id: string): Promise<BotLinkCode> {
     this._log.debug('Consuming link code', { id });
     return this._repo.consume(id);
+  }
+
+  /**
+   * Validates, consumes, and updates the Telegram menu for the linked chat.
+   * Called from the link-account flow after the user sends their code.
+   *
+   * @returns true if the link was successful, false otherwise.
+   */
+  public async validateAndLink(code: string, chatId: string | number): Promise<boolean> {
+    const record = await this.validate(code);
+    if (!record) return false;
+
+    await this.consume(record.id);
+    await this._menu.applyCommands(chatId, true);
+    this._log.info('User linked via bot', { userId: record.userId, chatId });
+    return true;
   }
 }

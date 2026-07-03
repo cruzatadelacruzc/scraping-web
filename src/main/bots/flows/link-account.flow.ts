@@ -13,7 +13,7 @@ export const linkAccountFlow = addKeyword(['__LINK_CODE__']).addAction(async (ct
   const botCtx = await resolveTenant(ctx, methods);
   const lang = botCtx.preferredLang;
   const body = (ctx.body ?? '').trim();
-  const validateAndLink = methods.extensions?.validateAndLink as ((code: string, lang: string) => Promise<boolean>) | undefined;
+  const validateAndLink = methods.extensions?.validateAndLink as ((code: string, chatId: string | number) => Promise<boolean>) | undefined;
 
   await methods.flowDynamic(linkAccountPrompt(lang));
 
@@ -23,7 +23,7 @@ export const linkAccountFlow = addKeyword(['__LINK_CODE__']).addAction(async (ct
   }
 
   try {
-    const linked = await validateAndLink(body, lang);
+    const linked = await validateAndLink(body, ctx.from);
     if (linked) {
       await methods.flowDynamic(linkAccountSuccess(lang));
     } else {

@@ -13,10 +13,7 @@ export { BotController } from './controllers/bot.controller';
 export { BotQueues, BOT_OUTBOUND_SEND } from './queues';
 export type { IBotOutboundJob } from './queues';
 
-export { WhatsAppProvider } from './providers/whatsapp/whatsapp.provider';
-export { TelegramProvider } from './providers/telegram/telegram.provider';
-export { getEnabledProviders } from './providers/provider.factory';
-export type { IBotProvider } from './providers/ibot-provider.interface';
+export { resolveProviderEntry, getEnabledBotTypes } from './providers/provider-registry';
 
 export { mainFlow } from './flows';
 

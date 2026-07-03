@@ -78,9 +78,10 @@ import { AiHistoryRepository } from '@bots/repositories/ai-history.repository';
 import { TenantBotContextService } from '@bots/services/tenant-bot-context.service';
 import { MessageRouterService } from '@bots/services/message-router.service';
 import { I18nService } from '@bots/services/i18n.service';
+import { BotMenuService } from '@bots/services/bot-menu.service';
+import { TelegramAdapter } from '@bots/adapters/telegram-adapter.service';
+import { WhatsAppAdapter } from '@bots/adapters/whatsapp-adapter.service';
 import { BotQueues } from '@bots/queues';
-import { WhatsAppProvider } from '@bots/providers/whatsapp/whatsapp.provider';
-import { TelegramProvider } from '@bots/providers/telegram/telegram.provider';
 
 export const container = new Container();
 
@@ -175,6 +176,7 @@ container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(Gener
 container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware);
 
 // Bot module (WhatsApp / Telegram)
+container.bind<BotMenuService>(TYPES.BotMenuService).to(BotMenuService).inSingletonScope();
 container.bind<BotService>(TYPES.BotService).to(BotService).inSingletonScope();
 container.bind<BotController>(TYPES.BotController).to(BotController);
 container.bind<LinkCodeService>(TYPES.LinkCodeService).to(LinkCodeService);
@@ -185,5 +187,5 @@ container.bind<TenantBotContextService>(TYPES.TenantBotContextService).to(Tenant
 container.bind<MessageRouterService>(TYPES.MessageRouterService).to(MessageRouterService);
 container.bind<I18nService>(TYPES.I18nService).to(I18nService);
 container.bind<IQueueModule>(TYPES.BotQueues).to(BotQueues).inSingletonScope();
-container.bind<WhatsAppProvider>(TYPES.WhatsAppProvider).to(WhatsAppProvider).inSingletonScope();
-container.bind<TelegramProvider>(TYPES.TelegramProvider).to(TelegramProvider).inSingletonScope();
+container.bind<TelegramAdapter>(TYPES.TelegramAdapter).to(TelegramAdapter).inSingletonScope();
+container.bind<WhatsAppAdapter>(TYPES.WhatsAppAdapter).to(WhatsAppAdapter).inSingletonScope();

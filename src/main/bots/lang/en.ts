@@ -17,11 +17,11 @@ export const en = {
     greeting: 'Hello! Welcome to the BazaarSentinel bot.',
     intro: 'To get started, link this chat to your account:',
     cta: 'Tap to create an account',
-    alreadyHaveAccount: 'Already have an account? Open the web app and click "Link WhatsApp" to get a code.',
+    alreadyHaveAccount: 'Already have an account? Open the web app and click "Link Bot" to get a code.',
   },
   unlinked: {
     needsLink: 'To use the bot, you first need to link this chat to your account.',
-    openWeb: 'Open the web app, go to Settings → Bots, and click "Link WhatsApp" to generate a code.',
+    openWeb: 'Open the web app, go to Settings → Bots, and click "Link Bot" to generate a code.',
     sendCode: 'Then send the 6-character code here.',
   },
   linkAccount: {
@@ -39,6 +39,11 @@ export const en = {
       '/profile — show your account information',
       'Or just ask a question and the AI will help.',
     ],
+    availableCommands: 'Available commands:',
+    commandAlarms: 'list your configured price alarms',
+    commandSubscription: 'show your current plan and status',
+    commandProfile: 'show your account information',
+    commandHelp: 'show this help message',
   },
   alarms: {
     title: 'Your alarms:',
@@ -66,5 +71,14 @@ export const en = {
     unlinked: 'You are not linked. Open the web app to generate a link code.',
     rateLimit: 'You are sending messages too fast. Please slow down.',
     providerDown: 'The chat provider is not connected yet. Try again in a moment.',
+  },
+  commands: {
+    help: 'See available commands and how to link your account',
+    status: 'Check if the bot is online',
+    link: 'Link your BazaarSentinel account',
+    alarms: 'View your active alarms',
+    subscription: 'View your plan and expiration',
+    profile: 'View your profile',
+    unlink: 'Unlink your account',
   },
 } as const;

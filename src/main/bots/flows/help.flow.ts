@@ -10,7 +10,7 @@ export const helpFlow = addKeyword(['/help']).addAction(async (ctx, methods) => 
   const lang = botCtx.preferredLang;
 
   const lines = [
-    t(lang, 'help.availableCommands'),
+    t(lang, 'help.title'),
     '',
     '/alarms — ' + t(lang, 'help.commandAlarms'),
     '/subscription — ' + t(lang, 'help.commandSubscription'),

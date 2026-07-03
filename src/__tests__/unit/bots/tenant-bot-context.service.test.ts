@@ -48,7 +48,7 @@ describe('TenantBotContextService', () => {
       expect(repo.upsert).toHaveBeenCalledWith({
         provider: 'whatsapp',
         externalId: '+5355001234',
-        accountId: '', // placeholder account — unlinked users get empty
+        accountId: null, // unlinked user — set when linked
       });
       expect(ctx).toEqual({
         conversationId: 'conv-id-1',

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { LinkCodeService } from '@bots/services/link-code.service';
 import { LinkCodeRepository } from '@bots/repositories/link-code.repository';
+import { BotMenuService } from '@bots/services/bot-menu.service';
 import { nanoid } from 'nanoid';
 
 jest.mock('nanoid', () => ({ nanoid: jest.fn() }));
@@ -10,6 +11,7 @@ const mockNanoid = nanoid as jest.MockedFunction<typeof nanoid>;
 describe('LinkCodeService', () => {
   let service: LinkCodeService;
   let repo: jest.Mocked<LinkCodeRepository>;
+  let menu: jest.Mocked<BotMenuService>;
   const log = { debug: jest.fn(), warn: jest.fn(), error: jest.fn(), context: '' } as any;
 
   const mockCode = {
@@ -34,7 +36,13 @@ describe('LinkCodeService', () => {
       findExpired: jest.fn(),
     } as any;
 
-    service = new LinkCodeService(log, repo);
+    menu = {
+      applyCommands: jest.fn(),
+      buildKeyboard: jest.fn(),
+      getButtons: jest.fn(),
+    } as any;
+
+    service = new LinkCodeService(log, repo, menu);
   });
 
   describe('generate', () => {
@@ -55,7 +63,7 @@ describe('LinkCodeService', () => {
 
     it('uses the env TTL to compute expiresAt', async () => {
       process.env.BOT_LINK_CODE_TTL_MINUTES = '5';
-      const svc = new LinkCodeService(log, repo as any);
+      const svc = new LinkCodeService(log, repo as any, menu);
       repo.create.mockImplementation(async data => {
         const diff = data.expiresAt.getTime() - Date.now();
         expect(diff).toBeGreaterThan(4 * 60 * 1000);
@@ -68,7 +76,7 @@ describe('LinkCodeService', () => {
 
     it('defaults to 10 minutes when env var is unset', async () => {
       delete process.env.BOT_LINK_CODE_TTL_MINUTES;
-      const svc = new LinkCodeService(log, repo as any);
+      const svc = new LinkCodeService(log, repo as any, menu);
       repo.create.mockImplementation(async data => {
         const diff = data.expiresAt.getTime() - Date.now();
         expect(diff).toBeGreaterThan(9 * 60 * 1000);

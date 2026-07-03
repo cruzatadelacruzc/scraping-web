@@ -1,21 +1,23 @@
+import '@bots/utils/dns-ipv4.util';
 import { inject, injectable } from 'inversify';
-import { createBot, MemoryDB, type CoreClass } from '@builderbot/bot';
+import { createProvider, createBot, MemoryDB, type CoreClass } from '@builderbot/bot';
 import type { ProviderClass } from '@builderbot/bot';
 import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
-import { WhatsAppProvider } from '@bots/providers/whatsapp/whatsapp.provider';
-import { TelegramProvider } from '@bots/providers/telegram/telegram.provider';
+import { TelegramAdapter } from '@bots/adapters/telegram-adapter.service';
+import { WhatsAppAdapter } from '@bots/adapters/whatsapp-adapter.service';
+import type { IProviderAdapter } from '@bots/adapters/provider-adapter.interface';
+import { resolveProviderEntry, getEnabledBotTypes } from '@bots/providers/provider-registry';
 import { TenantBotContextService } from './tenant-bot-context.service';
-import { MessageRouterService } from './message-router.service';
 import { LinkCodeService } from './link-code.service';
 import { mainFlow } from '@bots/flows';
 
-/** Base port for bot HTTP servers — one per provider, each gets basePort + index. */
+/** Base port for auto-detection — each bot type gets basePort + index. */
 const BOT_HTTP_BASE_PORT = parseInt(process.env.BOT_HTTP_PORT ?? '3001', 10);
 
 /** Internal record of a running bot instance. */
 interface IBotInstance {
-  name: string;
+  botType: string;
   provider: ProviderClass;
   instance: CoreClass;
 }
@@ -26,83 +28,115 @@ export class BotService {
 
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(TYPES.WhatsAppProvider) private readonly _whatsapp: WhatsAppProvider,
-    @inject(TYPES.TelegramProvider) private readonly _telegram: TelegramProvider,
+    @inject(TYPES.TelegramAdapter) private readonly _telegramAdapter: TelegramAdapter,
+    @inject(TYPES.WhatsAppAdapter) private readonly _whatsappAdapter: WhatsAppAdapter,
     @inject(TYPES.TenantBotContextService) private readonly _tenantCtx: TenantBotContextService,
-    @inject(TYPES.MessageRouterService) private readonly _router: MessageRouterService,
     @inject(TYPES.LinkCodeService) private readonly _linkCode: LinkCodeService,
   ) {
     this._log.context = BotService.name;
   }
 
+  // -----------------------------------------------------------------------
+  // Public API
+  // -----------------------------------------------------------------------
+
   /**
-   * Creates one builderbot instance per enabled provider. Each bot
-   * receives its own {@link ProviderClass} and a shared flow tree.
-   * Tenant context is injected via {@link GeneralArgs.extensions}
-   * so every flow can resolve its tenant on-demand.
+   * Creates one builderbot instance per enabled bot type. The concrete
+   * provider class is resolved from {@code provider-registry.ts} via the
+   * {@code BOT_<TYPE>_PROVIDER} env vars. Each bot receives a shared flow
+   * tree and a provider-specific {@link IProviderAdapter} in extensions.
    */
   public async start(): Promise<void> {
-    const enabled = (process.env.BOT_ENABLED ?? 'none').split(',');
+    const botTypes = getEnabledBotTypes();
 
-    const factories: Array<{ name: string; factory: { createProviderInstance(): ProviderClass } }> = [];
-
-    if (enabled.includes('whatsapp') || enabled.includes('both')) {
-      factories.push({ name: 'whatsapp', factory: this._whatsapp });
-    }
-    if (enabled.includes('telegram') || enabled.includes('both')) {
-      factories.push({ name: 'telegram', factory: this._telegram });
-    }
-
-    if (factories.length === 0) {
+    if (botTypes.length === 0) {
       this._log.info('No bot providers enabled (BOT_ENABLED=none)');
       return;
     }
 
-    for (const [index, { name, factory }] of factories.entries()) {
-      try {
-        const provider = factory.createProviderInstance();
-        const adapter = new MemoryDB();
+    for (const [index, botType] of botTypes.entries()) {
+      let provider: ProviderClass | null = null;
 
-        // extensions.tenantResolver is called by flows to resolve
-        // tenant context on-demand before executing gated logic.
+      try {
+        const entry = resolveProviderEntry(botType);
+        provider = createProvider(entry.Provider, entry.buildConfig());
+        const adapter = new MemoryDB();
+        const providerAdapter = this._resolveAdapter(botType);
+        const port = this._resolvePort(botType, index);
+
         const instance = await createBot(
-          {
-            flow: mainFlow,
-            provider,
-            database: adapter,
-          },
+          { flow: mainFlow, provider: provider!, database: adapter },
           {
             extensions: {
-              tenantResolver: (from: string) => this._tenantCtx.resolve(name, from),
-              providerName: name,
+              tenantResolver: (from: string) => this._tenantCtx.resolve(botType, from),
+              providerName: botType,
+              providerAdapter,
+              validateAndLink: (code: string, chatId: string | number) => this._linkCode.validateAndLink(code, chatId),
             },
           },
         );
 
-        // httpServer triggers initAll → initVendor → launch(), which starts
-        // the underlying message listener (polling for Telegram, WebSocket
-        // for WhatsApp). Each provider needs a unique port.
-        const port = BOT_HTTP_BASE_PORT + index;
-        instance.httpServer(port);
+        // httpServer triggers initAll → initVendor → launch().
+        // If initVendor fails, clean up so the port is freed.
+        try {
+          instance.httpServer(port);
+        } catch (vendorErr: unknown) {
+          this._log.error(`Vendor init failed for "${botType}" — cleaning up port ${port}`, vendorErr as Error);
 
-        this._bots.push({ name, provider, instance });
-        this._log.info(`Bot provider "${name}" started`);
+          await provider!.stop().catch(() => {
+            /* best-effort */
+          });
+          throw vendorErr;
+        }
+
+        this._bots.push({ botType, provider: provider!, instance });
+        this._log.info(`Bot "${botType}" started on port ${port}`);
       } catch (e: unknown) {
-        this._log.error(`Failed to start bot provider "${name}"`, e as Error);
+        this._log.error(`Failed to start bot "${botType}"`, e as Error);
+        if (provider) {
+          await provider.stop().catch(() => {
+            /* best-effort */
+          });
+        }
       }
     }
   }
 
   /** Stops all running bot providers. */
   public async stop(): Promise<void> {
-    for (const { name, provider } of this._bots) {
+    for (const { botType, provider } of this._bots) {
       try {
         await provider.stop();
-        this._log.info(`Bot provider "${name}" stopped`);
+        this._log.info(`Bot "${botType}" stopped`);
       } catch (e: unknown) {
-        this._log.error(`Error stopping provider "${name}"`, e as Error);
+        this._log.error(`Error stopping bot "${botType}"`, e as Error);
       }
     }
     this._bots = [];
+  }
+
+  // -----------------------------------------------------------------------
+  // Helpers
+  // -----------------------------------------------------------------------
+
+  /**
+   * Resolves the HTTP port for a bot type.
+   *
+   * Explicit env vars ({@code BOT_TELEGRAM_PORT}, {@code BOT_WHATSAPP_PORT})
+   * take precedence. Otherwise falls back to {@code BOT_HTTP_BASE_PORT + index}.
+   */
+  private _resolvePort(botType: string, index: number): number {
+    const envKey = botType === 'telegram' ? 'BOT_TELEGRAM_PORT' : 'BOT_WHATSAPP_PORT';
+    if (process.env[envKey]) {
+      return parseInt(process.env[envKey]!, 10);
+    }
+    return BOT_HTTP_BASE_PORT + index;
+  }
+
+  /** Returns the correct {@link IProviderAdapter} for the given bot type. */
+  private _resolveAdapter(botType: string): IProviderAdapter {
+    if (botType === 'telegram') return this._telegramAdapter;
+    if (botType === 'whatsapp') return this._whatsappAdapter;
+    throw new Error(`Unknown bot type: ${botType}`);
   }
 }

@@ -244,8 +244,8 @@ model BotLinkCode {
 // -----------------------------------------------------------------------------
 model BotConversation {
   id            String   @id @default(uuid())
-  accountId     String
-  account       Account  @relation(fields: [accountId], references: [id])
+  accountId     String?
+  account       Account? @relation(fields: [accountId], references: [id])
   userId        String? // null until linked
   user          User?    @relation(fields: [userId], references: [id])
   provider      String // "whatsapp" | "telegram"

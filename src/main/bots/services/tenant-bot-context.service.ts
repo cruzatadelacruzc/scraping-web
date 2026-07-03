@@ -6,7 +6,7 @@ import { BotConversationRepository } from '@bots/repositories/bot-conversation.r
 
 export interface IBotContext {
   conversationId: string;
-  accountId: string;
+  accountId: string | null;
   userId: string | null;
   preferredLang: string;
 }
@@ -32,7 +32,7 @@ export class TenantBotContextService {
     const conv = await this._repo.upsert({
       provider,
       externalId,
-      accountId: '', // placeholder — real tenant is set when user links
+      accountId: null, // unlinked — set when user links account
     });
 
     return {
@@ -52,6 +52,6 @@ export class TenantBotContextService {
     const ctx = await this.resolve(provider, externalId);
     this._log.debug('Wrapping bot message in tenant context', ctx);
 
-    return runWithRequestContext({ tenantId: ctx.accountId, userId: ctx.userId ?? undefined }, fn);
+    return runWithRequestContext({ tenantId: ctx.accountId ?? undefined, userId: ctx.userId ?? undefined }, fn);
   }
 }

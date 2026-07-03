@@ -17,11 +17,11 @@ export const es = {
     greeting: '¡Hola! Bienvenido al bot de BazaarSentinel.',
     intro: 'Para empezar, vincula este chat a tu cuenta:',
     cta: 'Toca para crear una cuenta',
-    alreadyHaveAccount: '¿Ya tienes cuenta? Abre la web y haz clic en "Vincular WhatsApp" para obtener un código.',
+    alreadyHaveAccount: '¿Ya tienes cuenta? Abre la web y haz clic en "Vincular Bot" para obtener un código.',
   },
   unlinked: {
     needsLink: 'Para usar el bot, primero vincula este chat a tu cuenta.',
-    openWeb: 'Abre la web, ve a Configuración → Bots, y haz clic en "Vincular WhatsApp" para generar un código.',
+    openWeb: 'Abre la web, ve a Configuración → Bots, y haz clic en "Vincular Bot" para generar un código.',
     sendCode: 'Luego envía el código de 6 caracteres aquí.',
   },
   linkAccount: {
@@ -39,6 +39,11 @@ export const es = {
       '/profile — muestra la información de tu cuenta',
       'O simplemente haz una pregunta y la IA te ayuda.',
     ],
+    availableCommands: 'Comandos disponibles:',
+    commandAlarms: 'lista tus alarmas de precio configuradas',
+    commandSubscription: 'muestra tu plan y estado actual',
+    commandProfile: 'muestra la información de tu cuenta',
+    commandHelp: 'muestra esta ayuda',
   },
   alarms: {
     title: 'Tus alarmas:',
@@ -66,5 +71,14 @@ export const es = {
     unlinked: 'No estás vinculado. Abre la web para generar un código de vínculo.',
     rateLimit: 'Estás enviando mensajes demasiado rápido. Por favor reduce la velocidad.',
     providerDown: 'El proveedor de chat no está conectado aún. Intenta de nuevo en un momento.',
+  },
+  commands: {
+    help: 'Ver comandos disponibles y cómo vincular tu cuenta',
+    status: 'Verificar si el bot está en línea',
+    link: 'Vincular tu cuenta de BazaarSentinel',
+    alarms: 'Ver tus alarmas activas',
+    subscription: 'Ver tu plan y vencimiento',
+    profile: 'Ver tu perfil',
+    unlink: 'Desvincular tu cuenta',
   },
 } as const;

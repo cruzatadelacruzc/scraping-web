@@ -6,7 +6,7 @@ import { PrismaClientType } from '@users/custom-prisma-client';
 export interface IUpsertConversationInput {
   provider: string;
   externalId: string;
-  accountId: string;
+  accountId: string | null;
 }
 
 @injectable()
