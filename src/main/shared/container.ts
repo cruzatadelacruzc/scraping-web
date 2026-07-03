@@ -68,6 +68,20 @@ import { ScraperConfigRegistryService } from '@scrapers/revolico/services/scrapi
 import { ScraperConfigService } from '@scrapers/revolico/services/scraping/scraper-config.service';
 import { GenericListingScraperService } from '@scrapers/revolico/services/scraping/generic-listing-scraper.service';
 import { GenericDetailScraperService } from '@scrapers/revolico/services/scraping/generic-detail-scraper.service';
+// Bots (WhatsApp / Telegram)
+import { BotService } from '@bots/services/bot.service';
+import { BotController } from '@bots/controllers/bot.controller';
+import { LinkCodeService } from '@bots/services/link-code.service';
+import { LinkCodeRepository } from '@bots/repositories/link-code.repository';
+import { BotConversationRepository } from '@bots/repositories/bot-conversation.repository';
+import { AiHistoryRepository } from '@bots/repositories/ai-history.repository';
+import { TenantBotContextService } from '@bots/services/tenant-bot-context.service';
+import { MessageRouterService } from '@bots/services/message-router.service';
+import { I18nService } from '@bots/services/i18n.service';
+import { BotMenuService } from '@bots/services/bot-menu.service';
+import { TelegramAdapter } from '@bots/adapters/telegram-adapter.service';
+import { WhatsAppAdapter } from '@bots/adapters/whatsapp-adapter.service';
+import { BotQueues } from '@bots/queues';
 
 export const container = new Container();
 
@@ -160,3 +174,18 @@ container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(Gener
 
 //middlewares
 container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware);
+
+// Bot module (WhatsApp / Telegram)
+container.bind<BotMenuService>(TYPES.BotMenuService).to(BotMenuService).inSingletonScope();
+container.bind<BotService>(TYPES.BotService).to(BotService).inSingletonScope();
+container.bind<BotController>(TYPES.BotController).to(BotController);
+container.bind<LinkCodeService>(TYPES.LinkCodeService).to(LinkCodeService);
+container.bind<LinkCodeRepository>(TYPES.LinkCodeRepository).to(LinkCodeRepository);
+container.bind<BotConversationRepository>(TYPES.BotConversationRepository).to(BotConversationRepository);
+container.bind<AiHistoryRepository>(TYPES.AiHistoryRepository).to(AiHistoryRepository);
+container.bind<TenantBotContextService>(TYPES.TenantBotContextService).to(TenantBotContextService);
+container.bind<MessageRouterService>(TYPES.MessageRouterService).to(MessageRouterService);
+container.bind<I18nService>(TYPES.I18nService).to(I18nService);
+container.bind<IQueueModule>(TYPES.BotQueues).to(BotQueues).inSingletonScope();
+container.bind<TelegramAdapter>(TYPES.TelegramAdapter).to(TelegramAdapter).inSingletonScope();
+container.bind<WhatsAppAdapter>(TYPES.WhatsAppAdapter).to(WhatsAppAdapter).inSingletonScope();

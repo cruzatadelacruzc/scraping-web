@@ -15,6 +15,7 @@ import * as swaggerDocument from '../../swagger.json';
 import { tenantInitMiddleware } from '@shared/middleware/tenant-init.middleware';
 import { QueueContext } from '@shared/queue/queue-context';
 import prisma from '@users/custom-prisma-client';
+import { BotService } from '@bots/services/bot.service';
 
 const PORT = process.env.PORT || 3000;
 
@@ -30,6 +31,10 @@ export class App {
     _dashboard.setup();
     await _db.dbConnect();
     await _tenantDb.dbConnect();
+
+    // Start bot providers if enabled
+    const botService = container.get<BotService>(TYPES.BotService);
+    await botService.start();
 
     appInstance = express();
 
@@ -78,6 +83,7 @@ export class App {
    * SIGTERM handler in production.
    */
   public async close(): Promise<void> {
+    await container.get<BotService>(TYPES.BotService).stop();
     await container.get<QueueContext>(QueueContext).shutdown();
     await container.get<PgDBContext>(TYPES.TenantDB).end();
     await prisma.$disconnect();

@@ -14,6 +14,7 @@ Related references:
 - Auth/tenant: `.claude/skills/security/SKILL.md`
 - Testing: `.claude/skills/testing/SKILL.md`
 - TypeScript patterns: `.claude/skills/typescript-best-practices/SKILL.md`
+- Bot module: `.claude/rules/bots.md`
 
 ## Code Standards
 

@@ -13,12 +13,12 @@ describe('bots/lang', () => {
       expect(Object.keys(en).sort()).toEqual(Object.keys(es).sort());
     });
 
-    it.each(['welcome', 'unlinked', 'help', 'errors'])('section %s exists in both languages', section => {
+    it.each(['welcome', 'unlinked', 'help', 'status', 'errors'])('section %s exists in both languages', section => {
       expect(en[section as keyof typeof en]).toBeDefined();
       expect(es[section as keyof typeof es]).toBeDefined();
     });
 
-    it.each(['common', 'welcome', 'unlinked', 'help', 'errors'] as const)('section %s has at least one key', section => {
+    it.each(['common', 'welcome', 'unlinked', 'help', 'status', 'errors'] as const)('section %s has at least one key', section => {
       expect(Object.keys(en[section]).length).toBeGreaterThan(0);
       expect(Object.keys(es[section]).length).toBeGreaterThan(0);
     });

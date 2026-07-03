@@ -22,3 +22,9 @@ tmp/
 .plans
 .firecrawl/
 .playwright-cli/
+
+######################
+# Bot runtime logs
+######################
+*.class.log
+baileys.log

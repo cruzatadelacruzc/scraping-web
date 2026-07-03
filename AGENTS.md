@@ -156,6 +156,7 @@ Run before `git commit` — see @.claude/rules/compliance-checklist.md for the f
 | Docker dev environment                      | `.claude/skills/docker-dev/SKILL.md`                |
 | Testing patterns (Jest + ALS + mocks)       | `.claude/skills/testing/SKILL.md`                   |
 | Add a new alarm condition                   | `.claude/skills/alarm-condition/SKILL.md`           |
+| Bot module (WhatsApp + Telegram)            | `.claude/skills/bots/SKILL.md`                      |
 | TypeScript best practices                   | `.claude/skills/typescript-best-practices/SKILL.md` |
 | PostgreSQL / Prisma schema                  | `prisma/schema.prisma`                              |
 | MongoDB / Mongoose connection               | `src/main/config/db-config.ts`                      |
