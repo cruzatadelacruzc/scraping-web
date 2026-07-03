@@ -12,11 +12,11 @@
  * No hooks needed — just patch the cache before anything else loads baileys.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 const baileysPath = require.resolve('baileys');
 
 // Eagerly load and patch BEFORE any builderbot module requires it.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const ns = require(baileysPath);
 const fn = ns.default;
 
