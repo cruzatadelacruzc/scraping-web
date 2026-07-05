@@ -46,6 +46,7 @@ import { TokenService } from './security/token.service';
 import { UserIdentityRepository } from '@users/repositories/user-identity.repository';
 import { ProviderTokenVerifier } from '@shared/security/provider-token-verifier';
 import { AccountRepository } from '@users/repositories/account.repository';
+import { AdminController } from '@admin/controllers/admin.controller';
 import { AlarmController } from '@alarms/controllers/alarm.controller';
 import { NotificationController } from '@alarms/controllers/notification.controller';
 import { AlarmService } from '@alarms/services/alarm.service';
@@ -145,6 +146,7 @@ container.bind(TYPES.AlarmMapper).to(AlarmMapper);
 container.bind(TYPES.NotificationMapper).to(NotificationMapper);
 
 //controllers
+container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
 container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
