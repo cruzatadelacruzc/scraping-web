@@ -14,3 +14,11 @@
  * via the environment when invoking jest.
  */
 process.env.QUEUE_BACKEND = 'mock';
+
+/**
+ * Disable bot providers during tests. Bot providers (WhatsApp/Baileys,
+ * Telegram/Telegraf) open real ports and try to connect to external
+ * services which would hang in the test environment. Set BOT_ENABLED
+ * in a dedicated test file if you need to test real bot behavior.
+ */
+process.env.BOT_ENABLED = 'none';

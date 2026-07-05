@@ -83,7 +83,7 @@ describe('LinkCodeRepository', () => {
 
       expect(mockPrisma.botLinkCode.update).toHaveBeenCalledWith({
         where: { id: 'code-id-1' },
-        data: { consumedAt: expect.any(Date) },
+        data: { consumedAt: expect.any(Date), status: 'CONSUMED' },
       });
       expect(result.consumedAt).toBeInstanceOf(Date);
     });

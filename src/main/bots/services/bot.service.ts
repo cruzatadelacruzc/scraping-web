@@ -71,7 +71,8 @@ export class BotService {
               tenantResolver: (from: string) => this._tenantCtx.resolve(botType, from),
               providerName: botType,
               providerAdapter,
-              validateAndLink: (code: string, chatId: string | number) => this._linkCode.validateAndLink(code, chatId),
+              verifyAndLink: (token: string, chatId: string, provider: string) => this._linkCode.verifyAndLink(token, chatId, provider),
+              linkCodeService: this._linkCode,
             },
           },
         );

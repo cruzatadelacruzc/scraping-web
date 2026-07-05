@@ -9,6 +9,8 @@ export interface IBotContext {
   accountId: string | null;
   userId: string | null;
   preferredLang: string;
+  /** When the link expires — null if not linked or link lifetime not set. */
+  linkExpiresAt: Date | null;
 }
 
 @injectable()
@@ -40,6 +42,7 @@ export class TenantBotContextService {
       accountId: conv.accountId,
       userId: conv.userId ?? null,
       preferredLang: conv.preferredLang ?? 'es',
+      linkExpiresAt: conv.linkExpiresAt ?? null,
     };
   }
 

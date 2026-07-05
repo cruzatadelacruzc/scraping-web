@@ -16,6 +16,8 @@ import { tenantInitMiddleware } from '@shared/middleware/tenant-init.middleware'
 import { QueueContext } from '@shared/queue/queue-context';
 import prisma from '@users/custom-prisma-client';
 import { BotService } from '@bots/services/bot.service';
+import { LinkCodeService } from '@bots/services/link-code.service';
+import { BotRateLimitService } from '@bots/services/rate-limit.service';
 
 const PORT = process.env.PORT || 3000;
 
@@ -46,6 +48,7 @@ export class App {
     server.setErrorConfig(app => {
       app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
         if (error instanceof Error) {
+          console.error('[GlobalErrorHandler]', error.message, error.stack?.split('\n').slice(0, 5).join('\n'));
           return ResponseHandler.error(res, 'Sorry, we have presented internal problems');
         }
         next();
@@ -87,6 +90,17 @@ export class App {
     await container.get<QueueContext>(QueueContext).shutdown();
     await container.get<PgDBContext>(TYPES.TenantDB).end();
     await prisma.$disconnect();
+
+    // Close Redis connections opened by bot services so Jest can exit cleanly.
+    // `destroy()` is best-effort — failures are logged but never re-thrown.
+    container
+      .get<LinkCodeService>(TYPES.LinkCodeService)
+      .destroy()
+      .catch(() => {});
+    container
+      .get<BotRateLimitService>(TYPES.BotRateLimitService)
+      .destroy()
+      .catch(() => {});
   }
 }
 

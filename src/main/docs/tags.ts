@@ -8,6 +8,7 @@ export const TAG = {
   NOTIFICATIONS: 'Notifications',
   SCRAPING: 'Scraping',
   ADMIN: 'Admin',
+  BOTS: 'Bots',
 } as const;
 
 export const API_TAGS = [
@@ -20,4 +21,5 @@ export const API_TAGS = [
   { name: TAG.NOTIFICATIONS, description: 'Alarm notification management' },
   { name: TAG.SCRAPING, description: 'Product scraping job management' },
   { name: TAG.ADMIN, description: 'Super-admin endpoints' },
+  { name: TAG.BOTS, description: 'WhatsApp / Telegram bot account linking' },
 ];

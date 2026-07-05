@@ -25,11 +25,17 @@ export const es = {
     sendCode: 'Luego envía el código de 6 caracteres aquí.',
   },
   linkAccount: {
-    promptCode: 'Por favor envía el código de 6 caracteres desde la web.',
-    codeAccepted: '✅ ¡Vinculado! Ya puedes usar /alarms, /subscription y /profile.',
+    promptCode: 'Por favor envía el código de 8 caracteres desde la web.',
+    codeAccepted: '✅ ¡Código aceptado! Por favor confirma el vínculo en la web de BazaarSentinel.',
     codeInvalid: '❌ Ese código no es válido. Verifícalo en la web e inténtalo de nuevo.',
     codeExpired: '⌛ Ese código ha expirado. Genera uno nuevo en la web.',
     codeAlreadyUsed: '🔁 Ese código ya fue usado. Genera uno nuevo si necesitas re-vincular.',
+    pendingConfirmation:
+      '⏳ Un código ha sido validado desde tu chat de {provider}. Por favor confirma en la web para completar el vínculo.',
+    linkConfirmed: '✅ ¡Vínculo confirmado! Tu cuenta está conectada. Puedes usar /alarms, /subscription y /profile.',
+    linkDenied: '❌ La solicitud de vínculo fue rechazada. Genera un nuevo código si quieres intentarlo de nuevo.',
+    rateLimited: '⏱️ Demasiados intentos. Por favor espera {minutes} minutos e inténtalo de nuevo.',
+    confirmRequired: 'Por seguridad, el vínculo requiere confirmación en la web en {url}',
   },
   help: {
     title: '¿Qué puedo hacer?',

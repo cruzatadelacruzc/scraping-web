@@ -23,7 +23,9 @@ describe('TenantBotContextService', () => {
     preferredLang: 'es',
     lastMessage: null,
     lastActivity: new Date(),
+    linkExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeEach(() => {
@@ -31,7 +33,11 @@ describe('TenantBotContextService', () => {
     repo = {
       upsert: jest.fn(),
       findByExternalId: jest.fn(),
+      findByUserId: jest.fn(),
+      findExpiredLinks: jest.fn(),
       linkUser: jest.fn(),
+      unlinkUser: jest.fn(),
+      updateLinkExpiry: jest.fn(),
       updateLastActivity: jest.fn(),
       updatePreferredLang: jest.fn(),
     } as any;
@@ -55,11 +61,12 @@ describe('TenantBotContextService', () => {
         accountId: 'tenant-1',
         userId: 'user-1',
         preferredLang: 'es',
+        linkExpiresAt: expect.any(Date),
       });
     });
 
     it('returns null userId when conversation is not linked', async () => {
-      repo.upsert.mockResolvedValueOnce({ ...fakeConv, userId: null });
+      repo.upsert.mockResolvedValueOnce({ ...fakeConv, userId: null, linkExpiresAt: null });
       const ctx = await service.resolve('whatsapp', '+5355001234');
       expect(ctx.userId).toBeNull();
     });
@@ -77,7 +84,7 @@ describe('TenantBotContextService', () => {
     });
 
     it('still wraps when userId is null (unlinked user)', async () => {
-      repo.upsert.mockResolvedValueOnce({ ...fakeConv, userId: null });
+      repo.upsert.mockResolvedValueOnce({ ...fakeConv, userId: null, linkExpiresAt: null });
       const fn = jest.fn().mockResolvedValue('ok');
 
       await service.wrap('whatsapp', '+5355001234', fn);

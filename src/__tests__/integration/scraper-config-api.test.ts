@@ -73,6 +73,23 @@ afterAll(async () => {
   try {
     // Remove any ScraperConfig rows this test created (regardless of success)
     await pgDb.query(`DELETE FROM public."ScraperConfig" WHERE "storeKey" IN ($1, $2)`, [TEST_STORE_KEY, SECOND_STORE_KEY]);
+    // Delete bot-related FK tables first (each in its own try/catch — migration may not have run yet)
+    try {
+      await pgDb.query('DELETE FROM public."bot_link_audit" WHERE "accountId" = $1', [testAccountId]);
+    } catch {
+      /* table may not exist yet */
+    }
+    try {
+      await pgDb.query('DELETE FROM public."bot_link_codes" WHERE "accountId" = $1', [testAccountId]);
+    } catch {
+      /* table may not exist yet */
+    }
+    try {
+      await pgDb.query('DELETE FROM public."bot_conversations" WHERE "accountId" = $1', [testAccountId]);
+    } catch {
+      /* table may not exist yet */
+    }
+
     await pgDb.query('DELETE FROM public."UserIdentity" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [
       testAccountId,
     ]);

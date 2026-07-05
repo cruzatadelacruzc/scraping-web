@@ -84,6 +84,7 @@ model Account {
   alarms           Alarm[]
   notifications    Notification[]
   botLinkCodes     BotLinkCode[]
+  botLinkAudits    BotLinkAudit[]
   botConversations BotConversation[]
   deletedAt        DateTime?
 
@@ -107,6 +108,7 @@ model User {
   emailVerified    Boolean           @default(false)
   roles            Role[]            @relation("UserRoles")
   botLinkCodes     BotLinkCode[]
+  botLinkAudits    BotLinkAudit[]
   botConversations BotConversation[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -220,22 +222,80 @@ model Notification {
 }
 
 // -----------------------------------------------------------------------------
+// Bot Link Code status
+// -----------------------------------------------------------------------------
+enum BotLinkCodeStatus {
+  PENDING
+  VALIDATED
+  CONFIRMED
+  CONSUMED
+  EXPIRED
+  REJECTED
+}
+
+// -----------------------------------------------------------------------------
+// Bot Link Audit action
+// -----------------------------------------------------------------------------
+enum BotLinkAction {
+  CODE_GENERATED
+  CODE_VALIDATED
+  CODE_CONFIRMED
+  CODE_DENIED
+  CODE_EXPIRED
+  LINKED
+  UNLINKED
+}
+
+// -----------------------------------------------------------------------------
 // Bot Link Codes (WhatsApp / Telegram account linking)
 // -----------------------------------------------------------------------------
 model BotLinkCode {
-  id         String    @id @default(uuid())
-  code       String    @unique
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  accountId  String
-  account    Account   @relation(fields: [accountId], references: [id])
-  expiresAt  DateTime
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id             String             @id @default(uuid())
+  code           String             @unique
+  userId         String
+  user           User               @relation(fields: [userId], references: [id])
+  accountId      String
+  account        Account            @relation(fields: [accountId], references: [id])
+  status         BotLinkCodeStatus  @default(PENDING)
+  expiresAt      DateTime
+  validatedAt    DateTime?
+  confirmedAt    DateTime?
+  rejectedAt     DateTime?
+  consumedAt     DateTime?
+  validatedFrom  String?            // chatId that submitted the code
+  provider       String?            // "telegram" | "whatsapp"
+  attemptCount   Int                @default(0)
+  createdAt      DateTime           @default(now())
 
   @@index([code])
   @@index([accountId, userId])
+  @@index([status])
   @@map("bot_link_codes")
+}
+
+// -----------------------------------------------------------------------------
+// Bot Link Audit — complete audit trail for link/unlink actions
+// -----------------------------------------------------------------------------
+model BotLinkAudit {
+  id         String         @id @default(uuid())
+  accountId  String
+  account    Account        @relation(fields: [accountId], references: [id])
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  action     BotLinkAction
+  code       String?
+  codeId     String?
+  provider   String?         // "telegram" | "whatsapp" | null for API actions
+  externalId String?         // chatId / phone number
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([code])
+  @@index([userId, createdAt])
+  @@map("bot_link_audit")
 }
 
 // -----------------------------------------------------------------------------
@@ -253,10 +313,13 @@ model BotConversation {
   preferredLang String   @default("es")
   lastMessage   String?
   lastActivity  DateTime @default(now())
+  linkExpiresAt DateTime? // null when not linked; set to createdAt + 30d on link
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   @@unique([provider, externalId])
   @@index([accountId, userId])
+  @@index([linkExpiresAt])
   @@map("bot_conversations")
 }
 

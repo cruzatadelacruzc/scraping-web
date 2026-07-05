@@ -23,6 +23,9 @@ import { UserProviderRegisterSchema } from '@users/dto/user-provider-register.dt
 import { AccountSubscriptionSchema } from '@users/dto/account-subscriptions.dto';
 import { CreateAlarmSchema } from '@alarms/dto/create-alarm.dto';
 import { UpdateAlarmSchema } from '@alarms/dto/update-alarm.dto';
+import { GenerateLinkCodeSchema } from '@bots/services/dto/generate-link-code.dto';
+import { ConfirmLinkSchema } from '@bots/services/dto/confirm-link.dto';
+import { LinkHistoryQuerySchema } from '@bots/services/dto/link-history.dto';
 
 // ── Companion schemas for DTOs without Zod ───────────────────────────
 const AlarmResponseSchema = z.object({
@@ -100,6 +103,36 @@ const ScraperConfigUpdateSchema = z.object({
   }),
 });
 
+// ── Bot link schemas ──────────────────────────────────────────────────
+const LinkTokenResponseSchema = z.object({
+  deepLink: z.string().openapi({ description: 'One-time deep link URL for the bot', example: 'https://t.me/BazaarSentinelBot?start=...' }),
+  expiresAt: z.string().openapi({ description: 'ISO timestamp when the link expires', example: '2026-01-01T00:05:00.000Z' }),
+});
+
+const GenerateLinkCodeResponseSchema = z.object({
+  links: z
+    .record(LinkTokenResponseSchema)
+    .openapi({ description: 'Provider → link data', example: { telegram: { deepLink: '...', expiresAt: '...' } } }),
+  ttlMinutes: z.number().openapi({ description: 'Token time-to-live in minutes', example: 5 }),
+});
+
+const LinkStatusResponseSchema = z.object({
+  linked: z.boolean().openapi({ description: 'Whether the chat is linked', example: true }),
+  provider: z.string().nullable().openapi({ description: 'Provider name', example: 'telegram' }),
+  externalId: z.string().optional().openapi({ description: 'Masked chat ID', example: '****5678' }),
+  preferredLang: z.string().openapi({ description: 'Preferred language', example: 'es' }),
+  lastActivity: z.string().optional().openapi({ description: 'Last activity timestamp' }),
+  linkExpiresAt: z.string().nullable().optional().openapi({ description: 'When the link expires' }),
+});
+
+const LinkHistoryEntrySchema = z.object({
+  id: uuid('Audit entry identifier'),
+  action: z.string().openapi({ description: 'Action performed', example: 'LINKED' }),
+  provider: z.string().nullable().optional().openapi({ description: 'Provider name', example: 'telegram' }),
+  externalId: z.string().nullable().optional().openapi({ description: 'Masked chat ID' }),
+  createdAt: z.string().openapi({ description: 'ISO timestamp' }),
+});
+
 // ── Exported schema registry (populated by registerAllSchemas) ───────
 export const Schemas: Record<string, z.ZodTypeAny> = {};
 
@@ -122,4 +155,12 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
   Schemas.ScraperConfigResponseDTO = registry.register('ScraperConfigResponseDTO', ScraperConfigResponseSchema);
   Schemas.ScraperConfigCreateDTO = registry.register('ScraperConfigCreateDTO', ScraperConfigCreateSchema);
   Schemas.ScraperConfigUpdateDTO = registry.register('ScraperConfigUpdateDTO', ScraperConfigUpdateSchema);
+  // Bot DTOs
+  Schemas.GenerateLinkCodeDTO = registry.register('GenerateLinkCodeDTO', GenerateLinkCodeSchema);
+  Schemas.ConfirmLinkDTO = registry.register('ConfirmLinkDTO', ConfirmLinkSchema);
+  Schemas.LinkHistoryQueryDTO = registry.register('LinkHistoryQueryDTO', LinkHistoryQuerySchema);
+  // Bot response schemas
+  Schemas.GenerateLinkCodeResponseDTO = registry.register('GenerateLinkCodeResponseDTO', GenerateLinkCodeResponseSchema);
+  Schemas.LinkStatusResponseDTO = registry.register('LinkStatusResponseDTO', LinkStatusResponseSchema);
+  Schemas.LinkHistoryEntryDTO = registry.register('LinkHistoryEntryDTO', LinkHistoryEntrySchema);
 }
