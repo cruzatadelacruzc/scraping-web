@@ -158,7 +158,7 @@ export class AuthMiddleware extends BaseMiddleware {
           return;
         }
 
-        const hasRole = roles.some(role => userRoles.includes(role));
+        const hasRole = userRoles.includes('SUPER_ADMIN') || roles.some(role => userRoles.includes(role));
         if (!hasRole) {
           ResponseHandler.unAuthorized(res);
           return;

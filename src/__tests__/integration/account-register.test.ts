@@ -41,6 +41,15 @@ beforeAll(async () => {
   await pgDb.dbConnect();
 
   // Clean up orphaned data from previous test runs before creating fresh account
+  // Order matters: child tables with FK constraints must be deleted first.
+  // Bot tables may not exist yet if migrations haven't been applied.
+  try {
+    await pgDb.query('DELETE FROM public."bot_link_audit"');
+    await pgDb.query('DELETE FROM public."bot_link_codes"');
+    await pgDb.query('DELETE FROM public."bot_conversations"');
+  } catch {
+    // Tables don't exist yet — safe to skip
+  }
   await pgDb.query('DELETE FROM public."UserIdentity"');
   await pgDb.query('DELETE FROM public."User"');
   await pgDb.query('DELETE FROM public."Account"');
@@ -57,7 +66,10 @@ beforeAll(async () => {
 afterAll(async () => {
   // Clean up test data
   try {
-    // UserIdentity has ON DELETE RESTRICT, so delete it first
+    // Order matters: child tables with FK constraints deleted first
+    await pgDb.query('DELETE FROM public."bot_link_audit" WHERE "accountId" = $1', [testAccountId]);
+    await pgDb.query('DELETE FROM public."bot_link_codes" WHERE "accountId" = $1', [testAccountId]);
+    await pgDb.query('DELETE FROM public."bot_conversations" WHERE "accountId" = $1', [testAccountId]);
     await pgDb.query('DELETE FROM public."UserIdentity" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [
       testAccountId,
     ]);

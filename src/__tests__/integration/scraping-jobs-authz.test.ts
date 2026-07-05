@@ -39,6 +39,20 @@ beforeAll(async () => {
   const qContext = container.get(QueueContext);
   jest.spyOn(qContext, 'enqueue').mockResolvedValue('mock-job-id-1');
 
+  // Clean up orphaned data from previous test runs before creating fresh account.
+  // Order matters: child tables with FK constraints must be deleted first.
+  // Bot tables may not exist yet if migrations haven't been applied.
+  try {
+    await pgDb.query('DELETE FROM public.bot_link_audit');
+    await pgDb.query('DELETE FROM public.bot_link_codes');
+    await pgDb.query('DELETE FROM public.bot_conversations');
+  } catch {
+    /* tables may not exist yet */
+  }
+  await pgDb.query('DELETE FROM public."UserIdentity"');
+  await pgDb.query('DELETE FROM public."User"');
+  await pgDb.query('DELETE FROM public."Account"');
+
   // Create test account
   testAccountId = uuidv4();
   await pgDb.query(
@@ -79,6 +93,11 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
+    // Delete bot-related FK tables first
+    await pgDb.query('DELETE FROM public.bot_link_audit WHERE "accountId" = $1', [testAccountId]);
+    await pgDb.query('DELETE FROM public.bot_link_codes WHERE "accountId" = $1', [testAccountId]);
+    await pgDb.query('DELETE FROM public.bot_conversations WHERE "accountId" = $1', [testAccountId]);
+
     // _UserRoles has ON DELETE CASCADE from User, so it's cleaned automatically
     // UserIdentity has ON DELETE RESTRICT, so delete it first
     await pgDb.query('DELETE FROM public."UserIdentity" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [

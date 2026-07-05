@@ -27,6 +27,22 @@ it('provider non-existent account', async () => {
   await pgDb.dbConnect();
 
   // Clean up any orphaned data from previous runs (scoped — does not affect other tests)
+  // Order matters: child tables with FK constraints deleted first
+  try {
+    await pgDb.query('DELETE FROM public."bot_link_audit"');
+  } catch {
+    /* table may not exist yet */
+  }
+  try {
+    await pgDb.query('DELETE FROM public."bot_link_codes"');
+  } catch {
+    /* table may not exist yet */
+  }
+  try {
+    await pgDb.query('DELETE FROM public."bot_conversations"');
+  } catch {
+    /* table may not exist yet */
+  }
   await pgDb.query('DELETE FROM public."UserIdentity"');
   await pgDb.query('DELETE FROM public."User"');
   await pgDb.query('DELETE FROM public."Account"');
@@ -49,7 +65,22 @@ it('provider non-existent account', async () => {
   console.log('STATUS:', res.status, JSON.stringify(res.body));
   expect(res.status).toBe(404);
 
-  // Cleanup: only delete the account this test created
+  // Cleanup: only delete the account this test created (order matters for FKs)
+  try {
+    await pgDb.query('DELETE FROM public."bot_link_audit" WHERE "accountId" = $1', [realId]);
+  } catch {
+    /* table may not exist yet */
+  }
+  try {
+    await pgDb.query('DELETE FROM public."bot_link_codes" WHERE "accountId" = $1', [realId]);
+  } catch {
+    /* table may not exist yet */
+  }
+  try {
+    await pgDb.query('DELETE FROM public."bot_conversations" WHERE "accountId" = $1', [realId]);
+  } catch {
+    /* table may not exist yet */
+  }
   await pgDb.query('DELETE FROM public."UserIdentity" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [realId]);
   await pgDb.query('DELETE FROM public."User" WHERE "accountId" = $1', [realId]);
   await pgDb.query('DELETE FROM public."Account" WHERE "id" = $1', [realId]);

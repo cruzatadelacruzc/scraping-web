@@ -38,8 +38,14 @@ export async function resolveTenant(ctx: IFlowContext, methods: IFlowMethods, op
   // ctx.from is a number for Telegram, string for WhatsApp — normalise to string
   const botCtx = await resolver(String(ctx.from));
 
-  if (opts?.requireLinked && !botCtx.userId) {
-    throw new UnlinkedUserError(botCtx.preferredLang);
+  if (opts?.requireLinked) {
+    if (!botCtx.userId) {
+      throw new UnlinkedUserError(botCtx.preferredLang);
+    }
+    // Check periodic revalidation — link must not have expired
+    if (botCtx.linkExpiresAt && botCtx.linkExpiresAt < new Date()) {
+      throw new UnlinkedUserError(botCtx.preferredLang);
+    }
   }
 
   return botCtx;

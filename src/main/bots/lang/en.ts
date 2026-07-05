@@ -25,11 +25,16 @@ export const en = {
     sendCode: 'Then send the 6-character code here.',
   },
   linkAccount: {
-    promptCode: 'Please send the 6-character code from the web app.',
-    codeAccepted: '✅ Linked! You can now use /alarms, /subscription and /profile.',
+    promptCode: 'Please send the 8-character code from the web app.',
+    codeAccepted: '✅ Code accepted! Please confirm the link in the BazaarSentinel web app.',
     codeInvalid: '❌ That code is invalid. Double-check it in the web app and try again.',
     codeExpired: '⌛ That code has expired. Please generate a new one in the web app.',
     codeAlreadyUsed: '🔁 That code was already used. Generate a new one if you need to re-link.',
+    pendingConfirmation: '⏳ A code has been validated from your {provider} chat. Please confirm in the web app to complete linking.',
+    linkConfirmed: '✅ Link confirmed! Your account is now connected. You can use /alarms, /subscription and /profile.',
+    linkDenied: '❌ Link request was denied. Generate a new code if you want to try again.',
+    rateLimited: '⏱️ Too many attempts. Please wait {minutes} minutes and try again.',
+    confirmRequired: 'For security, linking requires confirmation in the web app at {url}',
   },
   help: {
     title: 'What can I do?',

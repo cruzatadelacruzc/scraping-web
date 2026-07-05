@@ -1,36 +1,51 @@
 import { addKeyword } from '@builderbot/bot';
 import { resolveTenant } from './shared/resolve-tenant';
-import { linkAccountPrompt, linkAccountSuccess } from './shared/idle.helper';
+import { linkAccountPrompt, linkAccountConfirmed } from './shared/idle.helper';
 import { invalidCodeMessage } from './shared/auth.guard';
+import { t } from '@bots/lang';
+import { InvalidLinkCodeError } from '@bots/errors/invalid-link-code.error';
+import { RateLimitError } from '@bots/errors/rate-limit.error';
 
 /**
- * Link-account flow — captures the 6-character code the user sends.
+ * Link-account flow — receives a signed JWT token via deep link
+ * (`/start <token>` on Telegram) or text message (WhatsApp).
  *
- * The BotService injects a `validateAndLink` callback into
- * `methods.extensions` before creating the bot.
+ * The BotService injects `verifyAndLink` into `methods.extensions`.
+ * On success the user is linked immediately — no separate confirmation step.
  */
-export const linkAccountFlow = addKeyword(['__LINK_CODE__']).addAction(async (ctx, methods) => {
+export const linkAccountFlow = addKeyword(['__LINK_CODE__', '/start']).addAction(async (ctx, methods) => {
   const botCtx = await resolveTenant(ctx, methods);
   const lang = botCtx.preferredLang;
   const body = (ctx.body ?? '').trim();
-  const validateAndLink = methods.extensions?.validateAndLink as ((code: string, chatId: string | number) => Promise<boolean>) | undefined;
+  const chatId = String(ctx.from);
+  const providerName = (methods.extensions?.providerName as string) ?? 'unknown';
+  const verifyAndLink = methods.extensions?.verifyAndLink as
+    | ((token: string, chatId: string, provider: string) => Promise<boolean>)
+    | undefined;
 
-  await methods.flowDynamic(linkAccountPrompt(lang));
-
-  if (!validateAndLink) {
+  if (!verifyAndLink) {
     await methods.flowDynamic(`⚠️ ${invalidCodeMessage(lang)}`);
     return methods.endFlow();
   }
 
+  await methods.flowDynamic(linkAccountPrompt(lang));
+
   try {
-    const linked = await validateAndLink(body, ctx.from);
+    const linked = await verifyAndLink(body, chatId, providerName);
     if (linked) {
-      await methods.flowDynamic(linkAccountSuccess(lang));
+      await methods.flowDynamic(linkAccountConfirmed(lang));
     } else {
       await methods.flowDynamic(invalidCodeMessage(lang));
     }
-  } catch {
-    await methods.flowDynamic(invalidCodeMessage(lang));
+  } catch (err: unknown) {
+    if (err instanceof RateLimitError) {
+      const minutes = Math.ceil(err.retryAfterMs / 60000);
+      await methods.flowDynamic(`${t(lang, 'linkAccount.rateLimited')} ${minutes} min`);
+    } else if (err instanceof InvalidLinkCodeError) {
+      await methods.flowDynamic(invalidCodeMessage(lang));
+    } else {
+      await methods.flowDynamic(invalidCodeMessage(lang));
+    }
   }
   return methods.endFlow();
 });

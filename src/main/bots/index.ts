@@ -5,6 +5,7 @@ export { MessageRouterService } from './services/message-router.service';
 export { I18nService } from './services/i18n.service';
 
 export { LinkCodeRepository } from './repositories/link-code.repository';
+export { LinkAuditRepository } from './repositories/link-audit.repository';
 export { BotConversationRepository } from './repositories/bot-conversation.repository';
 export { AiHistoryRepository } from './repositories/ai-history.repository';
 

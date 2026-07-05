@@ -33,10 +33,47 @@ export class BotConversationRepository {
   }
 
   /**
-   * Associates a platform user with this conversation after successful code validation.
+   * Finds all linked conversations for a given user.
    */
-  public async linkUser(id: string, userId: string): Promise<BotConversation> {
-    return this._prisma.botConversation.update({ where: { id }, data: { userId } });
+  public async findByUserId(userId: string): Promise<BotConversation[]> {
+    return this._prisma.botConversation.findMany({ where: { userId } });
+  }
+
+  /**
+   * Finds all conversations whose link has expired.
+   */
+  public async findExpiredLinks(): Promise<BotConversation[]> {
+    return this._prisma.botConversation.findMany({
+      where: {
+        userId: { not: null },
+        linkExpiresAt: { lt: new Date() },
+      },
+    });
+  }
+
+  /**
+   * Associates a platform user with this conversation and sets link expiry.
+   */
+  public async linkUser(id: string, userId: string, linkExpiresAt?: Date): Promise<BotConversation> {
+    const data: Record<string, unknown> = { userId };
+    if (linkExpiresAt) {
+      data.linkExpiresAt = linkExpiresAt;
+    }
+    return this._prisma.botConversation.update({ where: { id }, data });
+  }
+
+  /**
+   * Updates the link expiry timestamp on a conversation.
+   */
+  public async updateLinkExpiry(id: string, linkExpiresAt: Date | null): Promise<BotConversation> {
+    return this._prisma.botConversation.update({ where: { id }, data: { linkExpiresAt } });
+  }
+
+  /**
+   * Clears the link — sets userId and linkExpiresAt to null for unlinking.
+   */
+  public async unlinkUser(id: string): Promise<BotConversation> {
+    return this._prisma.botConversation.update({ where: { id }, data: { userId: null, linkExpiresAt: null } });
   }
 
   /**

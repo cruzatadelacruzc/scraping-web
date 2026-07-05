@@ -54,6 +54,8 @@ export const TYPES = {
   WhatsAppAdapter: Symbol.for('WhatsAppAdapter'),
   LinkCodeService: Symbol.for('LinkCodeService'),
   LinkCodeRepository: Symbol.for('LinkCodeRepository'),
+  LinkAuditRepository: Symbol.for('LinkAuditRepository'),
+  BotRateLimitService: Symbol.for('BotRateLimitService'),
   BotConversationRepository: Symbol.for('BotConversationRepository'),
   AiHistoryRepository: Symbol.for('AiHistoryRepository'),
   TenantBotContextService: Symbol.for('TenantBotContextService'),

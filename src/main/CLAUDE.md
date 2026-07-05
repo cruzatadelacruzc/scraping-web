@@ -125,7 +125,7 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 ### Architecture
 
 - OpenAPI metadata centralized in `src/main/docs/schema-registry.ts` — DTOs are NEVER modified
-- Paths defined in `src/main/docs/modules/*.paths.ts` (9 files, one per module)
+- Paths defined in `src/main/docs/modules/*.paths.ts` — one file per module. **When adding a new module with controllers**: (a) register its Zod DTO schemas in `schema-registry.ts`, (b) create `<module>.paths.ts` using `endpoint()` from `helpers/path-builder`, and (c) import and call it in `path-registry.ts`.
 - For `$ref` in paths use the return value of `registry.register()`, not the raw Zod schema
 - `tsconfig.build.json` excludes `src/main/docs/**` — code only used at build time
 
