@@ -49,6 +49,10 @@ import { AccountRepository } from '@users/repositories/account.repository';
 import { AdminController } from '@admin/controllers/admin.controller';
 import { ProductAdminController } from '@admin/controllers/product-admin.controller';
 import { ProductAdminService } from '@admin/services/product-admin.service';
+import { QueueAdminController } from '@admin/controllers/queue-admin.controller';
+import { QueueAdminService } from '@admin/services/queue-admin.service';
+import { DashboardController } from '@admin/controllers/dashboard.controller';
+import { DashboardService } from '@admin/services/dashboard.service';
 import { AlarmController } from '@alarms/controllers/alarm.controller';
 import { NotificationController } from '@alarms/controllers/notification.controller';
 import { AlarmService } from '@alarms/services/alarm.service';
@@ -74,7 +78,6 @@ import { GenericListingScraperService } from '@scrapers/revolico/services/scrapi
 import { GenericDetailScraperService } from '@scrapers/revolico/services/scraping/generic-detail-scraper.service';
 import { AnalyticsService } from '@scrapers/revolico/services/analytics.service';
 import { RuleBasedExtractorService } from '@scrapers/revolico/services/attribute-extractor/rule-based-extractor.service';
-import { LLMExtractorService } from '@scrapers/revolico/services/attribute-extractor/llm-extractor.service';
 import { AttributeExtractorService } from '@scrapers/revolico/services/attribute-extractor/attribute-extractor.service';
 // Bots (WhatsApp / Telegram)
 import { BotService } from '@bots/services/bot.service';
@@ -155,10 +158,14 @@ container.bind(TYPES.ProductMapper).to(ProductMapper);
 
 //services
 container.bind<ProductAdminService>(TYPES.ProductAdminService).to(ProductAdminService);
+container.bind<QueueAdminService>(TYPES.QueueAdminService).to(QueueAdminService);
+container.bind<DashboardService>(TYPES.DashboardService).to(DashboardService);
 
 //controllers
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<ProductAdminController>(TYPES.ProductAdminController).to(ProductAdminController);
+container.bind<QueueAdminController>(TYPES.QueueAdminController).to(QueueAdminController);
+container.bind<DashboardController>(TYPES.DashboardController).to(DashboardController);
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
 container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
@@ -189,7 +196,6 @@ container.bind<GenericListingScraperService>(TYPES.GenericListingScraper).to(Gen
 container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(GenericDetailScraperService).inSingletonScope();
 container.bind<AnalyticsService>(TYPES.AnalyticsService).to(AnalyticsService).inSingletonScope();
 container.bind<RuleBasedExtractorService>(RuleBasedExtractorService).to(RuleBasedExtractorService).inSingletonScope();
-container.bind<LLMExtractorService>(LLMExtractorService).to(LLMExtractorService).inSingletonScope();
 container.bind<AttributeExtractorService>(AttributeExtractorService).to(AttributeExtractorService).inSingletonScope();
 
 //middlewares
