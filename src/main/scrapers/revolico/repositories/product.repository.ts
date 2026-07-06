@@ -1,7 +1,7 @@
 import { DBContext } from '@config/db-config';
 import { inject, injectable } from 'inversify';
 import productModel, { IRevolicoProduct } from '../models/product.model';
-import { Model, RootFilterQuery } from 'mongoose';
+import { Model, RootFilterQuery, PipelineStage } from 'mongoose';
 import { DeleteResult } from 'mongodb';
 
 export interface ICustomInsertManyResult {
@@ -93,6 +93,24 @@ export class ProductRepository {
   }
 
   /**
+   * Deletes a single product by its MongoDB _id.
+   * @param _id - The MongoDB ObjectId of the product to delete.
+   * @returns The delete result.
+   */
+  public async deleteById(_id: string): Promise<DeleteResult> {
+    return this._model.deleteOne({ _id });
+  }
+
+  /**
+   * Runs a MongoDB aggregation pipeline.
+   * @param pipeline - The aggregation pipeline stages.
+   * @returns The aggregation result.
+   */
+  public async aggregate(pipeline: PipelineStage[]): Promise<unknown[]> {
+    return this._model.aggregate(pipeline).exec();
+  }
+
+  /**
    * Inserts or updates a single product in the database.
    * @param {IRevolicoProduct} product - The product to be inserted or updated.
    * @param {keyof IRevolicoProduct[]} filterFields - The fields to use as filter. Defaults to ['ID'].
@@ -125,6 +143,10 @@ export class ProductRepository {
         location: product.location,
         views: product.views,
         seller: product.seller,
+        metadata: product.metadata,
+        tags: product.tags,
+        attributes: product.attributes,
+        analytics: product.analytics,
       },
       $push: {
         ...(product.price ? { priceHistory: { value: product.price, updatedAt: new Date() } } : {}),
