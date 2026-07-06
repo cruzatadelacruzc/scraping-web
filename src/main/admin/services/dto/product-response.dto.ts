@@ -239,3 +239,19 @@ export const ProductHistorySchema = <T extends z.ZodTypeAny>(
   });
 
 export type ProductHistoryType<T extends z.ZodTypeAny> = z.infer<ReturnType<typeof ProductHistorySchema<T>>>;
+
+// ---------------------------------------------------------------------------
+// ProductStatsDTO
+// ---------------------------------------------------------------------------
+
+export const ProductStatsSchema = z.object({
+  totalProducts: z.number(),
+  byCategory: z.array(z.object({ category: z.string(), count: z.number() })),
+  byState: z.array(z.object({ state: z.string(), count: z.number() })),
+  outstandingCount: z.number(),
+  promotedCount: z.number(),
+  lastScrapedAt: z.string().nullable(),
+  priceRange: z.object({ min: z.number(), max: z.number() }),
+});
+
+export type ProductStatsType = z.infer<typeof ProductStatsSchema>;

@@ -47,6 +47,8 @@ import { UserIdentityRepository } from '@users/repositories/user-identity.reposi
 import { ProviderTokenVerifier } from '@shared/security/provider-token-verifier';
 import { AccountRepository } from '@users/repositories/account.repository';
 import { AdminController } from '@admin/controllers/admin.controller';
+import { ProductAdminController } from '@admin/controllers/product-admin.controller';
+import { ProductAdminService } from '@admin/services/product-admin.service';
 import { AlarmController } from '@alarms/controllers/alarm.controller';
 import { NotificationController } from '@alarms/controllers/notification.controller';
 import { AlarmService } from '@alarms/services/alarm.service';
@@ -56,6 +58,7 @@ import { AlarmRepository } from '@alarms/repositories/alarm.repository';
 import { NotificationRepository } from '@alarms/repositories/notification.repository';
 import { AlarmMapper } from '@alarms/mappers/alarm.mapper';
 import { NotificationMapper } from '@alarms/mappers/notification.mapper';
+import { ProductMapper } from '@admin/mappers/product.mapper';
 import { ConditionRegistry } from '@alarms/conditions/condition-registry';
 import { PriceDropsBelowCondition } from '@alarms/conditions/price-drops-below.condition';
 import { PriceRisesAboveCondition } from '@alarms/conditions/price-rises-above.condition';
@@ -69,6 +72,10 @@ import { ScraperConfigRegistryService } from '@scrapers/revolico/services/scrapi
 import { ScraperConfigService } from '@scrapers/revolico/services/scraping/scraper-config.service';
 import { GenericListingScraperService } from '@scrapers/revolico/services/scraping/generic-listing-scraper.service';
 import { GenericDetailScraperService } from '@scrapers/revolico/services/scraping/generic-detail-scraper.service';
+import { AnalyticsService } from '@scrapers/revolico/services/analytics.service';
+import { RuleBasedExtractorService } from '@scrapers/revolico/services/attribute-extractor/rule-based-extractor.service';
+import { LLMExtractorService } from '@scrapers/revolico/services/attribute-extractor/llm-extractor.service';
+import { AttributeExtractorService } from '@scrapers/revolico/services/attribute-extractor/attribute-extractor.service';
 // Bots (WhatsApp / Telegram)
 import { BotService } from '@bots/services/bot.service';
 import { BotController } from '@bots/controllers/bot.controller';
@@ -144,9 +151,14 @@ container.bind(TYPES.SubscriptionsMapper).to(SubscriptionsMapper);
 container.bind(TYPES.PlanMapper).to(PlanMapper);
 container.bind(TYPES.AlarmMapper).to(AlarmMapper);
 container.bind(TYPES.NotificationMapper).to(NotificationMapper);
+container.bind(TYPES.ProductMapper).to(ProductMapper);
+
+//services
+container.bind<ProductAdminService>(TYPES.ProductAdminService).to(ProductAdminService);
 
 //controllers
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
+container.bind<ProductAdminController>(TYPES.ProductAdminController).to(ProductAdminController);
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
 container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
@@ -175,6 +187,10 @@ container.bind<ScraperConfigRegistryService>(TYPES.ScraperConfigRegistry).to(Scr
 container.bind<ScraperConfigService>(TYPES.ScraperConfigService).to(ScraperConfigService).inSingletonScope();
 container.bind<GenericListingScraperService>(TYPES.GenericListingScraper).to(GenericListingScraperService).inSingletonScope();
 container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(GenericDetailScraperService).inSingletonScope();
+container.bind<AnalyticsService>(TYPES.AnalyticsService).to(AnalyticsService).inSingletonScope();
+container.bind<RuleBasedExtractorService>(RuleBasedExtractorService).to(RuleBasedExtractorService).inSingletonScope();
+container.bind<LLMExtractorService>(LLMExtractorService).to(LLMExtractorService).inSingletonScope();
+container.bind<AttributeExtractorService>(AttributeExtractorService).to(AttributeExtractorService).inSingletonScope();
 
 //middlewares
 container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware);
