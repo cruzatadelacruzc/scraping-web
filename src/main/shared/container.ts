@@ -53,6 +53,10 @@ import { QueueAdminController } from '@admin/controllers/queue-admin.controller'
 import { QueueAdminService } from '@admin/services/queue-admin.service';
 import { DashboardController } from '@admin/controllers/dashboard.controller';
 import { DashboardService } from '@admin/services/dashboard.service';
+import { AccountAdminService } from '@admin/services/account-admin.service';
+import { RoleService } from '@admin/services/role.service';
+import { AccountAdminController } from '@admin/controllers/account-admin.controller';
+import { RoleController } from '@admin/controllers/role.controller';
 import { AlarmController } from '@alarms/controllers/alarm.controller';
 import { NotificationController } from '@alarms/controllers/notification.controller';
 import { AlarmService } from '@alarms/services/alarm.service';
@@ -160,12 +164,16 @@ container.bind(TYPES.ProductMapper).to(ProductMapper);
 container.bind<ProductAdminService>(TYPES.ProductAdminService).to(ProductAdminService);
 container.bind<QueueAdminService>(TYPES.QueueAdminService).to(QueueAdminService);
 container.bind<DashboardService>(TYPES.DashboardService).to(DashboardService);
+container.bind<AccountAdminService>(TYPES.AccountAdminService).to(AccountAdminService);
+container.bind<RoleService>(TYPES.RoleService).to(RoleService);
 
 //controllers
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<ProductAdminController>(TYPES.ProductAdminController).to(ProductAdminController);
 container.bind<QueueAdminController>(TYPES.QueueAdminController).to(QueueAdminController);
 container.bind<DashboardController>(TYPES.DashboardController).to(DashboardController);
+container.bind<AccountAdminController>(TYPES.AccountAdminController).to(AccountAdminController);
+container.bind<RoleController>(TYPES.RoleController).to(RoleController);
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
 container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
