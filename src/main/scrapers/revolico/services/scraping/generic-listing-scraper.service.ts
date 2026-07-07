@@ -219,6 +219,14 @@ export class GenericListingScraperService {
       imageURL: row.imageURL,
       isOutstanding: Boolean(row.isOutstanding),
       isPromoted,
+      metadata: {
+        source: 'revolico',
+        schemaVersion: 1,
+        scrapedAt: new Date().toISOString(),
+      },
+      tags: [],
+      attributes: {},
+      analytics: {},
     };
   }
 

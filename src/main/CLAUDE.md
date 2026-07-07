@@ -84,6 +84,11 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 - Tests mirror source structure in `src/__tests__/`
 - File naming conventions: see `.claude/rules/compliance-checklist.md` "File naming (canonical suffixes)" section.
 
+### Scraper Module
+
+- `src/main/scrapers/` — multi-store scraping architecture with enrichment pipeline.
+- See `src/main/scrapers/CLAUDE.md` for scraper-specific patterns (extraction, storage, analytics, attributes, LLM integration).
+
 ## Creating New Components
 
 1. Add Symbol to `types.container.ts`

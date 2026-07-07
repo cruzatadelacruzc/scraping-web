@@ -50,6 +50,74 @@ On `JsonataExtractionError`, the worker logs three `[scraper-failure]` lines via
 - Expression sandboxing (`isolated-vm`/`vm2`) — expressions are trusted (team-written). 5s timeout + validate-on-write are the MVP guardrails.
 - LLM auto-tuning of broken expressions — future evolution; manual iteration is the MVP workflow.
 
+## AI-Powered Product Enrichment
+
+After a product is scraped, the system enriches it with **computed analytics** and **AI-extracted keywords** before persisting to MongoDB. Enrichment is store-agnostic — any scraper can consume it.
+
+### Product document fields
+
+Each product document carries these enrichment fields:
+
+| Field        | Type                       | Source                        | Description                                                      |
+| ------------ | -------------------------- | ----------------------------- | ---------------------------------------------------------------- |
+| `metadata`   | `object`                   | Scraper worker                | Source info, schema version, and scrape timestamp                |
+| `tags`       | `string[]`                 | User-managed (admin API)      | Manual labels for filtering and categorization                   |
+| `attributes` | `Record<string, unknown>`  | `AttributeExtractorService`   | Structured data extracted from the raw description (keywords, etc.) |
+| `analytics`  | `IProductAnalytics`        | `AnalyticsService`            | Computed metrics derived from history arrays                     |
+
+### Analytics
+
+`AnalyticsService` (`src/main/scrapers/revolico/services/analytics.service.ts`) is a pure computation service — no DB or external calls. It derives these metrics from a product's in-memory history arrays:
+
+| Metric             | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| `viewsPerDay`      | Average views per day since the first scrape                      |
+| `priceTrend`       | Direction of price movement: `upward`, `downward`, or `stable`    |
+| `priceVolatility`  | Coefficient of variation (stddev / mean) on the last 10 price points |
+| `priceChanges`     | Number of recorded price changes                                  |
+| `hotScore`         | Composite popularity score: viewsPerDay * outstandingBonus * priceDropBonus |
+| `computedAt`       | ISO-8601 timestamp of when the analytics were computed             |
+
+### Keywords (attribute extraction)
+
+`AttributeExtractorService` (`src/main/scrapers/services/attribute-extractor/`) uses a **hybrid pipeline** to extract structured attributes (keywords) from product descriptions:
+
+1. **Rule-based extraction** — `RuleBasedExtractorService` detects common patterns (brand-model combos, condition terms, location mentions) without any API call.
+2. **Confidence gate** — if the rule-based result has confidence >= 0.4, the pipeline returns immediately (zero API cost).
+3. **Cache lookup** — `KeywordsCache` provides two-layer caching (in-memory Map + MongoDB collection with 30-day TTL index). Cache key is the MD5 hex of `description.trim().toLowerCase()` — identical descriptions across scrapes hit the cache.
+4. **LLM fallback** — `extractKeywords()` calls the configured LLM provider via the Vercel AI SDK (`generateObject` with Zod output schema, max 5 keywords). The result is cached for future lookups.
+
+The pipeline **never throws** — it always returns at minimum an empty object. If LLM env vars are missing, the worker logs a warning and skips extraction. If the LLM call fails, the error is logged and an empty result is returned.
+
+### LLM Prompt Management
+
+The system prompt used for keyword extraction is **stored in the database** (`ScraperConfig` table with `storeKey: 'llm:keyword-extraction-prompt'`), not hardcoded. This allows prompt tuning without a redeploy.
+
+| Operation       | How                                                                              |
+| --------------- | -------------------------------------------------------------------------------- |
+| View / edit     | `PUT /api/revolicos/scraper-configs/llm:keyword-extraction-prompt` (admin API)   |
+| Reset to default| `npm run seed` (idempotent upsert)                                                |
+| Fallback        | Hardcoded few-shot prompt (~600 tokens) used when the DB row is missing. The service logs an `[llm:fallback-prompt]` warning so operators know to seed or edit. |
+
+The LLM provider is configured via environment variables (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`) and uses the Vercel AI SDK's OpenAI-compatible provider — any OpenAI-compatible API works (DeepSeek, OpenAI, etc.). If any of the three env vars is missing, LLM extraction is silently skipped.
+
+### LLM QA validation (planned)
+
+A future queue job (`keyword-extraction-qa`) will periodically sample cached keywords against the LLM to measure drift: when the prompt or model changes, `keywords-qa.json` (checked in) provides a stable benchmark of description -> expected-keywords pairs so operators can validate quality before rolling out.
+
+## Multi-store architecture
+
+Scraper enrichment is **shared across stores** to avoid duplication:
+
+```
+src/main/scrapers/
+├── services/                         # Shared enrichment (attribute extraction, analytics)
+│   └── attribute-extractor/          # Hybrid rules/cache/LLM pipeline
+└── revolico/                         # Revolico-specific scrapers, configs, models
+```
+
+New stores (e.g. `porlalivre/`) add their own directory under `src/main/scrapers/` with store-specific models, controllers, and JSONata expressions. They import shared enrichment from `@scrapers/services/` — no need to reimplement attribute extraction or analytics.
+
 ## Deployment
 
 The `Deploy Scrapers API` workflow (`.github/workflows/ec2-deploy.yml`) builds the image, pushes it to Quay.io, and runs the container on a self-hosted runner on the production EC2 host. While the project is an MVP **without** a production host, both build and deploy jobs skip themselves — CI stays green and no work is performed.
@@ -85,6 +153,8 @@ The repository ships project-specific guidance for Claude Code (and other AI ass
 | Testing patterns (Jest + ALS) | [.claude/skills/testing/SKILL.md](.claude/skills/testing/SKILL.md)                                     |
 | Add an alarm condition        | [.claude/skills/alarm-condition/SKILL.md](.claude/skills/alarm-condition/SKILL.md)                     |
 | TypeScript patterns           | [.claude/skills/typescript-best-practices/SKILL.md](.claude/skills/typescript-best-practices/SKILL.md) |
+| Scraper module                | [src/main/scrapers/CLAUDE.md](src/main/scrapers/CLAUDE.md)                                             |
+| Revolico scraper              | [.claude/skills/revolico-scraper/SKILL.md](.claude/skills/revolico-scraper/SKILL.md)                   |
 
 ## Recommended Claude Code plugin: superpowers
 

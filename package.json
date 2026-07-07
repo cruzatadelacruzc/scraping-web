@@ -59,6 +59,7 @@
     "typescript-eslint": "^8.9.0"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.5",
     "@builderbot-plugins/telegram": "^2.0.0",
     "@builderbot/bot": "^1.2.0",
     "@builderbot/provider-baileys": "^1.4.3-y.4",
@@ -71,6 +72,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.15.4",
+    "ai": "^7.0.16",
     "baileys": "^7.0.0-rc13",
     "bcryptjs": "^3.0.2",
     "body-parse": "^0.1.0",

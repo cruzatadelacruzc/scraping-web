@@ -81,8 +81,9 @@ import { ScraperConfigService } from '@scrapers/revolico/services/scraping/scrap
 import { GenericListingScraperService } from '@scrapers/revolico/services/scraping/generic-listing-scraper.service';
 import { GenericDetailScraperService } from '@scrapers/revolico/services/scraping/generic-detail-scraper.service';
 import { AnalyticsService } from '@scrapers/revolico/services/analytics.service';
-import { RuleBasedExtractorService } from '@scrapers/revolico/services/attribute-extractor/rule-based-extractor.service';
-import { AttributeExtractorService } from '@scrapers/revolico/services/attribute-extractor/attribute-extractor.service';
+import { RuleBasedExtractorService } from '@scrapers/services/attribute-extractor/rule-based-extractor.service';
+import { AttributeExtractorService } from '@scrapers/services/attribute-extractor/attribute-extractor.service';
+import { KeywordsCache } from '@scrapers/services/attribute-extractor/keywords-cache';
 // Bots (WhatsApp / Telegram)
 import { BotService } from '@bots/services/bot.service';
 import { BotController } from '@bots/controllers/bot.controller';
@@ -204,6 +205,7 @@ container.bind<GenericListingScraperService>(TYPES.GenericListingScraper).to(Gen
 container.bind<GenericDetailScraperService>(TYPES.GenericDetailScraper).to(GenericDetailScraperService).inSingletonScope();
 container.bind<AnalyticsService>(TYPES.AnalyticsService).to(AnalyticsService).inSingletonScope();
 container.bind<RuleBasedExtractorService>(RuleBasedExtractorService).to(RuleBasedExtractorService).inSingletonScope();
+container.bind<KeywordsCache>(KeywordsCache).to(KeywordsCache).inSingletonScope();
 container.bind<AttributeExtractorService>(AttributeExtractorService).to(AttributeExtractorService).inSingletonScope();
 
 //middlewares

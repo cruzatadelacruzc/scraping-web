@@ -76,6 +76,9 @@ export const TYPES = {
   ScraperConfigController: Symbol.for('ScraperConfigController'),
   GenericListingScraper: Symbol.for('GenericListingScraper'),
   GenericDetailScraper: Symbol.for('GenericDetailScraper'),
+  AnalyticsService: Symbol.for('AnalyticsService'),
+  RuleBasedExtractor: Symbol.for('RuleBasedExtractor'),
+  AttributeExtractor: Symbol.for('AttributeExtractor'),
   // Admin module
   AdminController: Symbol.for('AdminController'),
   ProductAdminController: Symbol.for('ProductAdminController'),
