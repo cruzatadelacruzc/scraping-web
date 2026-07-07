@@ -7,11 +7,11 @@ import { z } from 'zod';
 export const ProductListItemSchema = z.object({
   _id: z.string(),
   ID: z.string().optional(),
-  category: z.string().optional(),
+  category: z.string(),
   subcategory: z.string().optional(),
   url: z.string(),
   description: z.string().optional(),
-  cost: z.string().optional(),
+  cost: z.string(),
   currency: z.string(),
   price: z.number(),
   imageURL: z.string().optional(),
@@ -29,11 +29,6 @@ export const ProductListItemSchema = z.object({
       name: z.string().optional(),
     })
     .optional(),
-  metadata: z
-    .object({
-      scrapedAt: z.unknown().optional(),
-    })
-    .optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -43,11 +38,11 @@ export type ProductListItemType = z.infer<typeof ProductListItemSchema>;
 export class ProductListItemDTO {
   public readonly _id: string;
   public readonly ID?: string;
-  public readonly category?: string;
+  public readonly category: string;
   public readonly subcategory?: string;
   public readonly url: string;
   public readonly description?: string;
-  public readonly cost?: string;
+  public readonly cost: string;
   public readonly currency: string;
   public readonly price: number;
   public readonly imageURL?: string;
@@ -56,7 +51,6 @@ export class ProductListItemDTO {
   public readonly location?: { state?: string; municipality?: string };
   public readonly views?: number;
   public readonly seller?: { name?: string };
-  public readonly metadata?: { scrapedAt?: unknown };
   public readonly createdAt: string;
   public readonly updatedAt: string;
 
@@ -76,7 +70,6 @@ export class ProductListItemDTO {
     this.location = data.location;
     this.views = data.views;
     this.seller = data.seller;
-    this.metadata = data.metadata;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
   }
@@ -99,11 +92,11 @@ export class ProductListItemDTO {
 export const ProductDetailSchema = z.object({
   _id: z.string(),
   ID: z.string().optional(),
-  category: z.string().optional(),
+  category: z.string(),
   subcategory: z.string().optional(),
   url: z.string(),
   description: z.string().optional(),
-  cost: z.string().optional(),
+  cost: z.string(),
   currency: z.string(),
   price: z.number(),
   imageURL: z.string().optional(),
@@ -124,16 +117,6 @@ export const ProductDetailSchema = z.object({
       whatsapp: z.string().optional(),
     })
     .optional(),
-  metadata: z
-    .object({
-      source: z.string().optional(),
-      schemaVersion: z.number().optional(),
-      scrapedAt: z.unknown().optional(),
-    })
-    .optional(),
-  tags: z.array(z.string()).optional(),
-  attributes: z.record(z.string(), z.unknown()).optional(),
-  analytics: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -143,11 +126,11 @@ export type ProductDetailType = z.infer<typeof ProductDetailSchema>;
 export class ProductDetailDTO {
   public readonly _id: string;
   public readonly ID?: string;
-  public readonly category?: string;
+  public readonly category: string;
   public readonly subcategory?: string;
   public readonly url: string;
   public readonly description?: string;
-  public readonly cost?: string;
+  public readonly cost: string;
   public readonly currency: string;
   public readonly price: number;
   public readonly imageURL?: string;
@@ -156,10 +139,6 @@ export class ProductDetailDTO {
   public readonly location?: { state?: string; municipality?: string };
   public readonly views?: number;
   public readonly seller?: { name?: string; phone?: string; email?: string; whatsapp?: string };
-  public readonly metadata?: { source?: string; schemaVersion?: number; scrapedAt?: unknown };
-  public readonly tags?: string[];
-  public readonly attributes?: Record<string, unknown>;
-  public readonly analytics?: Record<string, unknown>;
   public readonly createdAt: string;
   public readonly updatedAt: string;
 
@@ -179,10 +158,6 @@ export class ProductDetailDTO {
     this.location = data.location;
     this.views = data.views;
     this.seller = data.seller;
-    this.metadata = data.metadata;
-    this.tags = data.tags;
-    this.attributes = data.attributes;
-    this.analytics = data.analytics;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
   }

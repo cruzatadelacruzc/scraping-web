@@ -38,10 +38,6 @@ describe('ProductMapper', () => {
     location: { state: 'La Habana', municipality: 'Plaza' },
     views: 150,
     seller: { name: 'Juan', phone: '+5355555555', email: 'juan@email.cu', whatsapp: '+5355555555' },
-    metadata: { source: 'revolico', schemaVersion: 2, scrapedAt: new Date('2025-01-15') },
-    tags: ['vedado', '2cuartos'],
-    attributes: { rooms: 2, bathrooms: 1 },
-    analytics: { avgPrice: 48000 },
     priceHistory: [
       { value: 52000, updatedAt: new Date('2025-01-01') },
       { value: 50000, updatedAt: new Date('2025-01-10') },
@@ -103,6 +99,8 @@ describe('ProductMapper', () => {
       const minimal: IRevolicoProduct = {
         _id: '507f191e810c19729de860ea',
         url: 'https://revolico.com/item/min',
+        cost: '10',
+        category: 'electronica',
         currency: 'USD',
         price: 10,
         isOutstanding: false,
@@ -117,7 +115,8 @@ describe('ProductMapper', () => {
       expect(result.price).toBe(10);
       expect(result.currency).toBe('USD');
       expect(result.isOutstanding).toBe(false);
-      expect(result.category).toBeUndefined();
+      expect(result.cost).toBe('10');
+      expect(result.category).toBe('electronica');
       expect(result.subcategory).toBeUndefined();
       expect(result.description).toBeUndefined();
       expect(result.imageURL).toBeUndefined();
@@ -169,10 +168,6 @@ describe('ProductMapper', () => {
         email: 'juan@email.cu',
         whatsapp: '+5355555555',
       });
-      expect(result.tags).toEqual(['vedado', '2cuartos']);
-      expect(result.attributes).toEqual({ rooms: 2, bathrooms: 1 });
-      expect(result.analytics).toEqual({ avgPrice: 48000 });
-      expect(result.metadata).toEqual({ source: 'revolico', schemaVersion: 2, scrapedAt: new Date('2025-01-15') });
     });
 
     it('should NOT include history arrays in detail DTO', () => {
@@ -186,6 +181,8 @@ describe('ProductMapper', () => {
       const minimal: IRevolicoProduct = {
         _id: 'abc',
         url: 'https://revolico.com/item/min',
+        cost: '5',
+        category: 'inmuebles',
         currency: 'USD',
         price: 5,
         isOutstanding: false,
@@ -195,9 +192,8 @@ describe('ProductMapper', () => {
 
       const result = toProductDetailDTO(minimal);
       expect(result._id).toBe('abc');
-      expect(result.tags).toBeUndefined();
-      expect(result.attributes).toBeUndefined();
-      expect(result.analytics).toBeUndefined();
+      expect(result.cost).toBe('5');
+      expect(result.category).toBe('inmuebles');
       expect(result.seller).toBeUndefined();
     });
   });

@@ -62,7 +62,6 @@ export function toProductListItemDTO(model: IRevolicoProduct): ProductListItemTy
     location: model.location ? { state: model.location.state, municipality: model.location.municipality } : undefined,
     views: model.views,
     seller: model.seller ? { name: model.seller.name } : undefined,
-    metadata: model.metadata ? { scrapedAt: model.metadata.scrapedAt } : undefined,
     createdAt: toISODate((model as unknown as Record<string, unknown>).createdAt),
     updatedAt: toISODate((model as unknown as Record<string, unknown>).updatedAt),
   };
@@ -98,16 +97,6 @@ export function toProductDetailDTO(model: IRevolicoProduct): ProductDetailType {
           whatsapp: model.seller.whatsapp,
         }
       : undefined,
-    metadata: model.metadata
-      ? {
-          source: model.metadata.source as string | undefined,
-          schemaVersion: model.metadata.schemaVersion as number | undefined,
-          scrapedAt: model.metadata.scrapedAt,
-        }
-      : undefined,
-    tags: model.tags,
-    attributes: model.attributes,
-    analytics: model.analytics,
     createdAt: toISODate((model as unknown as Record<string, unknown>).createdAt),
     updatedAt: toISODate((model as unknown as Record<string, unknown>).updatedAt),
   };

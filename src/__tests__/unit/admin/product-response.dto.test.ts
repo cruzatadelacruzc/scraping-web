@@ -10,6 +10,8 @@ describe('ProductListItemDTO', () => {
   const validMinimal = {
     _id: '64a1b2c3d4e5f6a7b8c9d0e1',
     url: 'https://example.com/product-1',
+    cost: '100',
+    category: 'electronica',
     currency: 'USD',
     price: 100,
     isOutstanding: false,
@@ -37,7 +39,6 @@ describe('ProductListItemDTO', () => {
       location: { state: 'La Habana', municipality: 'Playa' },
       views: 150,
       seller: { name: 'John Doe' },
-      metadata: { scrapedAt: '2024-01-01T00:00:00.000Z' },
     };
     const result = ProductListItemDTO.from(full);
     expect(result.ID).toBe('PROD-001');
@@ -47,7 +48,7 @@ describe('ProductListItemDTO', () => {
     expect(result.views).toBe(150);
   });
 
-  it('should reject missing required fields (_id, url, currency, price)', () => {
+  it('should reject missing required fields (_id, url, cost, category, currency, price)', () => {
     expect(() => ProductListItemDTO.from({ url: 'x' })).toThrow();
     expect(() => ProductListItemDTO.from({ _id: 'x' })).toThrow();
     expect(() => ProductListItemDTO.from({})).toThrow();
@@ -59,6 +60,8 @@ describe('ProductDetailDTO', () => {
   const validMinimal = {
     _id: '64a1b2c3d4e5f6a7b8c9d0e1',
     url: 'https://example.com/product-1',
+    cost: '100',
+    category: 'electronica',
     currency: 'USD',
     price: 100,
     isOutstanding: false,
@@ -84,16 +87,12 @@ describe('ProductDetailDTO', () => {
       location: { state: 'La Habana', municipality: 'Vedado' },
       views: 250,
       seller: { name: 'John Doe', phone: '+5355555555', email: 'john@example.com', whatsapp: '+5355555555' },
-      metadata: { source: 'revolico', schemaVersion: 1, scrapedAt: '2024-01-01T00:00:00.000Z' },
-      tags: ['urgent', 'sale'],
-      attributes: { condition: 'new' },
-      analytics: { viewsPerDay: 10 },
     };
     const result = ProductDetailDTO.from(full);
+    expect(result.cost).toBe('50000 USD');
+    expect(result.category).toBe('inmuebles');
     expect(result.seller?.phone).toBe('+5355555555');
-    expect(result.tags).toContain('urgent');
-    expect(result.metadata?.source).toBe('revolico');
-    expect(result.analytics).toEqual({ viewsPerDay: 10 });
+    expect(result.seller?.email).toBe('john@example.com');
   });
 
   it('should reject missing required fields', () => {
