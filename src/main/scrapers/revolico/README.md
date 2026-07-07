@@ -248,6 +248,28 @@ suffixes (`hakAjM`, `fOGbMh`) change per Revolico build — never pin them.
 Each error carries `expression` + a 2 KB snippet of `inputJson` for
 debugging from Bull-Board without opening a browser.
 
+## Enrichment metrics
+
+The in-memory `EnrichmentMetricsService` accumulates counters at every
+pipeline decision point. Exposed via the admin API:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"'$SUPER_ADMIN_EMAIL'","password":"'$SUPER_ADMIN_PASSWORD'"}' \
+  | jq -r .accessToken)
+
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/admin/dashboard/enrichment | jq
+```
+
+Response includes: cache hit rates per layer, LLM token consumption
+(prompt cache hit/miss tokens, completion tokens), LLM failure rate,
+and estimated cost savings based on `LLM_COST_PER_MILLION_TOKENS`.
+
+See `src/main/scrapers/README.md#enrichment-metrics` for the full counter
+table and `src/main/scrapers/CLAUDE.md#7` for agent-facing documentation.
+
 ## Troubleshooting
 
 - **`NO_PRODUCTS_EXTRACTED`** → read the `inputJson` snippet in Bull-Board

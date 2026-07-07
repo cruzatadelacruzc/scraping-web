@@ -8,7 +8,21 @@ const KeywordsOutputSchema = z.object({
   keywords: z.array(z.string()).max(5).describe('Hasta 5 keywords relevantes del producto para búsqueda y filtrado'),
 });
 
-type KeywordsOutput = z.infer<typeof KeywordsOutputSchema>;
+/**
+ * Token usage reported by the LLM provider via the AI SDK `generateObject`.
+ * Includes prompt-cache hit/miss tokens for monitoring provider-side caching.
+ */
+export interface ILlmUsage {
+  promptCacheHitTokens: number;
+  promptCacheMissTokens: number;
+  completionTokens: number;
+}
+
+/** Return type of {@link extractKeywords} — keywords plus optional usage stats. */
+export interface IExtractKeywordsResult {
+  keywords: string[];
+  usage?: ILlmUsage;
+}
 
 // ---- env validation --------------------------------------------------------
 function validateEnv(log?: Pick<ILogger, 'warn'>): { apiKey: string; model: string; baseURL: string } | null {
@@ -72,9 +86,13 @@ export const FALLBACK_SYSTEM_PROMPT =
  * @param {Pick<ILogger, 'warn'>} [log] - Optional logger for diagnostics.
  * @param {string} [systemPrompt] - System prompt override (falls back to
  *   hardcoded prompt and finally to DB-stored llm:keyword-extraction-prompt).
- * @returns {Promise<KeywordsOutput>} Up to 5 keywords.
+ * @returns {Promise<ExtractKeywordsResult>} Up to 5 keywords plus optional LLM provider usage stats.
  */
-export async function extractKeywords(description: string, log?: Pick<ILogger, 'warn'>, systemPrompt?: string): Promise<KeywordsOutput> {
+export async function extractKeywords(
+  description: string,
+  log?: Pick<ILogger, 'warn'>,
+  systemPrompt?: string,
+): Promise<IExtractKeywordsResult> {
   // 1. Guard: empty input
   if (!description?.trim()) {
     return { keywords: [] };
@@ -108,7 +126,16 @@ export async function extractKeywords(description: string, log?: Pick<ILogger, '
       temperature: Number(process.env.LLM_TEMPERATURE) || 0,
     });
 
-    return result.object;
+    return {
+      keywords: result.object.keywords,
+      usage: result.usage
+        ? {
+            promptCacheHitTokens: result.usage.inputTokenDetails?.cacheReadTokens ?? 0,
+            promptCacheMissTokens: result.usage.inputTokenDetails?.noCacheTokens ?? 0,
+            completionTokens: result.usage.outputTokens ?? 0,
+          }
+        : undefined,
+    };
   } catch (err) {
     log?.warn(`LLM extraction failed (baseURL=${env.baseURL} model=${env.model}): ${(err as Error).message}`);
     return { keywords: [] };

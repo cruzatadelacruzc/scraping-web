@@ -156,7 +156,49 @@ When the fallback is used, `AttributeExtractorService._loadSystemPrompt()` logs 
 
 The `ScraperConfigRegistry` (in `revolico/services/scraping/`) caches each `storeKey` for 30 seconds. API writes invalidate the cache. Seed and raw SQL do NOT -- the worker picks up the new value on TTL expiry or process restart.
 
-## 7. Cross-references
+## 7. Enrichment metrics
+
+`enrichment-metrics.service.ts`. In-memory singleton (no persistence) that accumulates counters across the enrichment pipeline. Exposed via admin API at `GET /api/admin/dashboard/enrichment` (`SUPER_ADMIN` only).
+
+### 7.1 Counters
+
+Every decision point in the 4-layer pipeline increments a counter:
+
+| Recorder | When | Layer |
+|----------|------|-------|
+| `recordEnrichment()` | Every `enrichProduct()` call | entry |
+| `recordEnrichmentHashSkip()` | Description unchanged since last enrichment | enrichmentHash guard |
+| `recordRuleHighConfidence()` | Rule confidence >= 0.4 | rule-based extractor |
+| `recordCacheHit()` | KeywordsCache hit (memory or MongoDB) | cache |
+| `recordCacheMiss()` | KeywordsCache miss (proceeds to LLM) | cache |
+| `recordLlmCall(usage)` | LLM returned successfully | LLM |
+| `recordLlmFailure()` | LLM threw (network, timeout, etc.) | LLM |
+
+### 7.2 LLM provider usage
+
+`extractKeywords()` now returns `ExtractKeywordsResult` which includes `usage?: LlmUsage` from the AI SDK `generateObject` response. `LlmUsage` carries:
+- `promptCacheHitTokens` — tokens served from the provider's prompt cache
+- `promptCacheMissTokens` — tokens recomputed by the provider
+- `completionTokens` — tokens generated in the response
+
+These are accumulated in `recordLlmCall()`. The endpoint calculates rates and estimated savings.
+
+### 7.3 Admin endpoint
+
+`GET /api/admin/dashboard/enrichment` — `SUPER_ADMIN` only. Returns `EnrichmentMetricsSnapshot`:
+- All raw counters
+- Computed rates (skip rate, cache hit rate, LLM failure rate, LLM cache hit rate)
+- Token totals (prompt cache hit/miss, completion)
+- `estimatedSavingsUSD` — `(promptCacheHitTokens / 1e6) * LLM_COST_PER_MILLION_TOKENS`
+- `costPerMillionTokens` — value read from env var (0 if unset)
+
+### 7.4 Env var
+
+`LLM_COST_PER_MILLION_TOKENS` — price per 1M input tokens in USD. Optional.
+Examples: DeepSeek = 0.14, OpenAI = 2.50, Anthropic = 3.00.
+If unset, `estimatedSavingsUSD` is always 0.
+
+## 8. Cross-references
 
 - `.claude/skills/revolico-scraper/SKILL.md` -- Revolico-specific gotchas: IIFE wrapper, CSS Modules selectors, JSONata expression administration (3 write paths, cache invalidation rules), `isPromoted` service vs expression, `JsonataExtractionError` code catalog
 - `src/main/scrapers/revolico/README.md` -- Human documentation: full architecture flow, curl/SQL transcripts, "adding a new scraper" recipe
@@ -165,7 +207,7 @@ The `ScraperConfigRegistry` (in `revolico/services/scraping/`) caches each `stor
 - `src/main/shared/container.ts` -- DI registrations for all scraper services
 - `src/main/shared/types.container.ts` -- Symbol definitions (`TYPES.ScraperConfigRegistry`, `TYPES.AnalyticsService`, etc.)
 
-## 8. Coding constraints
+## 9. Coding constraints
 
 All constraints from `src/main/CLAUDE.md` apply, plus:
 

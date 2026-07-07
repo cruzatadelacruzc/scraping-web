@@ -250,10 +250,71 @@ product document:
 |---|---|---|
 | `analytics` | `AnalyticsService.compute()` | `viewsPerDay`, `priceTrend`, `priceVolatility`, `priceChanges`, `hotScore`, `computedAt` |
 | `attributes` | `AttributeExtractorService.extract()` | Rule-extracted fields or `{ keywords: [...] }` |
+| `enrichmentHash` | `ProductService.enrichProduct()` | MD5 of the description used for last enrichment; skips extraction on re-scrape when unchanged |
 | `metadata` | Pipeline | Last-enrichment timestamps and status |
 
 Timestamps (`createdAt`, `updatedAt`) are managed by Mongoose
 `{ timestamps: true }`.
+
+## Enrichment metrics
+
+The `EnrichmentMetricsService` is an in-memory singleton (not persisted) that
+accumulates counters across every decision point in the enrichment pipeline.
+Metrics reset on process restart — no DB dependency.
+
+### Counters
+
+| Recorder | When | Layer |
+|---|---|---|
+| `recordEnrichment()` | Every `enrichProduct()` call | entry |
+| `recordEnrichmentHashSkip()` | Description unchanged since last enrichment | enrichmentHash guard |
+| `recordRuleHighConfidence()` | Rule confidence ≥ 0.4 (skips cache + LLM) | rule-based extractor |
+| `recordCacheHit()` | KeywordsCache hit (memory or MongoDB) | cache |
+| `recordCacheMiss()` | KeywordsCache miss (proceeds to LLM) | cache |
+| `recordLlmCall(usage)` | LLM returned successfully (accumulates tokens) | LLM |
+| `recordLlmFailure()` | LLM threw (network, timeout, etc.) | LLM |
+
+### LLM provider tokens
+
+The `extractKeywords()` function now returns `IExtractKeywordsResult` with an
+optional `usage` field. The AI SDK exposes:
+- `inputTokenDetails.cacheReadTokens` — tokens served from the provider's prompt cache
+- `inputTokenDetails.noCacheTokens` — tokens recomputed by the provider
+- `outputTokens` — tokens generated in the response
+
+### Admin endpoint
+
+`GET /api/admin/dashboard/enrichment` — `SUPER_ADMIN` only. Returns:
+
+```json
+{
+  "startedAt": "2026-07-07T12:00:00.000Z",
+  "totalEnrichments": 150,
+  "enrichmentHashSkips": 45,
+  "enrichmentHashSkipRate": 0.3,
+  "ruleHighConfidence": 60,
+  "ruleHighConfidenceRate": 0.57,
+  "cacheHits": 20,
+  "cacheMisses": 25,
+  "cacheHitRate": 0.44,
+  "llmCalls": 23,
+  "llmFailures": 2,
+  "llmFailureRate": 0.08,
+  "llmPromptCacheHitTokens": 12000,
+  "llmPromptCacheMissTokens": 8000,
+  "llmCompletionTokens": 3500,
+  "llmCacheHitRate": 0.6,
+  "estimatedSavingsUSD": 0.00168,
+  "costPerMillionTokens": 0.14
+}
+```
+
+The `estimatedSavingsUSD` is calculated as `(promptCacheHitTokens / 1e6) * LLM_COST_PER_MILLION_TOKENS`. If the env var is not set, both `estimatedSavingsUSD` and `costPerMillionTokens` are `0`.
+
+### Env var
+
+`LLM_COST_PER_MILLION_TOKENS` — price per 1M input tokens in USD (optional).
+Examples: DeepSeek $0.14, OpenAI $2.50, Anthropic $3.00.
 
 ## Related files
 

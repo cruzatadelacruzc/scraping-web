@@ -12,6 +12,8 @@ export interface IProductBase {
   attributes?: Record<string, unknown>;
   /** Computed analytics metrics. */
   analytics?: Record<string, unknown>;
+  /** MD5 hash of the description used for the last enrichment. Prevents re-sending identical descriptions to the LLM. */
+  enrichmentHash?: string;
 }
 
 export interface IProductDetails {

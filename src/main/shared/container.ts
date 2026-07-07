@@ -84,6 +84,7 @@ import { AnalyticsService } from '@scrapers/revolico/services/analytics.service'
 import { RuleBasedExtractorService } from '@scrapers/services/attribute-extractor/rule-based-extractor.service';
 import { AttributeExtractorService } from '@scrapers/services/attribute-extractor/attribute-extractor.service';
 import { KeywordsCache } from '@scrapers/services/attribute-extractor/keywords-cache';
+import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
 // Bots (WhatsApp / Telegram)
 import { BotService } from '@bots/services/bot.service';
 import { BotController } from '@bots/controllers/bot.controller';
@@ -207,6 +208,7 @@ container.bind<AnalyticsService>(TYPES.AnalyticsService).to(AnalyticsService).in
 container.bind<RuleBasedExtractorService>(RuleBasedExtractorService).to(RuleBasedExtractorService).inSingletonScope();
 container.bind<KeywordsCache>(KeywordsCache).to(KeywordsCache).inSingletonScope();
 container.bind<AttributeExtractorService>(AttributeExtractorService).to(AttributeExtractorService).inSingletonScope();
+container.bind<EnrichmentMetricsService>(EnrichmentMetricsService).to(EnrichmentMetricsService).inSingletonScope();
 
 //middlewares
 container.bind<AuthMiddleware>(TYPES.AuthMiddleware).to(AuthMiddleware);

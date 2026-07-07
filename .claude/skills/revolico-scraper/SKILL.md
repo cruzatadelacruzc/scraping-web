@@ -152,3 +152,18 @@ Future `llm:*` keys (e.g. `llm:category-classifier-prompt`,
 `llm:condition-evaluator-prompt`) follow the same pattern: store the
 prompt text in `ScraperConfig.value`, name it `llm:<purpose>`, and let
 the relevant service read it through `ScraperConfigRegistry`.
+
+## 11. Enrichment metrics
+
+`EnrichmentMetricsService` (`src/main/scrapers/services/enrichment-metrics.service.ts`)
+is an in-memory singleton (no persistence) that accumulates counters across
+every decision in the enrichment pipeline. It is injected into
+`ProductService` and `AttributeExtractorService`.
+
+**Admin endpoint:** `GET /api/admin/dashboard/enrichment` (SUPER_ADMIN only).
+Returns counters, computed rates, LLM token usage, and estimated cost savings.
+
+**Env var:** `LLM_COST_PER_MILLION_TOKENS` (optional). Used to compute
+`estimatedSavingsUSD` in the metrics response. If unset, savings are 0.
+
+See `src/main/scrapers/CLAUDE.md#7` for the full counter table and usage.

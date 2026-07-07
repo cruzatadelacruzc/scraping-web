@@ -5,6 +5,7 @@ import { RuleBasedExtractorService, IRuleExtractionResult } from './rule-based-e
 import { extractKeywords, FALLBACK_SYSTEM_PROMPT } from './llm-extractor.service';
 import { KeywordsCache } from './keywords-cache';
 import { ScraperConfigRegistryService } from '@scrapers/revolico/services/scraping/scraper-config-registry.service';
+import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
 
 /** Minimum rule-based confidence to skip the LLM fallback. */
 const RULE_CONFIDENCE_THRESHOLD = 0.4;
@@ -28,6 +29,7 @@ export class AttributeExtractorService {
     @inject(RuleBasedExtractorService) private readonly _rules: RuleBasedExtractorService,
     @inject(KeywordsCache) private readonly _cache: KeywordsCache,
     @inject(TYPES.ScraperConfigRegistry) private readonly _promptRegistry: ScraperConfigRegistryService,
+    @inject(EnrichmentMetricsService) private readonly _metrics: EnrichmentMetricsService,
     @inject(TYPES.Logger) private readonly _log: ILogger,
   ) {
     this._log.context = AttributeExtractorService.name;
@@ -54,6 +56,7 @@ export class AttributeExtractorService {
     }
 
     if (ruleResult.confidence >= RULE_CONFIDENCE_THRESHOLD) {
+      this._metrics.recordRuleHighConfidence();
       this._log.debug(
         `Rule-based extraction confidence=${ruleResult.confidence.toFixed(2)} (matched ${ruleResult.matchedCount}) — skipping cache & LLM`,
       );
@@ -87,20 +90,31 @@ export class AttributeExtractorService {
     // Step 2 — cache check
     const cached = await this._cache.get(description);
     if (cached) {
+      this._metrics.recordCacheHit();
       this._log.debug(`Keywords cache hit (${cached.length} keywords)`);
       return { keywords: cached };
     }
 
     // Step 3 — LLM fallback (with DB-stored prompt, hardcoded fallback)
+    this._metrics.recordCacheMiss();
     this._log.info(`Rule confidence low & cache miss — calling LLM`);
     const systemPrompt = await this._loadSystemPrompt();
     const result = await extractKeywords(description, this._log, systemPrompt);
+
+    // Record LLM outcome
+    if (result.usage) {
+      this._metrics.recordLlmCall(result.usage);
+    } else {
+      // No usage = LLM threw (empty-description and missing-env guards
+      // are handled before we reach this method).
+      this._metrics.recordLlmFailure();
+    }
 
     // Store in cache (best-effort, fire-and-forget)
     if (result.keywords.length > 0) {
       this._cache.set(description, result.keywords).catch(() => {});
     }
 
-    return result;
+    return { keywords: result.keywords };
   }
 }

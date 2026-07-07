@@ -13,6 +13,7 @@ import { DashboardController } from '@admin/controllers/dashboard.controller';
 import { ResponseHandler } from '@shared/response-handler';
 import { ILogger } from '@shared/logger.interface';
 import { DashboardService } from '@admin/services/dashboard.service';
+import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
 
 describe('DashboardController', () => {
   let controller: DashboardController;
@@ -38,7 +39,11 @@ describe('DashboardController', () => {
 
     const serviceInstance = new (DashboardService as jest.Mock)() as DashboardService;
 
-    controller = new DashboardController(serviceInstance, loggerMock);
+    const metricsMock = {
+      getSnapshot: jest.fn().mockReturnValue({ startedAt: new Date().toISOString(), totalEnrichments: 0 }),
+    } as unknown as EnrichmentMetricsService;
+
+    controller = new DashboardController(serviceInstance, metricsMock, loggerMock);
 
     jest.spyOn(ResponseHandler, 'ok');
     jest.spyOn(ResponseHandler, 'error');

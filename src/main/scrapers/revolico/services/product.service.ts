@@ -3,6 +3,7 @@ import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { IJobContext } from '@shared/queue/port/job-context.interfaces';
 import { inject, injectable } from 'inversify';
+import crypto from 'crypto';
 import { IRevolicoProduct } from '../models/product.model';
 import { ProductRepository } from '../repositories/product.repository';
 import { QUEUE_NAME } from '../queues';
@@ -12,6 +13,7 @@ import { AlarmEngineService } from '@alarms/services/alarm-engine.service';
 import { IProductSnapshot } from '@alarms/conditions/condition.interface';
 import { AnalyticsService } from '@scrapers/revolico/services/analytics.service';
 import { AttributeExtractorService } from '@scrapers/services/attribute-extractor/attribute-extractor.service';
+import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
 
 @injectable()
 export class ProductService {
@@ -23,6 +25,7 @@ export class ProductService {
     @inject(TYPES.AlarmEngineService) private readonly _alarmEngine: AlarmEngineService,
     @inject(TYPES.AnalyticsService) private readonly _analytics: AnalyticsService,
     @inject(AttributeExtractorService) private readonly _attributeExtractor: AttributeExtractorService,
+    @inject(EnrichmentMetricsService) private readonly _metrics: EnrichmentMetricsService,
   ) {
     this._log.context = ProductService.name;
   }
@@ -99,7 +102,15 @@ export class ProductService {
 
   /**
    * Enriches a product with computed analytics and extracted attributes.
+   *
+   * Analytics are always recomputed (they depend on history arrays which change
+   * between scrapes). Attribute extraction is skipped when the description hash
+   * matches the stored `enrichmentHash` and attributes are already populated —
+   * this prevents re-sending identical descriptions to the LLM on every scrape.
+   *
    * Runs as fire-and-forget — failures are logged but never propagated.
+   *
+   * @param {string} url - The product URL to enrich.
    */
   public async enrichProduct(url: string): Promise<void> {
     try {
@@ -109,20 +120,46 @@ export class ProductService {
         return;
       }
 
+      // Analytics always recomputed — they depend on history arrays
       const analytics = this._analytics.compute(product);
-      const attributes = await this._attributeExtractor.extract(product.description);
 
-      const update: Record<string, unknown> = {};
+      this._metrics.recordEnrichment();
+
+      // Guard: skip attribute extraction if the description hasn't changed
+      // since the last enrichment and attributes are already populated.
+      const descHash = this._hashDescription(product.description);
+      const skipExtraction =
+        descHash !== '' && product.enrichmentHash === descHash && !!product.attributes && Object.keys(product.attributes).length > 0;
+
+      let attributes: Record<string, unknown> = (product.attributes as Record<string, unknown>) ?? {};
+      if (skipExtraction) {
+        this._metrics.recordEnrichmentHashSkip();
+        this._log.debug(`Skipping attribute extraction for ${url} — description unchanged`);
+      } else {
+        attributes = await this._attributeExtractor.extract(product.description);
+      }
+
+      const update: Record<string, unknown> = { enrichmentHash: descHash };
       if (analytics) update.analytics = analytics;
       if (Object.keys(attributes).length > 0) update.attributes = attributes;
 
-      if (Object.keys(update).length > 0) {
-        await this._repository.update(product._id, update as Partial<IRevolicoProduct>);
-        this._log.debug(`Enriched product ${url}`);
-      }
+      await this._repository.update(product._id, update as Partial<IRevolicoProduct>);
+      this._log.debug(`Enriched product ${url}`);
     } catch (err) {
       this._log.error(`Failed to enrich product ${url}`, (err as Error).message);
     }
+  }
+
+  /**
+   * Computes the MD5 hash of a description, used as a deterministic key for
+   * enrichment deduplication.
+   *
+   * @param {string | undefined} description - The raw listing description.
+   * @returns {string} Hex-encoded MD5 hash, or empty string if description is empty.
+   */
+  private _hashDescription(description?: string): string {
+    if (!description?.trim()) return '';
+    return crypto.createHash('md5').update(description.trim().toLowerCase()).digest('hex');
   }
 
   /**

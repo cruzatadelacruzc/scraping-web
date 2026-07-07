@@ -175,6 +175,15 @@ export function registerAdminPaths(registry: OpenAPIRegistry): void {
     .errors(401, 403)
     .register(registry);
 
+  endpoint('get', '/api/admin/dashboard/enrichment')
+    .tag(TAG.ADMIN_DASHBOARD)
+    .summary('Get enrichment pipeline metrics (cache hit rates, token consumption, cost savings)')
+    .operationId('adminGetEnrichmentMetrics')
+    .security('bearerAuth')
+    .response(200, 'Enrichment metrics', Schemas.EnrichmentMetricsDTO)
+    .errors(401, 403)
+    .register(registry);
+
   // ── Admin Accounts ────────────────────────────────────────────────────
   endpoint('get', '/api/admin/accounts')
     .tag(TAG.ADMIN_ACCOUNTS)

@@ -22,6 +22,8 @@ export interface IRevolicoProduct extends IProductBase, IProductDetails {
   attributes?: Record<string, unknown>;
   /** Computed analytics metrics (Fase 2). */
   analytics?: Record<string, unknown>;
+  /** MD5 hash of the description used for the last enrichment. Prevents re-sending identical descriptions to the LLM. */
+  enrichmentHash?: string;
 }
 
 export const productSchema = new Schema<IRevolicoProduct>(
@@ -125,6 +127,9 @@ export const productSchema = new Schema<IRevolicoProduct>(
     analytics: {
       type: Schema.Types.Mixed,
       default: {},
+    },
+    enrichmentHash: {
+      type: String,
     },
   },
   { timestamps: true },

@@ -147,6 +147,7 @@ export class ProductRepository {
         tags: product.tags,
         attributes: product.attributes,
         analytics: product.analytics,
+        enrichmentHash: product.enrichmentHash,
       },
       $push: {
         ...(product.price ? { priceHistory: { value: product.price, updatedAt: new Date() } } : {}),

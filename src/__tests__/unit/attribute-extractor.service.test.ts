@@ -1,6 +1,7 @@
 import { AttributeExtractorService } from '@scrapers/services/attribute-extractor/attribute-extractor.service';
 import { RuleBasedExtractorService } from '@scrapers/services/attribute-extractor/rule-based-extractor.service';
 import { KeywordsCache } from '@scrapers/services/attribute-extractor/keywords-cache';
+import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
 import { ILogger } from '@shared/logger.interface';
 
 // Mock the standalone LLM function
@@ -46,10 +47,19 @@ describe('AttributeExtractorService', () => {
       get: jest.fn().mockResolvedValue(null),
     } as any;
 
+    const metricsMock = {
+      recordRuleHighConfidence: jest.fn(),
+      recordCacheHit: jest.fn(),
+      recordCacheMiss: jest.fn(),
+      recordLlmCall: jest.fn(),
+      recordLlmFailure: jest.fn(),
+    } as unknown as EnrichmentMetricsService;
+
     service = new AttributeExtractorService(
       rulesMock as RuleBasedExtractorService,
       cacheMock,
       promptRegistryMock,
+      metricsMock,
       makeLogger() as unknown as ILogger,
     );
   });

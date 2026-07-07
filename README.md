@@ -105,6 +105,23 @@ The LLM provider is configured via environment variables (`LLM_PROVIDER`, `LLM_M
 
 A future queue job (`keyword-extraction-qa`) will periodically sample cached keywords against the LLM to measure drift: when the prompt or model changes, `keywords-qa.json` (checked in) provides a stable benchmark of description -> expected-keywords pairs so operators can validate quality before rolling out.
 
+### Monitoring
+
+The enrichment pipeline exposes real-time metrics via the admin API:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:3000/api/admin/dashboard/enrichment | jq
+```
+
+The `EnrichmentMetricsService` (in-memory, reset on restart) tracks every
+pipeline decision — enrichmentHash skips, rule hits, cache hits/misses, LLM
+calls/failures — plus LLM provider token usage (prompt cache hit/miss tokens,
+completion tokens). Computed rates and estimated USD savings (based on
+`LLM_COST_PER_MILLION_TOKENS`) are included in the response.
+
+See `src/main/scrapers/README.md#enrichment-metrics` for the full counter table.
+
 ## Multi-store architecture
 
 Scraper enrichment is **shared across stores** to avoid duplication:
