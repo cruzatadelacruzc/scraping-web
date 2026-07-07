@@ -70,7 +70,10 @@ describe('ProductService Integration Test', () => {
     const insertedProducts = await productRepository.find(0, 2);
     expect(insertedProducts).toHaveLength(2);
 
-    expect(insertedProducts[0]).toEqual(
+    // sort by ID for deterministic order across CI environments
+    const sorted = [...insertedProducts].sort((a, b) => (a.ID ?? '').localeCompare(b.ID ?? ''));
+
+    expect(sorted[0]).toEqual(
       expect.objectContaining({
         _id: expect.anything(),
         ID: productData[0].ID,
