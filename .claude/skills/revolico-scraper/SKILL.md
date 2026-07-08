@@ -169,17 +169,25 @@ Returns counters, computed rates, LLM token usage, and estimated cost savings.
 
 See `src/main/scrapers/CLAUDE.md#7` for the full counter table and usage.
 
-## 12. Rule word lists are DB-backed, not hardcoded
+## 12. Rule word lists — 3 write paths, same cache rule as JSONata
 
-The six word-list categories used by `RuleBasedExtractorService` (brands,
-conditions, colors, propertyTypes, locations, warrantyKeywords) are stored in
-the `Rule` table (PostgreSQL) and served through `RuleRegistryService` — an
-in-memory cache with 30 s TTL. The extractor reads from the cache synchronously.
+The six word-list categories (`brands`, `conditions`, `colors`, `propertyTypes`,
+`locations`, `warrantyKeywords`) follow the exact same write-path contract as
+`ScraperConfig` expressions (Section 3):
 
-API writes (`PUT/POST /api/admin/rules`) invalidate the cache immediately.
-Seed and raw SQL do NOT — the extractor picks up the new values on TTL expiry
-or process restart. Same pattern as `ScraperConfig` (Section 3).
+| Path | Invalidates cache? | Use when |
+|---|---|---|
+| `PUT/POST /api/admin/rules/:ruleKey` | **Yes** (calls `invalidate`) | Hot change, no redeploy |
+| `prisma/seed.ts` (via `rule-fallbacks.ts`) | No | Versioned, reviewable, canonical |
+| Raw SQL on `Rule` | No | Emergency rollback only |
 
-Cold start: `RuleRegistryService` bootstraps from `FALLBACK_RULES` in
-`rule-fallbacks.ts` before the async DB warm completes — the extraction
-pipeline is never blocked, even with an empty `Rule` table.
+**Add a new word to a rule list:** edit `rule-fallbacks.ts` FIRST (it is the
+canonical source and the cold-start fallback), then run `npm run seed`. If
+you need the change live immediately without a restart, also hit the admin API.
+
+After **seed** or **SQL** the extractor picks up the new values on TTL expiry
+(≤ 30 s) or process restart. After **API** the cache is invalidated instantly.
+
+Never edit `rule-based-extractor.service.ts` to add a word — the word lists
+were removed from that file. The extractor reads from `RuleRegistryService.get()`,
+which returns from an in-memory `Map` synchronously.
