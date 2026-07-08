@@ -97,6 +97,29 @@ export class PathBuilder {
     return this;
   }
 
+  /**
+   * Adds a query parameter to the endpoint documentation.
+   * @param name - The query parameter name.
+   * @param schema - Zod schema for the parameter (e.g. `z.string()`, `z.coerce.boolean().optional()`).
+   * @param description - Human-readable description.
+   */
+  public queryParam(name: string, schema: z.ZodTypeAny, description: string): this {
+    if (!this._config.request) {
+      this._config.request = {};
+    }
+    if (!this._config.request.query) {
+      this._config.request.query = z.object({});
+    }
+    const annotated = schema.openapi({
+      param: { name, in: 'query', description },
+      description,
+    });
+    (this._config.request.query as z.ZodObject<Record<string, z.ZodTypeAny>>) = (
+      this._config.request.query as z.ZodObject<Record<string, z.ZodTypeAny>>
+    ).extend({ [name]: annotated });
+    return this;
+  }
+
   public requestBody(schema: z.ZodTypeAny, description?: string): this {
     this._config.request = {
       ...(this._config.request || {}),

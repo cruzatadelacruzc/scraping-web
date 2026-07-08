@@ -46,6 +46,9 @@ const sortByUpdatedAtDesc = <T extends { updatedAt: unknown }>(items: T[]): T[] 
  * @returns A plain object matching ProductListItemType.
  */
 export function toProductListItemDTO(model: IRevolicoProduct): ProductListItemType {
+  const hasAttributes = typeof model.attributes === 'object' && model.attributes !== null && Object.keys(model.attributes).length > 0;
+  const hasAnalytics = typeof model.analytics === 'object' && model.analytics !== null && Object.keys(model.analytics).length > 0;
+
   return {
     _id: toStringId(model._id),
     ID: model.ID,
@@ -64,6 +67,10 @@ export function toProductListItemDTO(model: IRevolicoProduct): ProductListItemTy
     seller: model.seller ? { name: model.seller.name } : undefined,
     createdAt: toISODate((model as unknown as Record<string, unknown>).createdAt),
     updatedAt: toISODate((model as unknown as Record<string, unknown>).updatedAt),
+    hasEnrichment: !!(model.enrichmentHash && model.enrichmentHash.length > 0),
+    hasAttributes,
+    hasAnalytics,
+    tags: model.tags ?? [],
   };
 }
 
@@ -99,6 +106,11 @@ export function toProductDetailDTO(model: IRevolicoProduct): ProductDetailType {
       : undefined,
     createdAt: toISODate((model as unknown as Record<string, unknown>).createdAt),
     updatedAt: toISODate((model as unknown as Record<string, unknown>).updatedAt),
+    attributes: model.attributes,
+    analytics: model.analytics,
+    enrichmentHash: model.enrichmentHash,
+    tags: model.tags ?? [],
+    metadata: model.metadata,
   };
 }
 

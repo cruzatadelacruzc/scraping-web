@@ -1,11 +1,8 @@
 import { extractKeywords } from '@scrapers/services/attribute-extractor/llm-extractor.service';
 
-// Mock the `ai` module's generateText + Output
+// Mock the `ai` module's generateText (no more Output.object — we use json_object + manual parse)
 jest.mock('ai', () => ({
   generateText: jest.fn(),
-  Output: {
-    object: jest.fn().mockReturnValue({ type: 'json_schema' }),
-  },
 }));
 
 import { generateText } from 'ai';
@@ -39,7 +36,7 @@ describe('extractKeywords (Vercel AI SDK)', () => {
   describe('successful extraction', () => {
     it('returns keywords when LLM responds correctly', async () => {
       mockGenerateText.mockResolvedValueOnce({
-        output: { keywords: ['casa', 'miramar', '3 cuartos', 'garaje', 'independiente'] },
+        text: '{"keywords": ["casa", "miramar", "3 cuartos", "garaje", "independiente"]}',
         usage: undefined,
       } as any);
 
@@ -52,7 +49,7 @@ describe('extractKeywords (Vercel AI SDK)', () => {
 
     it('returns usage when provider reports token data', async () => {
       mockGenerateText.mockResolvedValueOnce({
-        output: { keywords: ['iphone', '14 pro'] },
+        text: '{"keywords": ["iphone", "14 pro"]}',
         usage: {
           inputTokenDetails: { cacheReadTokens: 500, noCacheTokens: 200 },
           outputTokens: 30,

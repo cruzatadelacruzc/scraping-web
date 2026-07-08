@@ -21,6 +21,11 @@ export const ProductListQuerySchema = z.object({
     return v;
   }, z.coerce.boolean().optional()),
   'location.state': z.string().optional(),
+  hasEnrichment: z.preprocess(v => {
+    if (v === 'false' || v === '0') return false;
+    if (v === 'true' || v === '1') return true;
+    return v;
+  }, z.coerce.boolean().optional()),
 });
 
 export type ProductListQueryType = z.infer<typeof ProductListQuerySchema>;
@@ -38,6 +43,7 @@ export class ProductListQueryDTO {
   public readonly isOutstanding?: boolean;
   public readonly isPromoted?: boolean;
   public readonly 'location.state'?: string;
+  public readonly hasEnrichment?: boolean;
 
   public constructor(data: ProductListQueryType) {
     this.skip = data.skip;
@@ -52,6 +58,7 @@ export class ProductListQueryDTO {
     this.isOutstanding = data.isOutstanding;
     this.isPromoted = data.isPromoted;
     this['location.state'] = data['location.state'];
+    this.hasEnrichment = data.hasEnrichment;
   }
 
   /**

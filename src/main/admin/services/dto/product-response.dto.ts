@@ -31,6 +31,10 @@ export const ProductListItemSchema = z.object({
     .optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  hasEnrichment: z.boolean(),
+  hasAttributes: z.boolean(),
+  hasAnalytics: z.boolean(),
+  tags: z.array(z.string()),
 });
 
 export type ProductListItemType = z.infer<typeof ProductListItemSchema>;
@@ -53,6 +57,10 @@ export class ProductListItemDTO {
   public readonly seller?: { name?: string };
   public readonly createdAt: string;
   public readonly updatedAt: string;
+  public readonly hasEnrichment: boolean;
+  public readonly hasAttributes: boolean;
+  public readonly hasAnalytics: boolean;
+  public readonly tags: string[];
 
   public constructor(data: ProductListItemType) {
     this._id = data._id;
@@ -72,6 +80,10 @@ export class ProductListItemDTO {
     this.seller = data.seller;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    this.hasEnrichment = data.hasEnrichment;
+    this.hasAttributes = data.hasAttributes;
+    this.hasAnalytics = data.hasAnalytics;
+    this.tags = data.tags;
   }
 
   /**
@@ -119,6 +131,11 @@ export const ProductDetailSchema = z.object({
     .optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  attributes: z.record(z.unknown()).optional(),
+  analytics: z.record(z.unknown()).optional(),
+  enrichmentHash: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export type ProductDetailType = z.infer<typeof ProductDetailSchema>;
@@ -141,6 +158,11 @@ export class ProductDetailDTO {
   public readonly seller?: { name?: string; phone?: string; email?: string; whatsapp?: string };
   public readonly createdAt: string;
   public readonly updatedAt: string;
+  public readonly attributes?: Record<string, unknown>;
+  public readonly analytics?: Record<string, unknown>;
+  public readonly enrichmentHash?: string;
+  public readonly tags?: string[];
+  public readonly metadata?: Record<string, unknown>;
 
   public constructor(data: ProductDetailType) {
     this._id = data._id;
@@ -160,6 +182,11 @@ export class ProductDetailDTO {
     this.seller = data.seller;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    this.attributes = data.attributes;
+    this.analytics = data.analytics;
+    this.enrichmentHash = data.enrichmentHash;
+    this.tags = data.tags;
+    this.metadata = data.metadata;
   }
 
   /**
@@ -227,6 +254,8 @@ export const ProductStatsSchema = z.object({
   promotedCount: z.number(),
   lastScrapedAt: z.string().nullable(),
   priceRange: z.object({ min: z.number(), max: z.number() }),
+  enrichedCount: z.number(),
+  unenrichedCount: z.number(),
 });
 
 export type ProductStatsType = z.infer<typeof ProductStatsSchema>;

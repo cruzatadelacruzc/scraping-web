@@ -32,6 +32,7 @@ Before claiming a task is done:
 - Confirm no files outside the intended scope were modified.
 - If the task added a public API surface, regenerate `swagger.json`.
 - If the task added a new dependency, run `npm install` and verify it lands in `package.json`.
+- If the task changed public API, env vars, architecture, or patterns: update or create the relevant `README.md` / `CLAUDE.md`. Notify the user which docs you plan to change before doing so. See `compliance-checklist.md#readme--project-docs` for the full rule.
 
 ## Commit messages
 

@@ -29,8 +29,26 @@ export function registerAdminPaths(registry: OpenAPIRegistry): void {
   endpoint('get', '/api/admin/products')
     .tag(TAG.ADMIN_PRODUCTS)
     .summary('List products with pagination and filtering')
+    .description('Paginated product list. Filter by category, price range, location, enrichment status, and more.')
     .operationId('adminListProducts')
     .security('bearerAuth')
+    .queryParam('skip', z.coerce.number().min(0).default(0), 'Number of items to skip')
+    .queryParam('limit', z.coerce.number().min(1).max(100).default(20), 'Max items per page')
+    .queryParam('sort', z.string().default('createdAt'), 'Field to sort by')
+    .queryParam('order', z.enum(['asc', 'desc']).default('desc'), 'Sort direction')
+    .queryParam('category', z.string().optional(), 'Filter by category')
+    .queryParam('subcategory', z.string().optional(), 'Filter by subcategory')
+    .queryParam('search', z.string().optional(), 'Case-insensitive search on description')
+    .queryParam('minPrice', z.coerce.number().optional(), 'Minimum price filter')
+    .queryParam('maxPrice', z.coerce.number().optional(), 'Maximum price filter')
+    .queryParam('isOutstanding', z.coerce.boolean().optional().openapi({ type: 'boolean' }), 'Filter by outstanding status')
+    .queryParam('isPromoted', z.coerce.boolean().optional().openapi({ type: 'boolean' }), 'Filter by promoted status')
+    .queryParam('location.state', z.string().optional(), 'Filter by location state')
+    .queryParam(
+      'hasEnrichment',
+      z.coerce.boolean().optional().openapi({ type: 'boolean' }),
+      'Filter by enrichment status. true = only enriched products, false = only unenriched.',
+    )
     .response(200, 'Paginated list of products', Schemas.PaginatedResponse)
     .errors(401, 403)
     .register(registry);

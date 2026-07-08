@@ -1141,29 +1141,42 @@
               }
             }
           },
-          "metadata": {
-            "type": "object",
-            "properties": {
-              "scrapedAt": {
-                "nullable": true
-              }
-            }
-          },
           "createdAt": {
             "type": "string"
           },
           "updatedAt": {
             "type": "string"
+          },
+          "hasEnrichment": {
+            "type": "boolean"
+          },
+          "hasAttributes": {
+            "type": "boolean"
+          },
+          "hasAnalytics": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "_id",
+          "category",
           "url",
+          "cost",
           "currency",
           "price",
           "isOutstanding",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "hasEnrichment",
+          "hasAttributes",
+          "hasAnalytics",
+          "tags"
         ]
       },
       "ProductDetailDTO": {
@@ -1236,25 +1249,11 @@
               }
             }
           },
-          "metadata": {
-            "type": "object",
-            "properties": {
-              "source": {
-                "type": "string"
-              },
-              "schemaVersion": {
-                "type": "number"
-              },
-              "scrapedAt": {
-                "nullable": true
-              }
-            }
+          "createdAt": {
+            "type": "string"
           },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "updatedAt": {
+            "type": "string"
           },
           "attributes": {
             "type": "object",
@@ -1268,16 +1267,27 @@
               "nullable": true
             }
           },
-          "createdAt": {
+          "enrichmentHash": {
             "type": "string"
           },
-          "updatedAt": {
-            "type": "string"
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            }
           }
         },
         "required": [
           "_id",
+          "category",
           "url",
+          "cost",
           "currency",
           "price",
           "isOutstanding",
@@ -1369,6 +1379,10 @@
           },
           "location.state": {
             "type": "string"
+          },
+          "hasEnrichment": {
+            "type": "boolean",
+            "nullable": true
           }
         }
       },
@@ -1438,6 +1452,12 @@
               "min",
               "max"
             ]
+          },
+          "enrichedCount": {
+            "type": "number"
+          },
+          "unenrichedCount": {
+            "type": "number"
           }
         },
         "required": [
@@ -1447,7 +1467,9 @@
           "outstandingCount",
           "promotedCount",
           "lastScrapedAt",
-          "priceRange"
+          "priceRange",
+          "enrichedCount",
+          "unenrichedCount"
         ]
       },
       "DashboardMetricsDTO": {
@@ -6922,10 +6944,157 @@
           "Admin - Products"
         ],
         "summary": "List products with pagination and filtering",
+        "description": "Paginated product list. Filter by category, price range, location, enrichment status, and more.",
         "operationId": "adminListProducts",
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "minimum": 0,
+              "default": 0,
+              "description": "Number of items to skip"
+            },
+            "required": false,
+            "description": "Number of items to skip",
+            "name": "skip",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Max items per page"
+            },
+            "required": false,
+            "description": "Max items per page",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "default": "createdAt",
+              "description": "Field to sort by"
+            },
+            "required": false,
+            "description": "Field to sort by",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc",
+              "description": "Sort direction"
+            },
+            "required": false,
+            "description": "Sort direction",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Filter by category"
+            },
+            "required": false,
+            "description": "Filter by category",
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Filter by subcategory"
+            },
+            "required": false,
+            "description": "Filter by subcategory",
+            "name": "subcategory",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Case-insensitive search on description"
+            },
+            "required": false,
+            "description": "Case-insensitive search on description",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "description": "Minimum price filter"
+            },
+            "required": false,
+            "description": "Minimum price filter",
+            "name": "minPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true,
+              "description": "Maximum price filter"
+            },
+            "required": false,
+            "description": "Maximum price filter",
+            "name": "maxPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "description": "Filter by outstanding status"
+            },
+            "required": false,
+            "description": "Filter by outstanding status",
+            "name": "isOutstanding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "description": "Filter by promoted status"
+            },
+            "required": false,
+            "description": "Filter by promoted status",
+            "name": "isPromoted",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Filter by location state"
+            },
+            "required": false,
+            "description": "Filter by location state",
+            "name": "location.state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "description": "Filter by enrichment status. true = only enriched products, false = only unenriched."
+            },
+            "required": false,
+            "description": "Filter by enrichment status. true = only enriched products, false = only unenriched.",
+            "name": "hasEnrichment",
+            "in": "query"
           }
         ],
         "responses": {

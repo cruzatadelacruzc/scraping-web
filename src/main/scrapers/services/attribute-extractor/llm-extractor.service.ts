@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { generateText, Output } from 'ai';
+import { generateText } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { ILogger } from '@shared/logger.interface';
 
@@ -25,10 +25,18 @@ export interface IExtractKeywordsResult {
 }
 
 // ---- env validation --------------------------------------------------------
-function validateEnv(log?: Pick<ILogger, 'warn'>): { apiKey: string; model: string; baseURL: string } | null {
+function validateEnv(log?: Pick<ILogger, 'warn'>): {
+  apiKey: string;
+  model: string;
+  baseURL: string;
+  enableReasoning: boolean;
+} | null {
   const baseURL = process.env.LLM_BASE_URL?.trim();
   const model = process.env.LLM_MODEL?.trim();
   const apiKey = process.env.LLM_API_KEY?.trim();
+  // LLM_ENABLE_REASONING: when 'false', explicitly disables DeepSeek thinking
+  // (saves tokens on simple extraction tasks). Defaults to true.
+  const enableReasoning = process.env.LLM_ENABLE_REASONING !== 'false';
 
   if (!baseURL || !model || !apiKey) {
     const missing = [!baseURL && 'LLM_BASE_URL', !model && 'LLM_MODEL', !apiKey && 'LLM_API_KEY'].filter(Boolean).join(', ');
@@ -36,7 +44,7 @@ function validateEnv(log?: Pick<ILogger, 'warn'>): { apiKey: string; model: stri
     return null;
   }
 
-  return { apiKey, model, baseURL };
+  return { apiKey, model, baseURL, enableReasoning };
 }
 
 // ---- fallback system prompt (Few-Shot, ~600 tokens) ------------------------
@@ -79,7 +87,7 @@ export const FALLBACK_SYSTEM_PROMPT =
  * `LLM_API_KEY` from the environment. Works with any OpenAI-compatible
  * API (DeepSeek, OpenAI, Anthropic, custom proxies, etc.) via
  * `@ai-sdk/openai-compatible` and {@link generateText} with
- * {@link Output.object}.
+ * `response_format: json_object` (injected via custom fetch).
  *
  * Returns `{ keywords: [] }` on any failure (missing env, network error,
  * timeout, bad response) — never throws.
@@ -107,34 +115,72 @@ export async function extractKeywords(
   }
 
   try {
-    // 3. Instantiate the provider adapter — baseURL comes from env, not hardcoded.
-    //    supportsStructuredOutputs: true tells the SDK to use tool calling for
-    //    JSON schema enforcement instead of `response_format`. DeepSeek does not
-    //    support `response_format` natively, which otherwise emits a warning
-    //    on every call ("The feature 'responseFormat' is not supported").
+    // 3. Instantiate the provider adapter.
+    //    DeepSeek v4-flash ALWAYS runs in thinking mode, which rejects:
+    //      - response_format: json_schema  → "This response_format type is unavailable now"
+    //      - tool_choice                   → "Thinking mode does not support this tool_choice"
+    //    The only compatible approach is response_format: json_object, injected via
+    //    a custom fetch that also strips tool_choice if the SDK added one.
     const provider = createOpenAICompatible({
       name: 'llm-extractor',
       apiKey: env.apiKey,
       baseURL: env.baseURL,
-      supportsStructuredOutputs: true,
+      fetch: async (url, init) => {
+        if (init?.body) {
+          const body = JSON.parse(init.body as string);
+          // Use json_object — the only structured-output format DeepSeek
+          // thinking mode supports. Also works on OpenAI, Anthropic, etc.
+          body.response_format = { type: 'json_object' };
+          // Remove tool_choice & tools if the SDK added them (conflict with
+          // DeepSeek thinking mode). The schema is enforced by the system prompt
+          // + json_object instead.
+          delete body.tool_choice;
+          delete body.tools;
+          // DeepSeek v4-flash ALWAYS reasons by default — explicitly enable or
+          // disable via LLM_ENABLE_REASONING. No-op for other providers.
+          body.thinking = { type: env.enableReasoning ? 'enabled' : 'disabled' };
+          if (env.enableReasoning) {
+            body.reasoning_effort = 'high'; // DeepSeek: "high" | "max"
+          }
+          init = { ...init, body: JSON.stringify(body) };
+        }
+        return fetch(url, init);
+      },
     });
 
     const model = provider(env.model);
 
-    // 4. Structured generation via generateText + Output.object (generateObject is deprecated).
-    //    DeepSeek requires "json" in the prompt for structured JSON output.
+    // 4. Plain generateText — no Output.object().
+    //    Structured output is enforced by response_format: json_object (injected
+    //    above) + the system prompt (which says "Output ONLY the JSON object").
+    //    We parse and Zod-validate the raw text ourselves.
     const prompt = description.toLowerCase().includes('json') ? description : `Output JSON.\n\n${description}`;
 
     const result = await generateText({
       model,
-      output: Output.object({ schema: KeywordsOutputSchema }),
       system: systemPrompt || FALLBACK_SYSTEM_PROMPT,
       prompt,
       temperature: Number(process.env.LLM_TEMPERATURE) || 0,
     });
 
+    // 5. Parse the raw JSON response and validate against the Zod schema.
+    //    On malformed JSON or schema mismatch, return empty keywords gracefully.
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(result.text);
+    } catch {
+      log?.warn(`LLM extraction failed — unparseable JSON response`);
+      return { keywords: [] };
+    }
+
+    const validated = KeywordsOutputSchema.safeParse(parsed);
+    if (!validated.success) {
+      log?.warn(`LLM extraction failed — schema mismatch: ${validated.error.message}`);
+      return { keywords: [] };
+    }
+
     return {
-      keywords: result.output.keywords,
+      keywords: validated.data.keywords,
       usage: result.usage
         ? {
             promptCacheHitTokens: result.usage?.inputTokenDetails?.cacheReadTokens ?? 0,
