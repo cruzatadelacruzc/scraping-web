@@ -335,3 +335,16 @@ model ScraperConfig {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+// -----------------------------------------------------------------------------
+// Rule — externalized word-list patterns for rule-based attribute extraction
+// -----------------------------------------------------------------------------
+model Rule {
+  id        String   @id @default(uuid())
+  ruleKey   String   @unique
+  values    Json
+  version   Int      @default(1)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
