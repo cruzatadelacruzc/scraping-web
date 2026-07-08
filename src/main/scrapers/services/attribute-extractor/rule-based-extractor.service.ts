@@ -1,4 +1,6 @@
-import { injectable } from 'inversify';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '@shared/types.container';
+import { RuleRegistryService } from './rule-registry.service';
 
 /**
  * Result of a rule-based attribute extraction attempt.
@@ -12,194 +14,6 @@ export interface IRuleExtractionResult {
   matchedCount: number;
 }
 
-// ---- electronics / vehicles -----------------------------------------------
-const BRANDS = [
-  'apple',
-  'samsung',
-  'huawei',
-  'xiaomi',
-  'motorola',
-  'lg',
-  'sony',
-  'nokia',
-  'lenovo',
-  'dell',
-  'hp',
-  'asus',
-  'acer',
-  'toshiba',
-  'canon',
-  'nikon',
-  'bosch',
-  'whirlpool',
-  'midea',
-  'haier',
-  'panasonic',
-  'philips',
-  'daewoo',
-  'electrolux',
-  'toyota',
-  'hyundai',
-  'kia',
-  'peugeot',
-  'audi',
-  'bmw',
-  'mercedes',
-  'volkswagen',
-  'nissan',
-  'mitsubishi',
-  'suzuki',
-  'yamaha',
-  'honda',
-] as const;
-
-const CONDITIONS = [
-  'perfecto estado',
-  'buen estado',
-  'mal estado',
-  'todo de lujo',
-  'muy buena',
-  'gran rebaja',
-  'super oferta',
-  'como nuevo',
-  'poco uso',
-  'sin uso',
-  'excelente',
-  'exclusiva',
-  'exclusivo',
-  'oportunidad',
-  'impecable',
-  'hermosa',
-  'hermoso',
-  'precioso',
-  'reacondicionado',
-  'restaurado',
-  'reparado',
-  'regular',
-  'dañado',
-  'defecto',
-  'nuevo',
-  'sellado',
-  'rebaja',
-  'oferta',
-  'ideal',
-  'lujo',
-  'roto',
-] as const;
-
-const COLORS = [
-  'space gray',
-  'starlight',
-  'champagne',
-  'turquesa',
-  'plateado',
-  'midnight',
-  'grafito',
-  'celeste',
-  'violeta',
-  'crema',
-  'morado',
-  'naranja',
-  'amarillo',
-  'marrón',
-  'beige',
-  'coral',
-  'dorado',
-  'blanco',
-  'negro',
-  'verde',
-  'rojo',
-  'azul',
-  'gris',
-  'rosa',
-  'pink',
-  'gold',
-  'blue',
-  'red',
-  'silver',
-  'green',
-  'black',
-  'white',
-  'purple',
-  'yellow',
-] as const;
-
-// ---- real estate ----------------------------------------------------------
-const PROPERTY_TYPES = [
-  'propiedad horizontal',
-  'apartamento',
-  'casa independiente',
-  'biplanta',
-  'triplanta',
-  'casona',
-  'finca',
-  'hostal',
-  'apartamento',
-  'apto',
-  'casa',
-  'cuarto',
-  'propiedad',
-] as const;
-
-// Havana neighbourhoods + nearby cities seen in the data
-const LOCATIONS = [
-  'nuevo vedado',
-  'centro habana',
-  'la habana vieja',
-  'habana vieja',
-  'arroyo naranjo',
-  'san miguel del padrón',
-  'santos suarez',
-  'santos suárez',
-  'santa marta',
-  'buena vista',
-  'casino deportivo',
-  'san juan bautista',
-  'san rafael',
-  'el náutico',
-  'los pinos',
-  'el bosque',
-  'el cerro',
-  'la lisa',
-  'la víbora',
-  'la vibora',
-  'santa fe',
-  'santa catalina',
-  'juan delgado',
-  'san lázaro',
-  'infanta',
-  'san lazaro',
-  'santa amelia',
-  '10 de octubre',
-  'san leopoldo',
-  'galiano',
-  'neptuno',
-  'miramar',
-  'vedado',
-  'marianao',
-  'lawton',
-  'playa',
-  'varadero',
-  'sevillano',
-  'mantilla',
-  'mónaco',
-  'mayia',
-  'capitolio',
-  'prado',
-  'la habana',
-  'habana',
-  'santiago de cuba',
-  'santiago',
-  'camagüey',
-  'holguín',
-  'santa clara',
-  'cienfuegos',
-  'pinar del río',
-  'matanzas',
-] as const;
-
-const WARRANTY_KEYWORDS = ['garantía', 'garantia', 'factura', 'con garantía', 'tiene garantía', 'con factura'] as const;
-
 // How many pattern categories we try (used for confidence denominator).
 const MAX_PATTERNS = 13;
 
@@ -212,8 +26,15 @@ const MAX_PATTERNS = 13;
  */
 @injectable()
 export class RuleBasedExtractorService {
+  public constructor(@inject(TYPES.RuleRegistry) private readonly _registry: RuleRegistryService) {}
+
   /**
    * Extracts structured attributes from a product description.
+   *
+   * Word-list categories (brands, conditions, colors, propertyTypes, locations,
+   * warrantyKeywords) are read from the RuleRegistryService cache. Regex-based
+   * patterns (rooms, bathrooms, garage, floors, storage, RAM, originalPrice,
+   * delivery) remain as inline code.
    *
    * @param {string} description - Raw description text from the listing.
    * @returns {IRuleExtractionResult} Extracted attributes with a 0-1 confidence score.
@@ -224,21 +45,21 @@ export class RuleBasedExtractorService {
     const text = this._stripAccents(description.toLowerCase().trim());
 
     // ---- brand (electronics / vehicles) ------------------------------------
-    const brand = BRANDS.find(b => this._wordMatch(b, text));
+    const brand = this._registry.get('brands').find(b => this._wordMatch(b, text));
     if (brand) {
       attributes.brand = brand.charAt(0).toUpperCase() + brand.slice(1);
       matchedCount++;
     }
 
     // ---- propertyType (real estate) ----------------------------------------
-    const propType = PROPERTY_TYPES.find(p => this._wordMatch(p, text));
+    const propType = this._registry.get('propertyTypes').find(p => this._wordMatch(p, text));
     if (propType) {
       attributes.propertyType = propType;
       matchedCount++;
     }
 
     // ---- condition ---------------------------------------------------------
-    const condition = CONDITIONS.find(c => this._wordMatch(c, text));
+    const condition = this._registry.get('conditions').find(c => this._wordMatch(c, text));
     if (condition) {
       attributes.condition = condition;
       matchedCount++;
@@ -283,7 +104,7 @@ export class RuleBasedExtractorService {
     }
 
     // ---- color (electronics / vehicles) ------------------------------------
-    const color = COLORS.find(c => this._wordMatch(c, text));
+    const color = this._registry.get('colors').find(c => this._wordMatch(c, text));
     if (color) {
       attributes.color = color;
       matchedCount++;
@@ -316,14 +137,15 @@ export class RuleBasedExtractorService {
       'recogida en',
       'recoge en',
     ];
-    const locationFound = LOCATIONS.find(loc => this._contains(loc, text)) || deliveryAction.find(k => this._contains(k, text));
+    const locationFound =
+      this._registry.get('locations').find(loc => this._contains(loc, text)) || deliveryAction.find(k => this._contains(k, text));
     if (locationFound) {
       attributes.delivery = locationFound;
       matchedCount++;
     }
 
     // ---- warranty ----------------------------------------------------------
-    const warrantyFound = WARRANTY_KEYWORDS.some(k => this._contains(k, text));
+    const warrantyFound = this._registry.get('warrantyKeywords').some(k => this._contains(k, text));
     if (warrantyFound) {
       attributes.warranty = true;
       matchedCount++;

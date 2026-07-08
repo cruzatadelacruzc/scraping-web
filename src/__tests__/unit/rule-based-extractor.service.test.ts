@@ -1,10 +1,174 @@
 import { RuleBasedExtractorService } from '@scrapers/services/attribute-extractor/rule-based-extractor.service';
 
+// Word-list arrays matching the FALLBACK_RULES used by the real registry.
+// The extractor now reads these from RuleRegistryService.get(key) instead
+// of module-level const arrays.
+const mockWordLists: Record<string, string[]> = {
+  brands: [
+    'apple',
+    'samsung',
+    'huawei',
+    'xiaomi',
+    'motorola',
+    'lg',
+    'sony',
+    'nokia',
+    'lenovo',
+    'dell',
+    'hp',
+    'asus',
+    'acer',
+    'toshiba',
+    'canon',
+    'nikon',
+    'bosch',
+    'whirlpool',
+    'midea',
+    'haier',
+    'panasonic',
+    'philips',
+    'daewoo',
+    'electrolux',
+    'toyota',
+    'hyundai',
+    'kia',
+    'peugeot',
+    'audi',
+    'bmw',
+    'mercedes',
+    'volkswagen',
+    'nissan',
+    'mitsubishi',
+    'suzuki',
+    'yamaha',
+    'honda',
+  ],
+  conditions: [
+    'perfecto estado',
+    'buen estado',
+    'mal estado',
+    'todo de lujo',
+    'muy buena',
+    'gran rebaja',
+    'super oferta',
+    'como nuevo',
+    'poco uso',
+    'sin uso',
+    'excelente',
+    'exclusiva',
+    'exclusivo',
+    'oportunidad',
+    'impecable',
+    'hermosa',
+    'hermoso',
+    'precioso',
+    'reacondicionado',
+    'restaurado',
+    'reparado',
+    'regular',
+    'danado',
+    'defecto',
+    'nuevo',
+    'sellado',
+    'rebaja',
+    'oferta',
+    'ideal',
+    'lujo',
+    'roto',
+  ],
+  colors: [
+    'space gray',
+    'starlight',
+    'champagne',
+    'turquesa',
+    'plateado',
+    'midnight',
+    'grafito',
+    'celeste',
+    'violeta',
+    'crema',
+    'morado',
+    'naranja',
+    'amarillo',
+    'marron',
+    'beige',
+    'coral',
+    'dorado',
+    'blanco',
+    'negro',
+    'verde',
+    'rojo',
+    'azul',
+    'gris',
+    'rosa',
+    'pink',
+    'gold',
+    'blue',
+    'red',
+    'silver',
+    'green',
+    'black',
+    'white',
+    'purple',
+    'yellow',
+  ],
+  propertyTypes: [
+    'propiedad horizontal',
+    'apartamento',
+    'casa independiente',
+    'biplanta',
+    'triplanta',
+    'casona',
+    'finca',
+    'hostal',
+    'apto',
+    'casa',
+    'cuarto',
+    'propiedad',
+  ],
+  locations: [
+    'nuevo vedado',
+    'centro habana',
+    'la habana vieja',
+    'habana vieja',
+    'arroyo naranjo',
+    'san miguel del padron',
+    'santos suarez',
+    'santa marta',
+    'buena vista',
+    'casino deportivo',
+    'miramar',
+    'vedado',
+    'marianao',
+    'lawton',
+    'playa',
+    'varadero',
+    'santiago de cuba',
+    'camaguey',
+    'holguin',
+    'santa clara',
+    'cienfuegos',
+    'pinar del rio',
+    'matanzas',
+    'la habana',
+    'habana',
+  ],
+  warrantyKeywords: ['garantia', 'factura', 'con garantia', 'tiene garantia', 'con factura'],
+};
+
+function makeMockRegistry(): { get: jest.Mock } {
+  return {
+    get: jest.fn((key: string) => mockWordLists[key] ?? []),
+  };
+}
+
 describe('RuleBasedExtractorService', () => {
   let service: RuleBasedExtractorService;
+  let mockRegistry: { get: jest.Mock };
 
   beforeEach(() => {
-    service = new RuleBasedExtractorService();
+    mockRegistry = makeMockRegistry();
+    service = new RuleBasedExtractorService(mockRegistry as any);
   });
 
   describe('brand extraction', () => {
@@ -77,7 +241,6 @@ describe('RuleBasedExtractorService', () => {
 
     it('extracts 1TB', () => {
       const result = service.extract('SSD externo 1 TB usb-c');
-
       expect((result.attributes as any).storage).toBe('1TB');
     });
 
@@ -250,6 +413,27 @@ describe('RuleBasedExtractorService', () => {
       expect(result.attributes.color).toBe('negro');
       expect(result.attributes.condition).toBe('nuevo');
       expect(result.attributes.warranty).toBe(true);
+    });
+  });
+
+  describe('RuleRegistryService integration', () => {
+    it('reads brands from registry', () => {
+      mockRegistry.get.mockImplementation((key: string) => {
+        if (key === 'brands') return ['testbrand'];
+        return [];
+      });
+      const result = service.extract('Vendo producto testbrand en oferta');
+      expect(result.attributes.brand).toBe('Testbrand');
+      expect(mockRegistry.get).toHaveBeenCalledWith('brands');
+    });
+
+    it('reads conditions from registry', () => {
+      mockRegistry.get.mockImplementation((key: string) => {
+        if (key === 'conditions') return ['custom condition'];
+        return [];
+      });
+      const result = service.extract('producto custom condition');
+      expect(result.attributes.condition).toBe('custom condition');
     });
   });
 });
