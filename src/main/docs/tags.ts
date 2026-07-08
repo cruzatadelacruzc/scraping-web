@@ -9,6 +9,12 @@ export const TAG = {
   SCRAPING: 'Scraping',
   ADMIN: 'Admin',
   BOTS: 'Bots',
+  // Admin subgroup tags
+  ADMIN_PRODUCTS: 'Admin - Products',
+  ADMIN_DASHBOARD: 'Admin - Dashboard',
+  ADMIN_QUEUES: 'Admin - Queues',
+  ADMIN_ACCOUNTS: 'Admin - Accounts',
+  ADMIN_ROLES: 'Admin - Roles',
 } as const;
 
 export const API_TAGS = [
@@ -22,4 +28,9 @@ export const API_TAGS = [
   { name: TAG.SCRAPING, description: 'Product scraping job management' },
   { name: TAG.ADMIN, description: 'Super-admin endpoints' },
   { name: TAG.BOTS, description: 'WhatsApp / Telegram bot account linking' },
+  { name: TAG.ADMIN_PRODUCTS, description: 'Admin product management' },
+  { name: TAG.ADMIN_DASHBOARD, description: 'Admin dashboard and health checks' },
+  { name: TAG.ADMIN_QUEUES, description: 'Admin queue introspection' },
+  { name: TAG.ADMIN_ACCOUNTS, description: 'Admin account management' },
+  { name: TAG.ADMIN_ROLES, description: 'Admin role management' },
 ];

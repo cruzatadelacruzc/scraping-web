@@ -76,4 +76,17 @@ export const TYPES = {
   ScraperConfigController: Symbol.for('ScraperConfigController'),
   GenericListingScraper: Symbol.for('GenericListingScraper'),
   GenericDetailScraper: Symbol.for('GenericDetailScraper'),
+  // Admin module
+  AdminController: Symbol.for('AdminController'),
+  ProductAdminController: Symbol.for('ProductAdminController'),
+  ProductAdminService: Symbol.for('ProductAdminService'),
+  ProductMapper: Symbol.for('ProductMapper'),
+  DashboardController: Symbol.for('DashboardController'),
+  DashboardService: Symbol.for('DashboardService'),
+  QueueAdminController: Symbol.for('QueueAdminController'),
+  QueueAdminService: Symbol.for('QueueAdminService'),
+  AccountAdminController: Symbol.for('AccountAdminController'),
+  AccountAdminService: Symbol.for('AccountAdminService'),
+  RoleController: Symbol.for('RoleController'),
+  RoleService: Symbol.for('RoleService'),
 };

@@ -26,6 +26,18 @@ import { UpdateAlarmSchema } from '@alarms/dto/update-alarm.dto';
 import { GenerateLinkCodeSchema } from '@bots/services/dto/generate-link-code.dto';
 import { ConfirmLinkSchema } from '@bots/services/dto/confirm-link.dto';
 import { LinkHistoryQuerySchema } from '@bots/services/dto/link-history.dto';
+// Admin DTOs
+import {
+  ProductListItemSchema,
+  ProductDetailSchema,
+  PriceHistoryEntrySchema,
+  ProductHistorySchema,
+  ProductStatsSchema,
+} from '@admin/services/dto/product-response.dto';
+import { ProductListQuerySchema } from '@admin/services/dto/product-list-query.dto';
+import { DashboardMetricsSchema, HealthResponseSchema } from '@admin/services/dto/dashboard-metrics.dto';
+import { QueueStatsSchema, JobDetailSchema } from '@admin/services/dto/queue-stats.dto';
+import { CreateRoleSchema, RoleResponseSchema } from '@admin/services/dto/role.dto';
 
 // ── Companion schemas for DTOs without Zod ───────────────────────────
 const AlarmResponseSchema = z.object({
@@ -163,4 +175,30 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
   Schemas.GenerateLinkCodeResponseDTO = registry.register('GenerateLinkCodeResponseDTO', GenerateLinkCodeResponseSchema);
   Schemas.LinkStatusResponseDTO = registry.register('LinkStatusResponseDTO', LinkStatusResponseSchema);
   Schemas.LinkHistoryEntryDTO = registry.register('LinkHistoryEntryDTO', LinkHistoryEntrySchema);
+
+  // Admin DTOs
+  const ProductPriceHistoryDTO = ProductHistorySchema(PriceHistoryEntrySchema);
+  Schemas.PaginatedResponse = registry.register(
+    'PaginatedResponse',
+    z.object({
+      data: z.array(z.object({}).passthrough()).openapi({ description: 'Array of items for the current page' }),
+      meta: z.object({
+        total: z.number().openapi({ description: 'Total number of items matching the query' }),
+        skip: z.number().openapi({ description: 'Number of items skipped' }),
+        limit: z.number().openapi({ description: 'Max items per page' }),
+        hasMore: z.boolean().openapi({ description: 'Whether additional pages are available' }),
+      }),
+    }),
+  );
+  Schemas.ProductListItemDTO = registry.register('ProductListItemDTO', ProductListItemSchema);
+  Schemas.ProductDetailDTO = registry.register('ProductDetailDTO', ProductDetailSchema);
+  Schemas.ProductPriceHistoryDTO = registry.register('ProductPriceHistoryDTO', ProductPriceHistoryDTO);
+  Schemas.ProductListQueryDTO = registry.register('ProductListQueryDTO', ProductListQuerySchema);
+  Schemas.ProductStatsDTO = registry.register('ProductStatsDTO', ProductStatsSchema);
+  Schemas.DashboardMetricsDTO = registry.register('DashboardMetricsDTO', DashboardMetricsSchema);
+  Schemas.HealthResponseDTO = registry.register('HealthResponseDTO', HealthResponseSchema);
+  Schemas.QueueStatsDTO = registry.register('QueueStatsDTO', QueueStatsSchema);
+  Schemas.JobDetailDTO = registry.register('JobDetailDTO', JobDetailSchema);
+  Schemas.CreateRoleDTO = registry.register('CreateRoleDTO', CreateRoleSchema);
+  Schemas.RoleResponseDTO = registry.register('RoleResponseDTO', RoleResponseSchema);
 }

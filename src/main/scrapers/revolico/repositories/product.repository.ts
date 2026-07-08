@@ -1,7 +1,7 @@
 import { DBContext } from '@config/db-config';
 import { inject, injectable } from 'inversify';
 import productModel, { IRevolicoProduct } from '../models/product.model';
-import { Model, RootFilterQuery } from 'mongoose';
+import { Model, RootFilterQuery, PipelineStage } from 'mongoose';
 import { DeleteResult } from 'mongodb';
 
 export interface ICustomInsertManyResult {
@@ -90,6 +90,24 @@ export class ProductRepository {
    */
   public async count(filter?: RootFilterQuery<IRevolicoProduct>): Promise<number> {
     return this._model.countDocuments(filter || {}).exec();
+  }
+
+  /**
+   * Deletes a single product by its MongoDB _id.
+   * @param _id - The MongoDB ObjectId of the product to delete.
+   * @returns The delete result.
+   */
+  public async deleteById(_id: string): Promise<DeleteResult> {
+    return this._model.deleteOne({ _id });
+  }
+
+  /**
+   * Runs a MongoDB aggregation pipeline.
+   * @param pipeline - The aggregation pipeline stages.
+   * @returns The aggregation result.
+   */
+  public async aggregate(pipeline: PipelineStage[]): Promise<unknown[]> {
+    return this._model.aggregate(pipeline).exec();
   }
 
   /**

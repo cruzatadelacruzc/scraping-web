@@ -46,6 +46,17 @@ import { TokenService } from './security/token.service';
 import { UserIdentityRepository } from '@users/repositories/user-identity.repository';
 import { ProviderTokenVerifier } from '@shared/security/provider-token-verifier';
 import { AccountRepository } from '@users/repositories/account.repository';
+import { AdminController } from '@admin/controllers/admin.controller';
+import { ProductAdminController } from '@admin/controllers/product-admin.controller';
+import { ProductAdminService } from '@admin/services/product-admin.service';
+import { QueueAdminController } from '@admin/controllers/queue-admin.controller';
+import { QueueAdminService } from '@admin/services/queue-admin.service';
+import { DashboardController } from '@admin/controllers/dashboard.controller';
+import { DashboardService } from '@admin/services/dashboard.service';
+import { AccountAdminService } from '@admin/services/account-admin.service';
+import { RoleService } from '@admin/services/role.service';
+import { AccountAdminController } from '@admin/controllers/account-admin.controller';
+import { RoleController } from '@admin/controllers/role.controller';
 import { AlarmController } from '@alarms/controllers/alarm.controller';
 import { NotificationController } from '@alarms/controllers/notification.controller';
 import { AlarmService } from '@alarms/services/alarm.service';
@@ -55,6 +66,7 @@ import { AlarmRepository } from '@alarms/repositories/alarm.repository';
 import { NotificationRepository } from '@alarms/repositories/notification.repository';
 import { AlarmMapper } from '@alarms/mappers/alarm.mapper';
 import { NotificationMapper } from '@alarms/mappers/notification.mapper';
+import { ProductMapper } from '@admin/mappers/product.mapper';
 import { ConditionRegistry } from '@alarms/conditions/condition-registry';
 import { PriceDropsBelowCondition } from '@alarms/conditions/price-drops-below.condition';
 import { PriceRisesAboveCondition } from '@alarms/conditions/price-rises-above.condition';
@@ -143,8 +155,22 @@ container.bind(TYPES.SubscriptionsMapper).to(SubscriptionsMapper);
 container.bind(TYPES.PlanMapper).to(PlanMapper);
 container.bind(TYPES.AlarmMapper).to(AlarmMapper);
 container.bind(TYPES.NotificationMapper).to(NotificationMapper);
+container.bind(TYPES.ProductMapper).to(ProductMapper);
+
+//services
+container.bind<ProductAdminService>(TYPES.ProductAdminService).to(ProductAdminService);
+container.bind<QueueAdminService>(TYPES.QueueAdminService).to(QueueAdminService);
+container.bind<DashboardService>(TYPES.DashboardService).to(DashboardService);
+container.bind<AccountAdminService>(TYPES.AccountAdminService).to(AccountAdminService);
+container.bind<RoleService>(TYPES.RoleService).to(RoleService);
 
 //controllers
+container.bind<AdminController>(TYPES.AdminController).to(AdminController);
+container.bind<ProductAdminController>(TYPES.ProductAdminController).to(ProductAdminController);
+container.bind<QueueAdminController>(TYPES.QueueAdminController).to(QueueAdminController);
+container.bind<DashboardController>(TYPES.DashboardController).to(DashboardController);
+container.bind<AccountAdminController>(TYPES.AccountAdminController).to(AccountAdminController);
+container.bind<RoleController>(TYPES.RoleController).to(RoleController);
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
 container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
