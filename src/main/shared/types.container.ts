@@ -81,6 +81,8 @@ export const TYPES = {
   RuleRegistry: Symbol.for('RuleRegistry'),
   RuleBasedExtractor: Symbol.for('RuleBasedExtractor'),
   AttributeExtractor: Symbol.for('AttributeExtractor'),
+  RuleService: Symbol.for('RuleService'),
+  RuleController: Symbol.for('RuleController'),
   // Admin module
   AdminController: Symbol.for('AdminController'),
   ProductAdminController: Symbol.for('ProductAdminController'),

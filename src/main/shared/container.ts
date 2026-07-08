@@ -83,6 +83,7 @@ import { GenericDetailScraperService } from '@scrapers/revolico/services/scrapin
 import { AnalyticsService } from '@scrapers/revolico/services/analytics.service';
 import { RuleRepository } from '@scrapers/services/attribute-extractor/repositories/rule.repository';
 import { RuleRegistryService } from '@scrapers/services/attribute-extractor/rule-registry.service';
+import { RuleService } from '@admin/services/rule.service';
 import { RuleBasedExtractorService } from '@scrapers/services/attribute-extractor/rule-based-extractor.service';
 import { AttributeExtractorService } from '@scrapers/services/attribute-extractor/attribute-extractor.service';
 import { KeywordsCache } from '@scrapers/services/attribute-extractor/keywords-cache';
@@ -201,6 +202,7 @@ container.bind(ScraperConfigRepository).toSelf();
 container.bind(TYPES.ScraperConfigRepository).to(ScraperConfigRepository);
 container.bind<RuleRepository>(TYPES.RuleRepository).to(RuleRepository).inSingletonScope();
 container.bind<RuleRegistryService>(TYPES.RuleRegistry).to(RuleRegistryService).inSingletonScope();
+container.bind<RuleService>(TYPES.RuleService).to(RuleService).inSingletonScope();
 
 // JSONata-driven scraping
 container.bind<JsonataRunnerService>(TYPES.JsonataRunner).to(JsonataRunnerService).inSingletonScope();
