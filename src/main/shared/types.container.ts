@@ -77,6 +77,8 @@ export const TYPES = {
   GenericListingScraper: Symbol.for('GenericListingScraper'),
   GenericDetailScraper: Symbol.for('GenericDetailScraper'),
   AnalyticsService: Symbol.for('AnalyticsService'),
+  RuleRepository: Symbol.for('RuleRepository'),
+  RuleRegistry: Symbol.for('RuleRegistry'),
   RuleBasedExtractor: Symbol.for('RuleBasedExtractor'),
   AttributeExtractor: Symbol.for('AttributeExtractor'),
   // Admin module
