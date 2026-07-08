@@ -295,4 +295,45 @@ export function registerAdminPaths(registry: OpenAPIRegistry): void {
     .response(200, 'Role unassigned', z.object({ message: z.string() }))
     .errors(400, 401, 403, 404)
     .register(registry);
+
+  // ── Admin Rules (rule-based extractor patterns) ──────────────────────
+  endpoint('get', '/api/admin/rules')
+    .tag(TAG.ADMIN_RULES)
+    .summary('List all rule-based extractor patterns')
+    .operationId('adminListRules')
+    .security('bearerAuth')
+    .response(200, 'List of all rules', z.object({ rules: z.array(Schemas.RuleResponseDTO) }))
+    .errors(401, 403)
+    .register(registry);
+
+  endpoint('get', '/api/admin/rules/{ruleKey}')
+    .tag(TAG.ADMIN_RULES)
+    .summary('Get a single rule by key')
+    .operationId('adminGetRule')
+    .security('bearerAuth')
+    .pathParam('ruleKey', 'Rule key (e.g. brands, colors)')
+    .response(200, 'Rule detail', z.object({ rule: Schemas.RuleResponseDTO }))
+    .errors(401, 403, 404)
+    .register(registry);
+
+  endpoint('post', '/api/admin/rules')
+    .tag(TAG.ADMIN_RULES)
+    .summary('Create a new rule')
+    .operationId('adminCreateRule')
+    .security('bearerAuth')
+    .requestBody(Schemas.CreateRuleDTO, 'Rule creation data')
+    .response(201, 'Rule created', z.object({ rule: Schemas.RuleResponseDTO }))
+    .errors(400, 401, 403, 409)
+    .register(registry);
+
+  endpoint('put', '/api/admin/rules/{ruleKey}')
+    .tag(TAG.ADMIN_RULES)
+    .summary('Update an existing rule')
+    .operationId('adminUpdateRule')
+    .security('bearerAuth')
+    .pathParam('ruleKey', 'Rule key (e.g. brands, colors)')
+    .requestBody(Schemas.UpdateRuleDTO, 'Updated values array')
+    .response(200, 'Rule updated', z.object({ rule: Schemas.RuleResponseDTO }))
+    .errors(400, 401, 403, 404)
+    .register(registry);
 }

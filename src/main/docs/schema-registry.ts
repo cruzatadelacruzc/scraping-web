@@ -230,4 +230,37 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
   Schemas.JobDetailDTO = registry.register('JobDetailDTO', JobDetailSchema);
   Schemas.CreateRoleDTO = registry.register('CreateRoleDTO', CreateRoleSchema);
   Schemas.RoleResponseDTO = registry.register('RoleResponseDTO', RoleResponseSchema);
+
+  // Rule-based extractor patterns
+  const RuleResponse = z.object({
+    id: uuid('Rule unique identifier'),
+    ruleKey: z.string().openapi({ description: 'Rule category key', example: 'brands' }),
+    values: z.array(z.string()).openapi({ description: 'Word-list values', example: ['apple', 'samsung'] }),
+    version: z.number().int().openapi({ description: 'Monotonic version counter', example: 1 }),
+    enabled: z.boolean().openapi({ description: 'Whether the rule is active', example: true }),
+    createdAt: timestamp('Creation timestamp'),
+    updatedAt: timestamp('Last update timestamp'),
+  });
+  Schemas.RuleResponseDTO = registry.register('RuleResponse', RuleResponse);
+
+  Schemas.CreateRuleDTO = registry.register(
+    'CreateRule',
+    z.object({
+      ruleKey: z.string().min(1).openapi({ description: 'Unique rule category key', example: 'brands' }),
+      values: z
+        .array(z.string().min(1))
+        .min(1)
+        .openapi({ description: 'Non-empty array of word-list values', example: ['apple', 'samsung', 'nokia'] }),
+    }),
+  );
+
+  Schemas.UpdateRuleDTO = registry.register(
+    'UpdateRule',
+    z.object({
+      values: z
+        .array(z.string().min(1))
+        .min(1)
+        .openapi({ description: 'Non-empty array of values (replaces existing)', example: ['apple', 'samsung', 'xiaomi'] }),
+    }),
+  );
 }
