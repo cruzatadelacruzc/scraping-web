@@ -143,6 +143,11 @@ export class ProductRepository {
         location: product.location,
         views: product.views,
         seller: product.seller,
+        metadata: product.metadata,
+        tags: product.tags,
+        attributes: product.attributes,
+        analytics: product.analytics,
+        enrichmentHash: product.enrichmentHash,
       },
       $push: {
         ...(product.price ? { priceHistory: { value: product.price, updatedAt: new Date() } } : {}),

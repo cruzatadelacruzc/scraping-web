@@ -107,6 +107,13 @@ describe('GenericListingScraperService', () => {
       imageURL: 'https://img/1.jpg',
       isOutstanding: true,
       isPromoted: false,
+      metadata: expect.objectContaining({
+        source: 'revolico',
+        schemaVersion: 1,
+      }),
+      tags: [],
+      attributes: {},
+      analytics: {},
     });
   });
 

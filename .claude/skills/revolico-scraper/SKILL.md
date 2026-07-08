@@ -89,5 +89,81 @@ in Bull-Board's `failedReason`. Read the snippet before guessing.
 ## 7. Cross-references
 
 - `src/main/scrapers/revolico/README.md` — full flow, full curl/SQL, "adding a new scraper" recipe.
+- `src/main/scrapers/CLAUDE.md` — scraper module AI instructions (architecture, enrichment pipeline).
+- `src/main/scrapers/README.md` — human-readable scraper docs.
 - `services/scraping/utils/dom-to-json.util.ts` — the browser-side helper loaded as a string.
 - `errors/jsonata-extraction.error.ts` — closed code catalog from Section 6.
+
+## 8. Product enrichment
+
+After `ProductRepository.bulkInsertOrUpdate` completes, the `PRODUCT_STORAGE`
+completion listener in `GenericListingScraperService` calls
+`ProductService.enrichProduct()`. This runs two computations against the
+stored product document, then writes the results back to MongoDB:
+
+| Step | Service | Output field | Notes |
+|---|---|---|---|
+| 1. Analytics | `AnalyticsService.compute(product)` | `analytics` | 5 metrics: velocity, acceleration, trend, volatility, score. Pure math; no external calls. |
+| 2. Attributes | `AttributeExtractorService.extract(product)` | `attributes` | Three-tier pipeline: rule-based extractors → keywords cache → LLM fallback. |
+
+Both results are persisted via `ProductRepository.update(productId, { analytics, attributes })`.
+Enrichment runs asynchronously after storage — it does NOT block the job completion.
+
+The `PRODUCT_STORAGE` listener fires once per batch of stored products (not per
+individual product). `ProductService.enrichProduct()` iterates over the batch
+and calls both services for each product.
+
+## 9. New product fields
+
+The `Product` document (Mongoose model) has grown beyond the original
+`url` + `price` + `title` shape. These fields are set during scraping
+and enrichment:
+
+| Field | Type | Set by | When |
+|---|---|---|---|
+| `metadata` | `{ source, schemaVersion, scrapedAt }` | `GenericListingScraperService._mapRow` | During row mapping (before storage) |
+| `tags` | `string[]` | (default `[]`) | User-managed; populated via admin API, not the scraper |
+| `attributes` | `Record<string, unknown>` | `AttributeExtractorService.extract()` | During enrichment (after storage) |
+| `analytics` | `Record<string, unknown>` | `AnalyticsService.compute()` | During enrichment (after storage) |
+
+All four fields are persisted in `ProductRepository.bulkInsertOrUpdate` via
+`$set` on upsert (alongside the existing `url`, `price`, `title`, etc.).
+The `tags` field defaults to an empty array on insert and is never
+overwritten by the scraper — only the admin API modifies it.
+
+## 10. ScraperConfig `llm:*` keys
+
+`ScraperConfig` (Postgres table, Prisma model) supports `storeKey` values
+with the `llm:` prefix. These keys skip JSONata expression validation in
+`ScraperConfigRegistry` because they store raw LLM prompts, not
+expressions.
+
+| Key | Purpose | Content |
+|---|---|---|
+| `llm:keyword-extraction-prompt` | System prompt for the LLM extractor | Instructions telling the LLM how to extract product attributes from a page |
+
+`llm:*` keys are read by `LlmExtractorService` (part of the attribute
+extraction pipeline). They are editable via the same
+`PUT/POST /api/revolicos/scraper-configs/:storeKey` API as expression
+keys. The API path invalidates the cache on write just like expression
+keys, but the consumer is the LLM service rather than the JSONata runner.
+
+Future `llm:*` keys (e.g. `llm:category-classifier-prompt`,
+`llm:condition-evaluator-prompt`) follow the same pattern: store the
+prompt text in `ScraperConfig.value`, name it `llm:<purpose>`, and let
+the relevant service read it through `ScraperConfigRegistry`.
+
+## 11. Enrichment metrics
+
+`EnrichmentMetricsService` (`src/main/scrapers/services/enrichment-metrics.service.ts`)
+is an in-memory singleton (no persistence) that accumulates counters across
+every decision in the enrichment pipeline. It is injected into
+`ProductService` and `AttributeExtractorService`.
+
+**Admin endpoint:** `GET /api/admin/dashboard/enrichment` (SUPER_ADMIN only).
+Returns counters, computed rates, LLM token usage, and estimated cost savings.
+
+**Env var:** `LLM_COST_PER_MILLION_TOKENS` (optional). Used to compute
+`estimatedSavingsUSD` in the metrics response. If unset, savings are 0.
+
+See `src/main/scrapers/CLAUDE.md#7` for the full counter table and usage.

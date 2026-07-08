@@ -17,6 +17,8 @@ module.exports = {
     {
       // Specific overrides must go BEFORE generic path alias patterns
       '^jose$': '<rootDir>/src/__tests__/__mocks__/jose.ts',
+      '^ai$': '<rootDir>/src/__tests__/__mocks__/ai.ts',
+      '^@ai-sdk/openai-compatible$': '<rootDir>/src/__tests__/__mocks__/@ai-sdk/openai-compatible.ts',
       '^@shared/security/provider-token-verifier$': '<rootDir>/src/main/shared/security/__mocks__/provider-token-verifier.ts',
     },
     pathsToModuleNameMapper(compilerOptions.paths),
