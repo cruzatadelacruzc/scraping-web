@@ -168,3 +168,37 @@ Returns counters, computed rates, LLM token usage, and estimated cost savings.
 `estimatedSavingsUSD` in the metrics response. If unset, savings are 0.
 
 See `src/main/scrapers/CLAUDE.md#7` for the full counter table and usage.
+
+## 12. Rule management API
+
+Word-list patterns (brands, colors, locations, conditions, propertyTypes,
+warrantyKeywords) are stored in the `Rule` table (PostgreSQL) and served via
+an in-memory cache (`RuleRegistryService`). They can be hot-updated at runtime:
+
+| Method | Path | Body | Notes |
+|---|---|---|---|
+| `GET` | `/api/admin/rules` | — | List all rules (enabled + disabled) |
+| `GET` | `/api/admin/rules/:ruleKey` | — | Single rule detail |
+| `POST` | `/api/admin/rules` | `{ ruleKey, values }` | Create a new rule (409 if exists) |
+| `PUT` | `/api/admin/rules/:ruleKey` | `{ values }` | Replace the word list entirely |
+
+All endpoints require `SUPER_ADMIN`. Writes invalidate the cache immediately —
+the next `RuleBasedExtractorService.extract()` call picks up the new values.
+
+```bash
+# Update the brands list
+curl -X PUT -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"values": ["apple", "samsung", "xiaomi", "oneplus"]}' \
+  http://localhost:3000/api/admin/rules/brands
+
+# Verify
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:3000/api/admin/rules/brands
+```
+
+The six canonical keys (`brands`, `conditions`, `colors`, `propertyTypes`,
+`locations`, `warrantyKeywords`) are seeded by `npm run seed` from
+`rule-fallbacks.ts`. On cold start, `RuleRegistryService` bootstraps from
+those same fallbacks before the async DB warm completes — the extraction
+pipeline is never blocked.

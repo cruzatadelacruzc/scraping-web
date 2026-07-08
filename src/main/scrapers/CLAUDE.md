@@ -45,11 +45,23 @@ Depends on: `RuleBasedExtractorService`, `KeywordsCache`, `ScraperConfigRegistry
 
 `rule-based-extractor.service.ts`. Deterministic regex patterns for Spanish classified-ad descriptions. 13 pattern categories:
 
-brand (35 brands), propertyType, condition, rooms, bathrooms, garage, floors, color (34 colors), storage (GB/TB/MB), RAM, delivery/location (56 locations), warranty, originalPrice.
+- **6 word-list categories** (brands, conditions, colors, propertyTypes, locations, warrantyKeywords) are read from `RuleRegistryService` — an in-memory cache backed by the `Rule` table in PostgreSQL. Editable at runtime via `PUT /api/admin/rules/:ruleKey` (SUPER_ADMIN). Falls back to hardcoded `FALLBACK_RULES` when the DB is unreachable.
+- **7 regex categories** (rooms, bathrooms, garage, floors, storage, RAM, originalPrice) remain as inline code.
 
-Confidence = `matchedCount / 13`. Threshold is 0.4 in the orchestrator. Accent-stripping applied to all input so `súper` matches `super`. Purely synchronous, no I/O.
+Confidence = `matchedCount / 13`. Threshold is 0.4 in the orchestrator. Accent-stripping applied to all input so `súper` matches `super`. Purely synchronous, no I/O — `RuleRegistryService.get()` reads from an in-memory `Map`.
 
-### 2.3 extractKeywords() (LLM)
+### 2.3 RuleRegistryService
+
+`rule-registry.service.ts`. In-memory cache for the six word-list categories used by `RuleBasedExtractorService`.
+
+- **Bootstrap**: Populates the cache with `FALLBACK_RULES` on construction (synchronous, sub-millisecond).
+- **DB warm**: Async load from `Rule` table replaces entries when complete. Logs a warning and keeps fallbacks on failure.
+- **Invalidation**: Called by `RuleService` after every API write (create/update). Evicts the key and re-fetches from DB.
+- **TTL**: 30 seconds. On expiry, returns stale values while triggering a background refresh.
+
+See `rule-fallbacks.ts` for the canonical fallback values (also used by `prisma/seed.ts`).
+
+### 2.4 extractKeywords() (LLM)
 
 `llm-extractor.service.ts`. Standalone async function (not a class). Uses Vercel AI SDK (`generateText` from `ai`) with `@ai-sdk/openai-compatible` provider and `response_format: json_object` injected via custom fetch (compatible with DeepSeek thinking mode). JSON output is parsed and Zod-validated manually.
 
@@ -68,7 +80,7 @@ Key: MD5 hex of `description.trim().toLowerCase()`. Mongo hits auto-promote to m
 
 ### 2.5 DI registration pattern
 
-All three classes (`AttributeExtractorService`, `RuleBasedExtractorService`, `KeywordsCache`) are registered in `src/main/shared/container.ts`. They bind to themselves (class-as-token) because they have no interfaces:
+All four classes (`AttributeExtractorService`, `RuleBasedExtractorService`, `KeywordsCache`, `RuleRegistryService`) are registered in `src/main/shared/container.ts`. They bind to themselves (class-as-token) because they have no interfaces:
 
 ```typescript
 container.bind<RuleBasedExtractorService>(RuleBasedExtractorService).to(RuleBasedExtractorService).inSingletonScope();
