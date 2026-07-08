@@ -1,3 +1,4 @@
+export { RuleController } from './rule.controller';
 export { AdminController } from './admin.controller';
 export { ProductAdminController } from './product-admin.controller';
 export { QueueAdminController } from './queue-admin.controller';

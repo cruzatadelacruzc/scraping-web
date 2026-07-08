@@ -1,3 +1,4 @@
+import { ValidationError } from '@shared/errors/validation.error';
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
@@ -27,11 +28,18 @@ export class CreateRuleDTO {
    * Creates a CreateRuleDTO from an unvalidated request body.
    * @param body - The raw request body.
    * @returns A validated CreateRuleDTO.
-   * @throws ZodError if validation fails.
+   * @throws {ValidationError} When the body fails Zod validation.
    */
   public static from(body: unknown): CreateRuleDTO {
-    const parsed = CreateRuleSchema.parse(body);
-    return new CreateRuleDTO(parsed);
+    try {
+      const parsed = CreateRuleSchema.parse(body);
+      return new CreateRuleDTO(parsed);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.issues.map(({ code, message, path }) => ({ code, message, path })));
+      }
+      throw err;
+    }
   }
 }
 
@@ -56,10 +64,17 @@ export class UpdateRuleDTO {
    * Creates an UpdateRuleDTO from an unvalidated request body.
    * @param body - The raw request body.
    * @returns A validated UpdateRuleDTO.
-   * @throws ZodError if validation fails.
+   * @throws {ValidationError} When the body fails Zod validation.
    */
   public static from(body: unknown): UpdateRuleDTO {
-    const parsed = UpdateRuleSchema.parse(body);
-    return new UpdateRuleDTO(parsed);
+    try {
+      const parsed = UpdateRuleSchema.parse(body);
+      return new UpdateRuleDTO(parsed);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new ValidationError(err.issues.map(({ code, message, path }) => ({ code, message, path })));
+      }
+      throw err;
+    }
   }
 }

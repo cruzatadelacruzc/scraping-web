@@ -56,6 +56,7 @@ import { DashboardService } from '@admin/services/dashboard.service';
 import { AccountAdminService } from '@admin/services/account-admin.service';
 import { RoleService } from '@admin/services/role.service';
 import { AccountAdminController } from '@admin/controllers/account-admin.controller';
+import { RuleController } from '@admin/controllers/rule.controller';
 import { RoleController } from '@admin/controllers/role.controller';
 import { AlarmController } from '@alarms/controllers/alarm.controller';
 import { NotificationController } from '@alarms/controllers/notification.controller';
@@ -178,6 +179,7 @@ container.bind<ProductAdminController>(TYPES.ProductAdminController).to(ProductA
 container.bind<QueueAdminController>(TYPES.QueueAdminController).to(QueueAdminController);
 container.bind<DashboardController>(TYPES.DashboardController).to(DashboardController);
 container.bind<AccountAdminController>(TYPES.AccountAdminController).to(AccountAdminController);
+container.bind<RuleController>(TYPES.RuleController).to(RuleController);
 container.bind<RoleController>(TYPES.RoleController).to(RoleController);
 container.bind<ScrapingController>(TYPES.RevolicoScraping).to(ScrapingController);
 container.bind<ScraperConfigController>(TYPES.ScraperConfigController).to(ScraperConfigController);
