@@ -1,4 +1,9 @@
 // CJS stub for ESM 'ai' package
+const Output = {
+  object: jest.fn().mockReturnValue({ type: 'json_schema' }),
+};
+
 module.exports = {
-  generateObject: jest.fn().mockResolvedValue({ object: { keywords: [] } }),
+  generateText: jest.fn().mockResolvedValue({ output: { keywords: [] }, usage: undefined }),
+  Output,
 };

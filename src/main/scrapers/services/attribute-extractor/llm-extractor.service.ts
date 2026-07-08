@@ -1,15 +1,15 @@
 import { z } from 'zod';
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { ILogger } from '@shared/logger.interface';
 
 // ---- Zod output schema -----------------------------------------------------
 const KeywordsOutputSchema = z.object({
-  keywords: z.array(z.string()).max(5).describe('Hasta 5 keywords relevantes del producto para búsqueda y filtrado'),
+  keywords: z.array(z.string()).max(5).describe('Up to 5 relevant keywords extracted from the product description'),
 });
 
 /**
- * Token usage reported by the LLM provider via the AI SDK `generateObject`.
+ * Token usage reported by the LLM provider via the AI SDK `generateText`.
  * Includes prompt-cache hit/miss tokens for monitoring provider-side caching.
  */
 export interface ILlmUsage {
@@ -42,32 +42,33 @@ function validateEnv(log?: Pick<ILogger, 'warn'>): { apiKey: string; model: stri
 // ---- fallback system prompt (Few-Shot, ~600 tokens) ------------------------
 // Used when the DB-stored prompt (llm:keyword-extraction-prompt) is unavailable.
 export const FALLBACK_SYSTEM_PROMPT =
-  'Eres un asistente de clasificación de anuncios clasificados cubanos (Revolico). ' +
-  'Tu tarea es extraer hasta 5 keywords que representen el producto anunciado.\n\n' +
-  'REGLAS ESTRICTAS:\n' +
-  '- Solo incluye información que aparezca EXPLÍCITAMENTE en la descripción.\n' +
-  '- No inventes marcas, precios, ubicaciones ni características que no estén escritas.\n' +
-  '- Prefiere frases cortas de 1 a 3 palabras (ej: "casa independiente", "iphone 14").\n' +
-  '- Incluye: tipo de producto, marca/modelo si aplica, ubicación, condición, ' +
-  'características distintivas (cuartos, baños, garaje, almacenamiento, color, etc.).\n' +
-  '- Omite palabras vacías de venta: "se vende", "vendo", "venta de", "precio", "oferta".\n' +
-  '- Ordena las keywords por relevancia (lo más distintivo primero).\n\n' +
-  'EJEMPLO 1:\n' +
-  'Descripción: "Apartamento en Miramar 3 cuartos 2 baños excelente estado"\n' +
+  'You are a classified-ad keyword extraction assistant for Cuban marketplaces (e.g. Revolico). ' +
+  'Extract up to 5 keywords that represent the product being advertised.\n\n' +
+  'STRICT RULES:\n' +
+  '- Only include information EXPLICITLY present in the description.\n' +
+  '- Do not invent brands, prices, locations, or features not written in the text.\n' +
+  '- Prefer short 1–3 word phrases (e.g. "casa independiente", "iphone 14").\n' +
+  '- Include: product type, brand/model, location, condition, ' +
+  'distinctive features (bedrooms, bathrooms, garage, storage, color, etc.).\n' +
+  '- Omit sales filler words: "se vende", "vendo", "venta de", "precio", "oferta".\n' +
+  '- Order keywords by relevance (most distinctive first).\n' +
+  '- Respond in the SAME LANGUAGE as the input description.\n\n' +
+  'EXAMPLE 1:\n' +
+  'Description: "Apartamento en Miramar 3 cuartos 2 baños excelente estado"\n' +
   'Keywords: ["apartamento", "miramar", "3 cuartos", "2 baños", "excelente estado"]\n\n' +
-  'EJEMPLO 2:\n' +
-  'Descripción: "iPhone 14 Pro Max 256GB negro como nuevo con garantía"\n' +
+  'EXAMPLE 2:\n' +
+  'Description: "iPhone 14 Pro Max 256GB negro como nuevo con garantía"\n' +
   'Keywords: ["iphone 14 pro max", "256gb", "negro", "como nuevo", "con garantía"]\n\n' +
-  'EJEMPLO 3:\n' +
-  'Descripción: "Casa independiente biplanta en Playa con garaje 4 cuartos"\n' +
+  'EXAMPLE 3:\n' +
+  'Description: "Casa independiente biplanta en Playa con garaje 4 cuartos"\n' +
   'Keywords: ["casa independiente", "playa", "biplanta", "garaje", "4 cuartos"]\n\n' +
-  'EJEMPLO 4:\n' +
-  'Descripción: "Vendo Laptop Dell Inspiron 15 3000 Series 8GB RAM"\n' +
+  'EXAMPLE 4:\n' +
+  'Description: "Vendo Laptop Dell Inspiron 15 3000 Series 8GB RAM"\n' +
   'Keywords: ["laptop", "dell inspiron", "15 pulgadas", "8gb ram", "laptop dell"]\n\n' +
-  'EJEMPLO 5:\n' +
-  'Descripción: "Se vende auto Hyundai Accent 2018 azul impecable"\n' +
+  'EXAMPLE 5:\n' +
+  'Description: "Se vende auto Hyundai Accent 2018 azul impecable"\n' +
   'Keywords: ["hyundai accent", "2018", "azul", "impecable", "auto"]\n\n' +
-  'Responde ÚNICAMENTE con el objeto JSON { "keywords": [...] }. Nada más.';
+  'Output ONLY the JSON object { "keywords": [...] }. Nothing else.';
 
 // ---- public API ------------------------------------------------------------
 
@@ -77,7 +78,8 @@ export const FALLBACK_SYSTEM_PROMPT =
  * Fully provider-agnostic — reads `LLM_BASE_URL`, `LLM_MODEL`, and
  * `LLM_API_KEY` from the environment. Works with any OpenAI-compatible
  * API (DeepSeek, OpenAI, Anthropic, custom proxies, etc.) via
- * `@ai-sdk/openai-compatible`.
+ * `@ai-sdk/openai-compatible` and {@link generateText} with
+ * {@link Output.object}.
  *
  * Returns `{ keywords: [] }` on any failure (missing env, network error,
  * timeout, bad response) — never throws.
@@ -105,34 +107,39 @@ export async function extractKeywords(
   }
 
   try {
-    // 3. Instantiate the provider adapter — baseURL comes from env, not hardcoded
+    // 3. Instantiate the provider adapter — baseURL comes from env, not hardcoded.
+    //    supportsStructuredOutputs: true tells the SDK to use tool calling for
+    //    JSON schema enforcement instead of `response_format`. DeepSeek does not
+    //    support `response_format` natively, which otherwise emits a warning
+    //    on every call ("The feature 'responseFormat' is not supported").
     const provider = createOpenAICompatible({
       name: 'llm-extractor',
       apiKey: env.apiKey,
       baseURL: env.baseURL,
+      supportsStructuredOutputs: true,
     });
 
     const model = provider(env.model);
 
-    // 4. Structured generation (Zod validates the output automatically).
-    //    DeepSeek requires "json" in the prompt for response_format: json_object.
-    const prompt = description.toLowerCase().includes('json') ? description : `Responde en JSON.\n\n${description}`;
+    // 4. Structured generation via generateText + Output.object (generateObject is deprecated).
+    //    DeepSeek requires "json" in the prompt for structured JSON output.
+    const prompt = description.toLowerCase().includes('json') ? description : `Output JSON.\n\n${description}`;
 
-    const result = await generateObject({
+    const result = await generateText({
       model,
-      schema: KeywordsOutputSchema,
+      output: Output.object({ schema: KeywordsOutputSchema }),
       system: systemPrompt || FALLBACK_SYSTEM_PROMPT,
       prompt,
       temperature: Number(process.env.LLM_TEMPERATURE) || 0,
     });
 
     return {
-      keywords: result.object.keywords,
+      keywords: result.output.keywords,
       usage: result.usage
         ? {
-            promptCacheHitTokens: result.usage.inputTokenDetails?.cacheReadTokens ?? 0,
-            promptCacheMissTokens: result.usage.inputTokenDetails?.noCacheTokens ?? 0,
-            completionTokens: result.usage.outputTokens ?? 0,
+            promptCacheHitTokens: result.usage?.inputTokenDetails?.cacheReadTokens ?? 0,
+            promptCacheMissTokens: result.usage?.inputTokenDetails?.noCacheTokens ?? 0,
+            completionTokens: result.usage?.outputTokens ?? 0,
           }
         : undefined,
     };

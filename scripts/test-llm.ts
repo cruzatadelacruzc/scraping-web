@@ -7,7 +7,7 @@
 
 import 'dotenv/config';
 import { z } from 'zod';
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 const TestSchema = z.object({
@@ -45,22 +45,22 @@ async function main(): Promise<void> {
       baseURL: baseURL!,
     });
 
-    const result = await generateObject({
+    const result = await generateText({
       model: provider(modelEnv!),
-      schema: TestSchema,
+      output: Output.object({ schema: TestSchema }),
       prompt:
-        `Responde en JSON. Extrae hasta 5 keywords de esta descripcion. Ademas, en el campo "model" dime exactamente ` +
-        `que modelo eres (mira tu nombre interno real, no lo que te puse en el prompt).\n\n` +
-        `Descripcion: "${testDescription}"`,
+        `Output JSON. Extract up to 5 keywords from this description. Also, in the "model" field, tell me exactly ` +
+        `what model you are (your real internal name, not what the prompt says).\n\n` +
+        `Description: "${testDescription}"`,
       temperature: Number(process.env.LLM_TEMPERATURE) || 0.3,
     });
 
     console.log('');
     console.log('── RESULT ──');
-    console.log(`  Model    : ${result.object.model}`);
-    console.log(`  Keywords : ${result.object.keywords.join(', ')}`);
+    console.log(`  Model    : ${result.output.model}`);
+    console.log(`  Keywords : ${result.output.keywords.join(', ')}`);
     console.log('');
-    console.log(`✅ Credentials valid — ${result.object.model} is working!`);
+    console.log(`✅ Credentials valid — ${result.output.model} is working!`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`❌ FAILED: ${msg}`);
