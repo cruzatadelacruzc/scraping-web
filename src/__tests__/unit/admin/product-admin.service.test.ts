@@ -103,8 +103,9 @@ describe('ProductAdminService', () => {
     isPromotedHistory: [{ value: true, updatedAt: new Date('2025-01-10') }],
     metadata: { scrapedAt: new Date('2025-01-15') },
     tags: ['vedado'],
-    attributes: {},
-    analytics: {},
+    attributes: { keywords: ['hermoso', 'apartamento'] },
+    analytics: { viewsPerDay: 5.2, priceTrend: 'stable', hotScore: 10.4 },
+    enrichmentHash: 'abc123def456',
     createdAt: new Date('2025-01-01'),
     updatedAt: new Date('2025-01-15'),
   };
@@ -207,6 +208,48 @@ describe('ProductAdminService', () => {
       );
     });
 
+    it('should build filter for hasEnrichment=true', async () => {
+      mockRepo.find.mockResolvedValue([]);
+      mockRepo.count.mockResolvedValue(0);
+
+      const query = ProductListQueryDTO.from({ hasEnrichment: true, skip: 0, limit: 10 });
+      await service.list(query);
+
+      const findCall = mockRepo.find.mock.calls[0] as unknown[];
+      const filter = findCall[3] as Record<string, unknown>;
+      expect(filter.enrichmentHash).toEqual({ $exists: true, $nin: [null, ''] });
+    });
+
+    it('should build filter for hasEnrichment=false', async () => {
+      mockRepo.find.mockResolvedValue([]);
+      mockRepo.count.mockResolvedValue(0);
+
+      const query = ProductListQueryDTO.from({ hasEnrichment: false, skip: 0, limit: 10 });
+      await service.list(query);
+
+      const findCall = mockRepo.find.mock.calls[0] as unknown[];
+      expect(findCall[3]).toHaveProperty('$or');
+      const orFilter = (findCall[3] as Record<string, unknown>).$or as Array<Record<string, unknown>>;
+      expect(orFilter).toHaveLength(3);
+      expect(orFilter).toContainEqual({ enrichmentHash: { $exists: false } });
+      expect(orFilter).toContainEqual({ enrichmentHash: null });
+      expect(orFilter).toContainEqual({ enrichmentHash: '' });
+    });
+
+    it('should return enrichment flags in list items', async () => {
+      mockRepo.find.mockResolvedValue([mockProduct] as never[]);
+      mockRepo.count.mockResolvedValue(1);
+
+      const query = ProductListQueryDTO.from({ skip: 0, limit: 20 });
+      const result = await service.list(query);
+
+      const item = result.data[0];
+      expect(item.hasEnrichment).toBe(true);
+      expect(item.hasAttributes).toBe(true);
+      expect(item.hasAnalytics).toBe(true);
+      expect(item.tags).toEqual(['vedado']);
+    });
+
     it('should build nested location filter', async () => {
       mockRepo.find.mockResolvedValue([]);
       mockRepo.count.mockResolvedValue(0);
@@ -261,6 +304,19 @@ describe('ProductAdminService', () => {
           locationHistory: 0,
         }),
       );
+    });
+
+    it('should return enrichment fields in detail', async () => {
+      mockRepo.findOne.mockResolvedValue(mockProduct);
+
+      const result = await service.getById('507f191e810c19729de860ea');
+
+      expect(result).not.toBeNull();
+      expect(result?.attributes).toEqual({ keywords: ['hermoso', 'apartamento'] });
+      expect(result?.analytics).toEqual({ viewsPerDay: 5.2, priceTrend: 'stable', hotScore: 10.4 });
+      expect(result?.enrichmentHash).toBe('abc123def456');
+      expect(result?.tags).toEqual(['vedado']);
+      expect(result?.metadata).toEqual({ scrapedAt: expect.any(Date) });
     });
 
     it('should return null when product not found', async () => {
@@ -385,7 +441,8 @@ describe('ProductAdminService', () => {
         .mockResolvedValueOnce([{ _id: 'inmuebles', count: 10 }]) // byCategory
         .mockResolvedValueOnce([{ _id: 'La Habana', count: 8 }]) // byState
         .mockResolvedValueOnce([{ total: 20, outstanding: 5, promoted: 3 }]) // counts
-        .mockResolvedValueOnce([{ lastScrapedAt: new Date('2025-01-15'), minPrice: 100, maxPrice: 50000 }]); // price/meta
+        .mockResolvedValueOnce([{ lastScrapedAt: new Date('2025-01-15'), minPrice: 100, maxPrice: 50000 }]) // price/meta
+        .mockResolvedValueOnce([{ enriched: 15, total: 20 }]); // enrichment
 
       const result = await service.getStats();
 
@@ -396,10 +453,17 @@ describe('ProductAdminService', () => {
       expect(result.promotedCount).toBe(3);
       expect(result.lastScrapedAt).toBe('2025-01-15T00:00:00.000Z');
       expect(result.priceRange).toEqual({ min: 100, max: 50000 });
+      expect(result.enrichedCount).toBe(15);
+      expect(result.unenrichedCount).toBe(5);
     });
 
     it('should handle empty aggregation results', async () => {
-      mockRepo.aggregate.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      mockRepo.aggregate
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
 
       const result = await service.getStats();
 
@@ -410,6 +474,8 @@ describe('ProductAdminService', () => {
       expect(result.promotedCount).toBe(0);
       expect(result.lastScrapedAt).toBeNull();
       expect(result.priceRange).toEqual({ min: 0, max: 0 });
+      expect(result.enrichedCount).toBe(0);
+      expect(result.unenrichedCount).toBe(0);
     });
   });
 

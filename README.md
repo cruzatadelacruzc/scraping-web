@@ -85,7 +85,7 @@ Each product document carries these enrichment fields:
 1. **Rule-based extraction** — `RuleBasedExtractorService` detects common patterns (brand-model combos, condition terms, location mentions) without any API call.
 2. **Confidence gate** — if the rule-based result has confidence >= 0.4, the pipeline returns immediately (zero API cost).
 3. **Cache lookup** — `KeywordsCache` provides two-layer caching (in-memory Map + MongoDB collection with 30-day TTL index). Cache key is the MD5 hex of `description.trim().toLowerCase()` — identical descriptions across scrapes hit the cache.
-4. **LLM fallback** — `extractKeywords()` calls the configured LLM provider via the Vercel AI SDK (`generateObject` with Zod output schema, max 5 keywords). The result is cached for future lookups.
+4. **LLM fallback** — `extractKeywords()` calls the configured LLM provider via the Vercel AI SDK (`generateText` with `response_format: json_object` injected via custom fetch, max 5 keywords). The result is cached for future lookups.
 
 The pipeline **never throws** — it always returns at minimum an empty object. If LLM env vars are missing, the worker logs a warning and skips extraction. If the LLM call fails, the error is logged and an empty result is returned.
 
@@ -99,7 +99,7 @@ The system prompt used for keyword extraction is **stored in the database** (`Sc
 | Reset to default| `npm run seed` (idempotent upsert)                                                |
 | Fallback        | Hardcoded few-shot prompt (~600 tokens) used when the DB row is missing. The service logs an `[llm:fallback-prompt]` warning so operators know to seed or edit. |
 
-The LLM provider is configured via environment variables (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`) and uses the Vercel AI SDK's OpenAI-compatible provider — any OpenAI-compatible API works (DeepSeek, OpenAI, etc.). If any of the three env vars is missing, LLM extraction is silently skipped.
+The LLM provider is configured via environment variables (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`) and uses the Vercel AI SDK's OpenAI-compatible provider — any OpenAI-compatible API works (DeepSeek, OpenAI, etc.). If any of the three env vars is missing, LLM extraction is silently skipped. An optional `LLM_ENABLE_REASONING` env var controls DeepSeek-style thinking mode (defaults to `true`; set to `false` to save tokens on extraction tasks).
 
 ### LLM QA validation (planned)
 

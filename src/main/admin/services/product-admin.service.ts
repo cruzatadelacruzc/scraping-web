@@ -142,7 +142,7 @@ export class ProductAdminService {
    * @returns Aggregated stats DTO.
    */
   public async getStats(): Promise<ProductStatsType> {
-    const [byCategory, byState, counts, meta] = await Promise.all([
+    const [byCategory, byState, counts, meta, enrichment] = await Promise.all([
       this._repo.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]),
       this._repo.aggregate([{ $group: { _id: '$location.state', count: { $sum: 1 } } }]),
       this._repo.aggregate([
@@ -165,10 +165,34 @@ export class ProductAdminService {
           },
         },
       ]),
+      this._repo.aggregate([
+        {
+          $group: {
+            _id: null,
+            enriched: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ['$enrichmentHash', null] },
+                      { $ne: ['$enrichmentHash', ''] },
+                      { $ne: [{ $type: '$enrichmentHash' }, 'missing'] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            total: { $sum: 1 },
+          },
+        },
+      ]),
     ]);
 
     const countsRow = (counts as Array<Record<string, unknown>>)[0] ?? {};
     const metaRow = (meta as Array<Record<string, unknown>>)[0] ?? {};
+    const enrichmentRow = (enrichment as Array<Record<string, unknown>>)[0] ?? {};
 
     return {
       totalProducts: (countsRow.total as number) ?? 0,
@@ -186,6 +210,8 @@ export class ProductAdminService {
         min: (metaRow.minPrice as number) ?? 0,
         max: (metaRow.maxPrice as number) ?? 0,
       },
+      enrichedCount: (enrichmentRow.enriched as number) ?? 0,
+      unenrichedCount: ((enrichmentRow.total as number) ?? 0) - ((enrichmentRow.enriched as number) ?? 0),
     };
   }
 
@@ -232,6 +258,11 @@ export class ProductAdminService {
     }
     if (query['location.state']) {
       filter['location.state'] = query['location.state'];
+    }
+    if (query.hasEnrichment === true) {
+      filter.enrichmentHash = { $exists: true, $nin: [null, ''] };
+    } else if (query.hasEnrichment === false) {
+      filter.$or = [{ enrichmentHash: { $exists: false } }, { enrichmentHash: null }, { enrichmentHash: '' }];
     }
 
     return filter as RootFilterQuery<IRevolicoProduct>;

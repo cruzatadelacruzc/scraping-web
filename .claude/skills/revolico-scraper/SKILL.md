@@ -125,8 +125,9 @@ and enrichment:
 | `tags` | `string[]` | (default `[]`) | User-managed; populated via admin API, not the scraper |
 | `attributes` | `Record<string, unknown>` | `AttributeExtractorService.extract()` | During enrichment (after storage) |
 | `analytics` | `Record<string, unknown>` | `AnalyticsService.compute()` | During enrichment (after storage) |
+| `enrichmentHash` | `string` | `ProductService.enrichProduct()` | MD5 of description. Guards against redundant re-extraction. |
 
-All four fields are persisted in `ProductRepository.bulkInsertOrUpdate` via
+All five fields are persisted in `ProductRepository.bulkInsertOrUpdate` via
 `$set` on upsert (alongside the existing `url`, `price`, `title`, etc.).
 The `tags` field defaults to an empty array on insert and is never
 overwritten by the scraper — only the admin API modifies it.

@@ -17,6 +17,10 @@ describe('ProductListItemDTO', () => {
     isOutstanding: false,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-02T00:00:00.000Z',
+    hasEnrichment: false,
+    hasAttributes: false,
+    hasAnalytics: false,
+    tags: [],
   };
 
   it('should accept a minimal valid object', () => {

@@ -51,11 +51,11 @@ Confidence = `matchedCount / 13`. Threshold is 0.4 in the orchestrator. Accent-s
 
 ### 2.3 extractKeywords() (LLM)
 
-`llm-extractor.service.ts`. Standalone async function (not a class). Uses Vercel AI SDK (`generateObject` from `ai`) with `@ai-sdk/openai-compatible` for provider-agnostic calls.
+`llm-extractor.service.ts`. Standalone async function (not a class). Uses Vercel AI SDK (`generateText` from `ai`) with `@ai-sdk/openai-compatible` provider and `response_format: json_object` injected via custom fetch (compatible with DeepSeek thinking mode). JSON output is parsed and Zod-validated manually.
 
-Three env vars drive it: `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`. If any is missing, returns `{ keywords: [] }` silently (logs a warning). Supports any OpenAI-compatible endpoint (DeepSeek, OpenAI, custom base URL).
+Three env vars drive it: `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`. If any is missing, returns `{ keywords: [] }` silently (logs a warning). Supports any OpenAI-compatible endpoint (DeepSeek, OpenAI, custom base URL). An optional `LLM_ENABLE_REASONING` env var controls DeepSeek-style thinking mode (defaults to `true`; set to `false` to save tokens on simple extraction tasks).
 
-Output validated by Zod schema: `{ keywords: z.array(z.string()).max(5) }`. Temperature 0. Returns `{ keywords: [] }` on any failure (network, timeout, bad response). Never throw.
+Output validated by Zod schema: `{ keywords: z.array(z.string()).max(5) }`. Temperature 0. Returns `{ keywords: [] }` on any failure (network, timeout, bad response, malformed JSON). Never throw.
 
 ### 2.4 KeywordsCache
 
@@ -176,7 +176,7 @@ Every decision point in the 4-layer pipeline increments a counter:
 
 ### 7.2 LLM provider usage
 
-`extractKeywords()` now returns `ExtractKeywordsResult` which includes `usage?: LlmUsage` from the AI SDK `generateObject` response. `LlmUsage` carries:
+`extractKeywords()` now returns `ExtractKeywordsResult` which includes `usage?: LlmUsage` from the AI SDK `generateText` response. `LlmUsage` carries:
 - `promptCacheHitTokens` — tokens served from the provider's prompt cache
 - `promptCacheMissTokens` — tokens recomputed by the provider
 - `completionTokens` — tokens generated in the response
@@ -211,7 +211,7 @@ If unset, `estimatedSavingsUSD` is always 0.
 
 All constraints from `src/main/CLAUDE.md` apply, plus:
 
-- **No hardcoded provider logic** in LLM calls. The `extractKeywords()` function reads `LLM_PROVIDER` / `LLM_MODEL` / `LLM_API_KEY` from env and works with any OpenAI-compatible endpoint. Never special-case a provider name (DeepSeek, OpenAI) in business logic.
+- **No hardcoded provider logic** in LLM calls. The `extractKeywords()` function reads `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY` from env and works with any OpenAI-compatible endpoint. Never special-case a provider name (DeepSeek, OpenAI) in business logic.
 - **Cache before LLM**. Always check `KeywordsCache` before calling `extractKeywords()`. LLM calls cost money and add latency. The orchestrator (`AttributeExtractorService.extract()`) enforces this: rules -> cache -> LLM. When calling `extractKeywords()` directly (bypassing the orchestrator), you MUST check the cache yourself.
 - **Never throw from enrichment**. Attribute extraction is best-effort augmentation. A failed LLM call or a cache miss should degrade gracefully to an empty object, not crash the job. All enrichment functions return sensible defaults on failure.
 - **Enrichment runs in PRODUCT_STORAGE**, not in the scraping jobs. This keeps scraping jobs fast and lets enrichment failures retry independently.

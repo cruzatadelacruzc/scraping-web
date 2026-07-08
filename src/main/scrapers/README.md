@@ -147,13 +147,15 @@ TTL is configurable via `LLM_CACHE_TTL_DAYS` env var (default 30).
 ## LLM configuration
 
 Provider-agnostic keyword extraction via Vercel AI SDK
-(`generateObject` + `@ai-sdk/openai-compatible`). Three env vars:
+(`generateText` with `response_format: json_object` + `@ai-sdk/openai-compatible`).
+Three required env vars, one optional:
 
 | Variable | Purpose |
 |---|---|
-| `LLM_PROVIDER` | Provider name (`deepseek`, `openai`) or custom base URL |
-| `LLM_MODEL` | Model identifier (e.g. `deepseek-chat`) |
+| `LLM_BASE_URL` | Base URL for the OpenAI-compatible API (e.g. `https://api.deepseek.com/v1`) |
+| `LLM_MODEL` | Model identifier (e.g. `deepseek-v4-flash`) |
 | `LLM_API_KEY` | API key for the provider |
+| `LLM_ENABLE_REASONING` | (optional) Enables DeepSeek thinking mode. Defaults to `true`. Set to `false` to save tokens. |
 
 If any variable is missing, LLM extraction is skipped silently and returns
 `{ keywords: [] }`. The system prompt is stored in the `ScraperConfig` table
