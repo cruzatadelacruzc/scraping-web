@@ -16,6 +16,7 @@ export const TAG = {
   ADMIN_ACCOUNTS: 'Admin - Accounts',
   ADMIN_ROLES: 'Admin - Roles',
   ADMIN_RULES: 'Admin - Rules',
+  ADMIN_SCHEDULES: 'Admin - Scraping Schedules',
 } as const;
 
 export const API_TAGS = [
@@ -35,4 +36,5 @@ export const API_TAGS = [
   { name: TAG.ADMIN_ACCOUNTS, description: 'Admin account management' },
   { name: TAG.ADMIN_ROLES, description: 'Admin role management' },
   { name: TAG.ADMIN_RULES, description: 'Admin rule-based extractor pattern management' },
+  { name: TAG.ADMIN_SCHEDULES, description: 'Admin automated scraping schedule management' },
 ];

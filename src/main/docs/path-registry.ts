@@ -10,6 +10,7 @@ import { registerScrapingPaths } from './modules/scraping.paths';
 import { registerAdminPaths } from './modules/admin.paths';
 import { registerScraperConfigsPaths } from './modules/scraper-configs.paths';
 import { registerBotsPaths } from './modules/bots.paths';
+import { registerSchedulingPaths } from './modules/scheduling.paths';
 
 export function registerAllPaths(registry: OpenAPIRegistry): void {
   registerAuthPaths(registry);
@@ -23,4 +24,5 @@ export function registerAllPaths(registry: OpenAPIRegistry): void {
   registerAdminPaths(registry);
   registerScraperConfigsPaths(registry);
   registerBotsPaths(registry);
+  registerSchedulingPaths(registry);
 }

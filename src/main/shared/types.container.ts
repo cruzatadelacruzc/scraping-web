@@ -96,4 +96,11 @@ export const TYPES = {
   AccountAdminService: Symbol.for('AccountAdminService'),
   RoleController: Symbol.for('RoleController'),
   RoleService: Symbol.for('RoleService'),
+  // Cron module (scraping schedules)
+  StoreRegistry: Symbol.for('StoreRegistry'),
+  CronSchedulerService: Symbol.for('CronSchedulerService'),
+  ScheduleService: Symbol.for('ScheduleService'),
+  ScheduleRepository: Symbol.for('ScheduleRepository'),
+  ScheduleController: Symbol.for('ScheduleController'),
+  StoreInfoController: Symbol.for('StoreInfoController'),
 };
