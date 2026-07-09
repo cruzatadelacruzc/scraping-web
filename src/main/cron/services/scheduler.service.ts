@@ -1,6 +1,16 @@
 import { inject, injectable } from 'inversify';
 import { ScrapingSchedule } from '@prisma/client';
-import cron from 'node-cron';
+
+// node-cron v3 ships with no bundled types and there is no @types/node-cron.
+// The .d.ts at src/main/types/node-cron.d.ts is found by tsc but not by
+// ts-node-dev (on-demand compilation).  Using require() with an inline type
+// cast ensures both compilers work.
+type CronScheduledTask = { start(): void; stop(): void };
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const cron = require('node-cron') as {
+  schedule(expression: string, func: () => void, options?: { scheduled?: boolean; timezone?: string }): CronScheduledTask;
+};
 import { ILogger } from '@shared/logger.interface';
 import { QueueContext } from '@shared/queue/queue-context';
 import { StoreRegistry } from '@cron/store-registry';
@@ -29,7 +39,7 @@ import { TYPES } from '@shared/types.container';
  */
 @injectable()
 export class CronSchedulerService {
-  private readonly _tasks = new Map<string, cron.IScheduledTask>();
+  private readonly _tasks = new Map<string, CronScheduledTask>();
 
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,

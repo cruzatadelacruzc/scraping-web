@@ -5,17 +5,12 @@ import { CronSchedulerService } from '@cron/services/scheduler.service';
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock('node-cron', () => {
-  const schedule = jest.fn().mockReturnValue({ start: jest.fn(), stop: jest.fn() });
-  return {
-    __esModule: true,
-    default: { schedule },
-  };
-});
+jest.mock('node-cron', () => ({
+  schedule: jest.fn().mockReturnValue({ start: jest.fn(), stop: jest.fn() }),
+}));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockNodeCron = require('node-cron');
-const mockSchedule = mockNodeCron.default.schedule;
+const mockSchedule = require('node-cron').schedule as jest.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
