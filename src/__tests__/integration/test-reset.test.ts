@@ -43,6 +43,10 @@ it('provider non-existent account', async () => {
   } catch {
     /* table may not exist yet */
   }
+  await pgDb.query('DELETE FROM public."PasswordResetToken"');
+  await pgDb.query('DELETE FROM public."EmailVerificationToken"');
+  await pgDb.query('DELETE FROM public."RefreshToken"');
+  await pgDb.query('DELETE FROM public."LoginAttempt"');
   await pgDb.query('DELETE FROM public."UserIdentity"');
   await pgDb.query('DELETE FROM public."User"');
   await pgDb.query('DELETE FROM public."Account"');
@@ -81,6 +85,15 @@ it('provider non-existent account', async () => {
   } catch {
     /* table may not exist yet */
   }
+  await pgDb.query('DELETE FROM public."PasswordResetToken" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [
+    realId,
+  ]);
+  await pgDb.query(
+    'DELETE FROM public."EmailVerificationToken" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)',
+    [realId],
+  );
+  await pgDb.query('DELETE FROM public."RefreshToken" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [realId]);
+  await pgDb.query('DELETE FROM public."LoginAttempt" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [realId]);
   await pgDb.query('DELETE FROM public."UserIdentity" WHERE "userId" IN (SELECT "id" FROM public."User" WHERE "accountId" = $1)', [realId]);
   await pgDb.query('DELETE FROM public."User" WHERE "accountId" = $1', [realId]);
   await pgDb.query('DELETE FROM public."Account" WHERE "id" = $1', [realId]);

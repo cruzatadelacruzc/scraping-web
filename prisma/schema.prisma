@@ -73,6 +73,74 @@ model UserIdentity {
 }
 
 // -----------------------------------------------------------------------------
+// Password Reset Tokens — single-use, expire in 1 hour
+// -----------------------------------------------------------------------------
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// Email Verification Tokens — single-use, expire in 24 hours
+// -----------------------------------------------------------------------------
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// Refresh Tokens — opaque random string stored hashed, 30-day expiry
+// -----------------------------------------------------------------------------
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  family     String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  createdAt  DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@index([family])
+}
+
+// -----------------------------------------------------------------------------
+// Login Attempts — brute-force tracking per user / IP
+// -----------------------------------------------------------------------------
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([ipAddress, createdAt])
+}
+
+// -----------------------------------------------------------------------------
 // Accounts OR Tenants
 // -----------------------------------------------------------------------------
 model Account {
@@ -106,13 +174,18 @@ model User {
   displayName      String?
   avatarUrl        String?
   emailVerified    Boolean           @default(false)
+  deletedAt        DateTime?
   roles            Role[]            @relation("UserRoles")
   botLinkCodes     BotLinkCode[]
   botLinkAudits    BotLinkAudit[]
   botConversations BotConversation[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  userIdentity     UserIdentity[]    @relation("userIdentities")
+  userIdentity              UserIdentity[]              @relation("userIdentities")
+  passwordResetTokens       PasswordResetToken[]
+  emailVerificationTokens   EmailVerificationToken[]
+  refreshTokens             RefreshToken[]
+  loginAttempts             LoginAttempt[]
 }
 
 // -----------------------------------------------------------------------------

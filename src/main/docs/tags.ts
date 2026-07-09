@@ -17,6 +17,7 @@ export const TAG = {
   ADMIN_ROLES: 'Admin - Roles',
   ADMIN_RULES: 'Admin - Rules',
   ADMIN_SCHEDULES: 'Admin - Scraping Schedules',
+  ACCOUNT_MANAGEMENT: 'Account Management',
 } as const;
 
 export const API_TAGS = [
@@ -30,6 +31,10 @@ export const API_TAGS = [
   { name: TAG.SCRAPING, description: 'Product scraping job management' },
   { name: TAG.ADMIN, description: 'Super-admin endpoints' },
   { name: TAG.BOTS, description: 'WhatsApp / Telegram bot account linking' },
+  {
+    name: TAG.ACCOUNT_MANAGEMENT,
+    description: 'Account self-management: password reset, email verification, refresh tokens, deactivation',
+  },
   { name: TAG.ADMIN_PRODUCTS, description: 'Admin product management' },
   { name: TAG.ADMIN_DASHBOARD, description: 'Admin dashboard and health checks' },
   { name: TAG.ADMIN_QUEUES, description: 'Admin queue introspection' },
