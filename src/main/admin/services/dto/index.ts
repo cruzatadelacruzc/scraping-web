@@ -27,4 +27,5 @@ export {
 } from './dashboard-metrics.dto';
 export { QueueStatsSchema, QueueStatsType, QueueStatsDTO, JobDetailSchema, JobDetailType, JobDetailDTO } from './queue-stats.dto';
 export { CreateRoleSchema, CreateRoleType, CreateRoleDTO, RoleResponseSchema, RoleResponseType, RoleResponseDTO } from './role.dto';
+export { CreateRuleSchema, CreateRuleType, CreateRuleDTO, UpdateRuleSchema, UpdateRuleType, UpdateRuleDTO } from './rule.dto';
 export { PaginatedResponseSchema, PaginatedResponseType } from './paginated-response.dto';

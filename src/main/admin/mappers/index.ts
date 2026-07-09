@@ -12,3 +12,5 @@ export {
   IPaginatedResponse,
 } from './product.mapper';
 export { toRoleResponseDTO, toRoleResponseDTOs } from './role.mapper';
+export { toRuleResponseDTO } from './rule.mapper';
+export type { IRuleResponseDTO } from './rule.mapper';

@@ -15,6 +15,7 @@ export const TAG = {
   ADMIN_QUEUES: 'Admin - Queues',
   ADMIN_ACCOUNTS: 'Admin - Accounts',
   ADMIN_ROLES: 'Admin - Roles',
+  ADMIN_RULES: 'Admin - Rules',
 } as const;
 
 export const API_TAGS = [
@@ -33,4 +34,5 @@ export const API_TAGS = [
   { name: TAG.ADMIN_QUEUES, description: 'Admin queue introspection' },
   { name: TAG.ADMIN_ACCOUNTS, description: 'Admin account management' },
   { name: TAG.ADMIN_ROLES, description: 'Admin role management' },
+  { name: TAG.ADMIN_RULES, description: 'Admin rule-based extractor pattern management' },
 ];

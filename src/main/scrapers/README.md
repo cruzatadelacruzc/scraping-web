@@ -24,6 +24,10 @@ src/main/scrapers/
     └── attribute-extractor/
         ├── attribute-extractor.service.ts   Orchestrator (rules → cache → LLM)
         ├── rule-based-extractor.service.ts  Deterministic regex patterns
+        ├── rule-registry.service.ts         In-memory cache (Rule table → Map)
+        ├── rule-fallbacks.ts               Canonical word-list defaults
+        ├── repositories/
+        │   └── rule.repository.ts           Prisma CRUD for Rule table
         ├── llm-extractor.service.ts         Provider-agnostic (Vercel AI SDK)
         └── keywords-cache.ts               2-layer cache (memory + MongoDB TTL)
 ```

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { FALLBACK_RULES } from '../src/main/scrapers/services/attribute-extractor/rule-fallbacks';
 
 const prisma = new PrismaClient();
 
@@ -103,6 +104,29 @@ async function main(): Promise<void> {
       console.log(`  ScraperConfig "${cfg.storeKey}" updated (expression changed, version bumped)`);
     } else {
       console.log(`  ScraperConfig "${cfg.storeKey}" already up to date`);
+    }
+  }
+
+  // ── Rule rows (word-list patterns for rule-based extraction) ──────
+  console.log('\nSeeding rule-based extractor patterns...');
+  for (const [ruleKey, values] of Object.entries(FALLBACK_RULES)) {
+    const valueArr = values as string[];
+    const existing = await prisma.rule.findUnique({ where: { ruleKey } });
+    if (!existing) {
+      await prisma.rule.create({ data: { ruleKey, values: valueArr } });
+      console.log(`  Rule "${ruleKey}" created (${valueArr.length} items)`);
+    } else {
+      // Update if values changed
+      const existingValues = existing.values as string[];
+      if (JSON.stringify(existingValues.sort()) !== JSON.stringify([...valueArr].sort())) {
+        await prisma.rule.update({
+          where: { ruleKey },
+          data: { values: valueArr, version: { increment: 1 } },
+        });
+        console.log(`  Rule "${ruleKey}" updated (${valueArr.length} items, version bumped)`);
+      } else {
+        console.log(`  Rule "${ruleKey}" already up to date`);
+      }
     }
   }
 

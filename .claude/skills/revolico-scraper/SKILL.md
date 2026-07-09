@@ -168,3 +168,26 @@ Returns counters, computed rates, LLM token usage, and estimated cost savings.
 `estimatedSavingsUSD` in the metrics response. If unset, savings are 0.
 
 See `src/main/scrapers/CLAUDE.md#7` for the full counter table and usage.
+
+## 12. Rule word lists — 3 write paths, same cache rule as JSONata
+
+The six word-list categories (`brands`, `conditions`, `colors`, `propertyTypes`,
+`locations`, `warrantyKeywords`) follow the exact same write-path contract as
+`ScraperConfig` expressions (Section 3):
+
+| Path | Invalidates cache? | Use when |
+|---|---|---|
+| `PUT/POST /api/admin/rules/:ruleKey` | **Yes** (calls `invalidate`) | Hot change, no redeploy |
+| `prisma/seed.ts` (via `rule-fallbacks.ts`) | No | Versioned, reviewable, canonical |
+| Raw SQL on `Rule` | No | Emergency rollback only |
+
+**Add a new word to a rule list:** edit `rule-fallbacks.ts` FIRST (it is the
+canonical source and the cold-start fallback), then run `npm run seed`. If
+you need the change live immediately without a restart, also hit the admin API.
+
+After **seed** or **SQL** the extractor picks up the new values on TTL expiry
+(≤ 30 s) or process restart. After **API** the cache is invalidated instantly.
+
+Never edit `rule-based-extractor.service.ts` to add a word — the word lists
+were removed from that file. The extractor reads from `RuleRegistryService.get()`,
+which returns from an in-memory `Map` synchronously.
