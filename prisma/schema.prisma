@@ -348,3 +348,18 @@ model Rule {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// -----------------------------------------------------------------------------
+// Scraping Schedule — cron-driven automated scraping per store
+// -----------------------------------------------------------------------------
+model ScrapingSchedule {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  store     String    @default("revolico")
+  cron      String
+  enabled   Boolean   @default(true)
+  jobs      Json
+  lastRunAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
