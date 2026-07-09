@@ -21,7 +21,13 @@ export class AuthController {
   public async login(@request() req: Request, @response() res: Response): Promise<void> {
     const dto = UserLoginDTO.from(req.body);
     this._log.debug('REST request to login', { username: dto.username });
-    const authResponse = await this._authService.login(dto);
-    ResponseHandler.ok(res, { user: authResponse.user, token: authResponse.token });
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'] as string | undefined;
+    const authResponse = await this._authService.login(dto, ip, userAgent);
+    ResponseHandler.ok(res, {
+      user: authResponse.user,
+      token: authResponse.token,
+      refreshToken: authResponse.refreshToken,
+    });
   }
 }

@@ -24,4 +24,13 @@ export class UserIdentityRepository {
       },
     });
   }
+
+  /**
+   * Deletes a UserIdentity by its ID.
+   *
+   * @param id - The identity record ID to delete.
+   */
+  public async delete(id: string): Promise<void> {
+    await this._prisma.userIdentity.delete({ where: { id } });
+  }
 }

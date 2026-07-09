@@ -1,233 +1,114 @@
 ---
 name: security
-description: 'Project-specific auth and security patterns: JWT (jsonwebtoken), AuthMiddleware + AuthMiddleware.forRoles, AsyncLocalStorage tenant context, ProviderTokenVerifier (jose ESM). Use when implementing or reviewing authentication, authorization, or tenant isolation code in this Express + Inversify + Prisma project.'
+description: 'Project-specific auth and security patterns: JWT (jsonwebtoken) with refresh tokens, AuthMiddleware + JWT blacklist + deletedAt guard, AsyncLocalStorage tenant context, ProviderTokenVerifier (jose ESM), password reset/verification flows, login rate limiting, account soft-delete. Use when implementing or reviewing authentication, authorization, or tenant isolation code in this Express + Inversify + Prisma project.'
 applyTo: 'src/main/shared/security/**, src/main/shared/middleware/**, src/main/shared/tenant-context-als.ts, src/main/users/**'
 risk: medium
 ---
 
 # Security — Auth, JWT, Roles, Tenant Context
 
-All examples in this skill are TypeScript with Inversify decorators (`@injectable()`, `@inject()`) and `inversify-express-utils` controllers. Do NOT introduce vanilla Express examples (`app.post()`, `require()`) — they do not match this project.
+All examples are TypeScript with Inversify decorators (`@injectable()`, `@inject()`) and `inversify-express-utils` controllers. Do NOT introduce vanilla Express patterns.
 
-## Middleware chain
-
-Every protected request flows through this chain (in this exact order):
+## Middleware chain (order matters)
 
 ```
-tenantInitMiddleware  →  AuthMiddleware  →  Controller  →  Service  →  Repository
+tenantInitMiddleware → AuthMiddleware → Controller → Service → Repository
 ```
 
-- `tenantInitMiddleware` initializes AsyncLocalStorage (ALS) and sets `traceId`.
-- `AuthMiddleware` validates the JWT, looks up the user, and attaches `req.user`.
-- `AuthMiddleware.forRoles(...roles)` is a static factory that runs the full auth flow AND checks roles in a single pass.
+`tenantInitMiddleware` must be FIRST — it initializes ALS. `AuthMiddleware` validates the JWT, checks the Redis blacklist (fail-open), rejects deactivated accounts (`User.deletedAt`), and attaches `req.user`. `AuthMiddleware.forRoles(...roles)` is a static factory that runs the full auth flow AND checks roles in a single pass.
 
-If any layer is missing, downstream code cannot trust the tenant context. Always verify both middlewares are wired in `bootstrap.ts` (or wherever routes are registered).
-
-## AuthMiddleware (real implementation)
-
-`src/main/shared/middleware/auth.middleware.ts`:
+**Usage in controllers:**
 
 ```typescript
-@injectable()
-export class AuthMiddleware extends BaseMiddleware {
-  public constructor(
-    @inject(TYPES.Logger) private readonly _log: ILogger,
-    @inject(TYPES.TokenService) private readonly _tokenService: TokenService,
-  ) {
-    super();
-    this._log.context = AuthMiddleware.name;
-  }
-
-  public async handler(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      ResponseHandler.unAuthenticated(res);
-      return;
-    }
-    const token = authHeader.slice(7);
-    const payload = await this._tokenService.verifyToken(token);
-    const tenantId = payload?.tenantId ?? req.header('x-tenant-id');
-    const userId = payload?.userId;
-    if (!tenantId || !userId) {
-      /* unAuthenticated */ return;
-    }
-
-    await runWithRequestContext({ tenantId, userId }, async () => {
-      const found = await prisma.user.findFirst({
-        where: {
-          id: userId,
-          accountId: tenantId, // <-- tenant scoping
-          userIdentity:
-            payload.provider && payload.provider !== 'local'
-              ? { some: { provider: payload.provider, providerId: payload.providerId } }
-              : undefined,
-        },
-        include: { userIdentity: true, roles: true },
-      });
-      if (!found) {
-        /* unAuthorized */ return;
-      }
-
-      req.user = { ...payload, user: found, roles: found.roles.map(r => r.name) };
-      next();
-    });
-  }
-
-  public static forRoles(...roles: string[]) {
-    return async (req, res, next) => {
-      const { container } = require('../container'); // lazy require breaks circular dep
-      const instance = container.get<AuthMiddleware>(TYPES.AuthMiddleware);
-      await instance.handler(req, res, () => {
-        const userRoles: string[] = (req.user as any)?.roles ?? [];
-        if (!userRoles.length || !roles.some(r => userRoles.includes(r))) {
-          ResponseHandler.unAuthorized(res);
-          return;
-        }
-        next();
-      });
-    };
-  }
-}
+@httpGet('/me', TYPES.AuthMiddleware)                              // auth only
+@httpGet('/admin', AuthMiddleware.forRoles('ACCOUNT_OWNER'))        // auth + role
+@httpGet('/shared', AuthMiddleware.forRoles('ACCOUNT_OWNER', 'MEMBER'))
 ```
 
-### Usage in controllers
+`SUPER_ADMIN` automatically passes any `forRoles()` check — the role check is `roles.some(r => userRoles.includes(r))` and SUPER_ADMIN is always in the user's role list. Do NOT add manual `|| req.user.roles.includes('SUPER_ADMIN')` checks.
+
+## TokenService & ITokenPayload
+
+`src/main/shared/security/token.service.ts` wraps `jsonwebtoken`. The payload now includes:
 
 ```typescript
-import { controller, httpGet, httpPost } from 'inversify-express-utils';
-import { AuthMiddleware } from '@shared/middleware/auth.middleware';
-
-@controller('/users')
-export class UserController {
-  // auth only
-  @httpGet('/me', TYPES.AuthMiddleware)
-  public async getMe(req: Request, res: Response): Promise<void> {
-    /* ... */
-  }
-
-  // auth + role check in a single pass
-  @httpGet('/admin', AuthMiddleware.forRoles('ACCOUNT_OWNER'))
-  public async admin(req: Request, res: Response): Promise<void> {
-    /* ... */
-  }
-
-  // multiple roles
-  @httpPost('/shared', AuthMiddleware.forRoles('ACCOUNT_OWNER', 'MEMBER'))
-  public async shared(req: Request, res: Response): Promise<void> {
-    /* ... */
-  }
-}
-```
-
-`SUPER_ADMIN` automatically passes any `forRoles()` check (the role check is `roles.some(r => userRoles.includes(r))` and SUPER_ADMIN is always seeded in the user's role list).
-
-## TokenService
-
-`src/main/shared/security/token.service.ts` — wraps `jsonwebtoken`:
-
-```typescript
-public generateToken(
-  userId: string,
-  accountId: string,
-  roles?: string[],
-  provider?: string,
-  providerId?: string,
-): string {
-  const payload: ITokenPayload = { userId, tenantId: accountId, roles, provider, providerId };
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: process.env.JWT_EXPIRATION ?? '1d' });
-}
-
-public async verifyToken(token: string): Promise<ITokenPayload> {
-  return jwt.verify(token, process.env.JWT_SECRET!) as ITokenPayload;
-}
-
 export interface ITokenPayload {
   userId: string;
   tenantId: string;
   roles?: string[];
   provider?: string;
   providerId?: string;
+  jti?: string;  // UUID v4 — enables per-token blacklist on logout
+  exp?: number;  // expiration timestamp (seconds since epoch)
 }
 ```
 
-JWT secret MUST come from `process.env.JWT_SECRET` — never hardcoded. Throw if missing.
+**Never** hardcode `JWT_SECRET`. Throw at startup if missing.
 
-## TenantContext (AsyncLocalStorage)
+## Refresh Tokens
 
-`src/main/shared/tenant-context-als.ts`:
+`TokenManagementService` at `src/main/users/services/token-management.service.ts`:
 
-```typescript
-export type RequestContext = { tenantId?: string; userId?: string; traceId?: string };
-const asyncRequestContext = new AsyncLocalStorage<RequestContext>();
+- **Issue**: `crypto.randomBytes(48).toString('hex')` → SHA-256 hash stored in `RefreshToken` model, 30-day expiry. Each token belongs to a family (UUID v4).
+- **Rotate**: on `POST /api/auth/refresh`, old token is marked `replacedBy` → new token id, new token issued in same family.
+- **Theft detection**: if an already-replaced token is presented again, the **entire family is revoked** — this indicates token theft.
+- **Revoke all**: called on password change and account deactivation.
 
-export function runWithRequestContext<T>(ctx: RequestContext, fn: () => T): T;
-export function getRequestContext(): RequestContext | undefined;
+## JWT Blacklist (logout)
 
-@injectable()
-export class TenantContext {
-  public get tenantId(): string | undefined {
-    return getRequestContext()?.tenantId;
-  }
-  public get userId(): string | undefined {
-    return getRequestContext()?.userId;
-  }
-  public requireTenantId(): string {
-    const id = this.tenantId;
-    if (!id) throw new Error('Missing tenantId in request context');
-    return id;
-  }
-}
-```
+Redis-based, keyed by `jti`. On logout, `AuthService.logout()` sets `jwt:blacklist:<jti>` with TTL = remaining token lifetime. `AuthMiddleware` checks this **after** JWT verification (fail-open: if Redis is down, requests are allowed through).
 
-Inject `TenantContext` into services that need tenant scoping. NEVER store tenant data in module-level scope — always read from ALS.
+## Login Rate Limiting
 
-## Roles
+`LoginRateLimitService` — same Redis fail-open pattern as `BotRateLimitService`:
 
-| Role            | Pass `forRoles` | Scope                          | Endpoints                   |
-| --------------- | --------------- | ------------------------------ | --------------------------- |
-| `SUPER_ADMIN`   | always          | system-wide                    | all (`/admin/*`, dashboard) |
-| `ACCOUNT_OWNER` | when seeded     | own tenant only                | tenant business endpoints   |
-| `MEMBER`        | when seeded     | own tenant (read-only, future) | none yet                    |
+| Limit | Threshold | Window | Lock |
+|---|---|---|---|
+| Per IP | 5 attempts | 15 min | 30 min |
+| Per username | 10 attempts | 15 min | 30 min |
 
-The role check happens via Prisma lookup inside `AuthMiddleware` — there is no separate role guard.
+Checks run BEFORE password validation in `AuthService.login()`. Success resets counters. `LoginAttempt` model records every attempt.
+
+## Account Soft-Delete
+
+`AccountDeactivationService`: sets `User.deletedAt`, pauses all alarms (`enabled = false`), revokes refresh tokens, blacklists current JWT. 30-day reversible by `SUPER_ADMIN`. `AuthMiddleware` rejects any request where `found.deletedAt` is set.
+
+> See @src/main/CLAUDE.md "Account Soft-Delete" section for the deactivation/purge flow details.
 
 ## ProviderTokenVerifier (Google, Facebook)
 
-`src/main/shared/security/provider-token-verifier.ts` uses `jose` (ESM module). It validates Google/Facebook ID tokens via JWKS in production or tokeninfo endpoint in dev.
+`src/main/shared/security/provider-token-verifier.ts` uses `jose` (ESM module). Validates ID tokens via JWKS.
+
+**Testing gotcha**: `jose` is ESM-only and breaks Jest CJS. Tests MUST use the moduleNameMapper:
 
 ```typescript
-import { jwtVerify, createRemoteJWKSet } from 'jose';
-
-const jwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
-const { payload } = await jwtVerify(idToken, jwks, { issuer: 'https://accounts.google.com' });
+// jest.config.js — specific overrides BEFORE generic path aliases:
+'^jose$': '<rootDir>/src/__tests__/__mocks__/jose.ts',
+'^@shared/security/provider-token-verifier$':
+  '<rootDir>/src/main/shared/security/__mocks__/provider-token-verifier.ts',
 ```
 
-**Testing**: `jose` is an ESM module and breaks Jest CJS. Tests MUST mock it via the moduleNameMapper (see @../testing/SKILL.md):
+> See @.claude/skills/testing/SKILL.md for complete Jest mock patterns.
 
-```typescript
-// jest.config.js
-moduleNameMapper: {
-  '^jose$': '<rootDir>/src/__tests__/__mocks__/jose.ts',
-  '^@shared/security/provider-token-verifier$':
-    '<rootDir>/src/main/shared/security/__mocks__/provider-token-verifier.ts',
-}
-```
+## Email Service
 
-## Tenant isolation (Prisma)
+`IEmailService` (Mock → dev, SmtpEmailService → prod), selected via `EMAIL_PROVIDER` env var. **Emails MUST go through the queue** — never call `IEmailService.send()` directly from a controller or service. Always enqueue `EMAIL_SEND_JOB` on `EmailQueues`.
 
-The Prisma client is wrapped in an extension that automatically filters by `tenantId` from ALS. This means service code can write:
+> See @src/main/CLAUDE.md "Email Service" section for env vars and implementation details.
 
-```typescript
-const alarms = await prisma.alarm.findMany(); // auto-filtered by tenantId
-const user = await prisma.user.findUnique({ where: { id } }); // auto-scoped
-```
+## Tenant Context & Isolation
 
-without manually passing `where: { accountId: tenantId }`. For MongoDB features, tenant isolation does NOT apply — product data is shared across tenants.
+ALS via `TenantContext` / `runWithRequestContext`. Prisma client extension auto-filters by `tenantId`. **Never** store tenant data in module-level scope — always read from ALS. MongoDB product data has NO tenant isolation.
+
+> See AGENTS.md "Security & Multi-Tenancy" for the full setup.
 
 ## Common errors to avoid
 
 - **Never** use globals for tenant context — always ALS.
 - **Never** trust `req.user` without `AuthMiddleware` running first.
-- **Never** include `tenantId` in user-facing error messages or logs that leak outside the system.
 - **Never** hardcode `JWT_SECRET`. Throw at startup if missing.
-- **Never** write `app.post(...)` or use Express bare functions — this project uses `@controller` decorators and `AuthMiddleware.forRoles(...)`.
-- **Never** call `jwt.verify` with the secret as a string literal — load from env.
+- **Never** write `app.post(...)` — use `@controller` decorators and `AuthMiddleware.forRoles(...)`.
+- **Never** send transactional emails synchronously — always enqueue via `EMAIL_SEND_JOB`.
+- **Never** return different HTTP statuses for known vs unknown emails in forgot-password — always 200 to prevent enumeration.
+- **Never** allow unlinking the last authentication method — check `user.passwordHash` and remaining `UserIdentity` records first.
+- **Never** add manual `SUPER_ADMIN` role checks — `AuthMiddleware.forRoles()` already handles it.

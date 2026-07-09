@@ -153,3 +153,33 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 ### Path aliases
 
 `@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`, `@cron/*`
+
+### Email Service
+
+`IEmailService` (`src/main/users/services/email/email.service.interface.ts`) with two implementations selected via `EMAIL_PROVIDER` env var:
+- `MockEmailService` — logs emails to `ILogger` (development, default when unset)
+- `SmtpEmailService` — sends via nodemailer with SMTP (Gmail or any provider)
+
+Emails are NOT sent synchronously — services enqueue an `EMAIL_SEND_JOB` on BullMQ and the `EmailQueues` worker dispatches to `IEmailService.send()`. This provides retry with backoff. Template rendering is handled by the pure-static `EmailTemplateService`.
+
+SMTP env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`.
+
+### Token Management
+
+`TokenManagementService` (`src/main/users/services/token-management.service.ts`) manages refresh token lifecycle:
+- **Issue**: generates opaque 96-hex-char random token, stores SHA-256 hash in `RefreshToken` model, 30-day expiry
+- **Rotate**: validates incoming token, revokes old, issues new in same family. If an already-replaced token is presented (possible theft), the entire family is revoked
+- **Revoke all**: called on password change and account deactivation
+
+`TokenService.generateToken()` now includes a `jti` (JWT ID, UUID v4) claim for per-token blacklisting on logout. The `ITokenPayload` interface also carries the `exp` claim.
+
+### Rate Limiting
+
+`LoginRateLimitService` follows the same Redis fail-open pattern as `BotRateLimitService`. Counters per IP and per username, with lock after exceeding thresholds. All checks fail-open (allow) if Redis is unavailable.
+
+### Account Soft-Delete
+
+`AccountDeactivationService` at `src/main/users/services/account-deactivation.service.ts`:
+- Sets `User.deletedAt`, pauses all alarms (`enabled = false`), revokes all refresh tokens, blacklists current JWT
+- Reversible within 30 days by `SUPER_ADMIN` via `POST /api/auth/reactivate`
+- `purgeExpiredAccounts()` hard-deletes personal data after 30 days (run as daily cron). Alarm/account data is preserved.

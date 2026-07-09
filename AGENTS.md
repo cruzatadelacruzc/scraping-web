@@ -111,7 +111,13 @@ ALS stores tenant context — never use globals. All DB operations must include 
 
 JWT-based with integrated role validation via `AuthMiddleware.forRoles(...)` — auth + role check in a single pass. `SUPER_ADMIN` automatically passes any `forRoles()` check.
 
-> See skill: @.claude/skills/security/SKILL.md for JWT verification, provider tokens (Google/Facebook via `jose`), and common errors to avoid. Follow strictly.
+Includes refresh tokens (opaque, SHA-256 hashed, 30-day rotation with theft detection), password reset (bcrypt-hashed single-use tokens, 1h expiry), email verification (24h tokens, auto-sent on registration), OAuth provider linking/unlinking, and JWT blacklist via Redis (using `jti` claim, fail-open if Redis down).
+
+Login is rate-limited per IP (5 attempts/15min) and per username (10 attempts/15min) with a 30-min lock after exceeding. `AuthMiddleware` also rejects deactivated accounts (`User.deletedAt`).
+
+`AccountDeactivationService` handles soft-delete: sets `deletedAt`, pauses all alarms (`enabled = false`), revokes refresh tokens, blacklists the current JWT. Reversible within 30 days by SUPER_ADMIN.
+
+> See skill: @.claude/skills/security/SKILL.md for JWT verification, provider tokens (Google/Facebook via `jose`), refresh tokens, JWT blacklist, rate limiting, and common errors to avoid. Follow strictly.
 
 ### Role system
 
@@ -166,3 +172,4 @@ Run before `git commit` — see @.claude/rules/compliance-checklist.md for the f
 | DB utility scripts                          | `scripts/`                                          |
 | Environment setup                           | `.env.example`                                      |
 | Super Admin SPA module guide                | `apps/admin-web/CLAUDE.md`                          |
+| Account management (passwords, tokens, deactivation, email) | `src/main/users/` (account-management.controller, services/email/) |

@@ -114,6 +114,21 @@ import { TelegramAdapter } from '@bots/adapters/telegram-adapter.service';
 import { WhatsAppAdapter } from '@bots/adapters/whatsapp-adapter.service';
 import { BotQueues } from '@bots/queues';
 
+// Account Management module
+import { IEmailService } from '@users/services/email/email.service.interface';
+import { MockEmailService } from '@users/services/email/mock-email.service';
+import { SmtpEmailService } from '@users/services/email/smtp-email.service';
+import { EmailQueues } from '@users/queues/email.queues';
+import { TokenRepository } from '@users/repositories/token.repository';
+import { LoginAttemptRepository } from '@users/repositories/login-attempt.repository';
+import { TokenManagementService } from '@users/services/token-management.service';
+import { PasswordResetService } from '@users/services/password-reset.service';
+import { EmailVerificationService } from '@users/services/email-verification.service';
+import { AccountDeactivationService } from '@users/services/account-deactivation.service';
+import { LoginRateLimitService } from '@users/services/login-rate-limit.service';
+import { AccountManagementController } from '@users/controllers/account-management.controller';
+import Redis from 'ioredis';
+
 export const container = new Container();
 
 //shared services
@@ -253,3 +268,48 @@ container.bind<I18nService>(TYPES.I18nService).to(I18nService);
 container.bind<IQueueModule>(TYPES.BotQueues).to(BotQueues).inSingletonScope();
 container.bind<TelegramAdapter>(TYPES.TelegramAdapter).to(TelegramAdapter).inSingletonScope();
 container.bind<WhatsAppAdapter>(TYPES.WhatsAppAdapter).to(WhatsAppAdapter).inSingletonScope();
+
+// Account Management module
+// Email service (select impl via EMAIL_PROVIDER env var)
+const emailImpl = process.env.EMAIL_PROVIDER ?? 'mock';
+if (emailImpl === 'smtp') {
+  container.bind<IEmailService>(TYPES.EmailService).to(SmtpEmailService).inSingletonScope();
+} else {
+  container.bind<IEmailService>(TYPES.EmailService).to(MockEmailService).inSingletonScope();
+}
+
+// Email queues
+container.bind<IQueueModule>(TYPES.EmailQueues).to(EmailQueues).inSingletonScope();
+
+// Repositories
+container.bind(TYPES.TokenRepository).to(TokenRepository).inSingletonScope();
+container.bind(TYPES.LoginAttemptRepository).to(LoginAttemptRepository).inSingletonScope();
+
+// Services
+container.bind(TYPES.TokenManagementService).to(TokenManagementService).inSingletonScope();
+container.bind(TYPES.PasswordResetService).to(PasswordResetService).inSingletonScope();
+container.bind(TYPES.EmailVerificationService).to(EmailVerificationService).inSingletonScope();
+container.bind(TYPES.AccountDeactivationService).to(AccountDeactivationService).inSingletonScope();
+container.bind(TYPES.LoginRateLimitService).to(LoginRateLimitService).inSingletonScope();
+
+// Controller
+container.bind(TYPES.AccountManagementController).to(AccountManagementController);
+
+// Redis client (shared by rate limiter and JWT blacklist)
+container
+  .bind<Redis>(TYPES.RedisClient)
+  .toDynamicValue(() => {
+    const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+    return new Redis(redisUrl, {
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
+      connectTimeout: 2000,
+      maxLoadingRetryTime: 2000,
+      enableOfflineQueue: false,
+      retryStrategy(): number | null {
+        // Never retry — AuthMiddleware and rate limiter both fail-open
+        return null;
+      },
+    });
+  })
+  .inSingletonScope();

@@ -1,5 +1,6 @@
 import { injectable } from 'inversify';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { ILogger } from '@shared/logger.interface';
 import { inject } from 'inversify';
 import { TYPES } from '@shared/types.container';
@@ -10,6 +11,8 @@ export interface ITokenPayload {
   roles?: string[];
   provider?: string;
   providerId?: string;
+  jti?: string;
+  exp?: number;
 }
 
 @injectable()
@@ -40,6 +43,7 @@ export class TokenService {
       roles,
       provider,
       providerId,
+      jti: crypto.randomUUID(),
     };
     return jwt.sign(payload, jwtSecret, { expiresIn: jwtExpiration });
   }

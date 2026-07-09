@@ -38,6 +38,15 @@ import { ProductListQuerySchema } from '@admin/services/dto/product-list-query.d
 import { DashboardMetricsSchema, HealthResponseSchema } from '@admin/services/dto/dashboard-metrics.dto';
 import { QueueStatsSchema, JobDetailSchema } from '@admin/services/dto/queue-stats.dto';
 import { CreateRoleSchema, RoleResponseSchema } from '@admin/services/dto/role.dto';
+// Account Management DTOs
+import { ForgotPasswordSchema } from '@users/services/dto/forgot-password.dto';
+import { ResetPasswordSchema } from '@users/services/dto/reset-password.dto';
+import { ChangePasswordSchema } from '@users/services/dto/change-password.dto';
+import { ChangeEmailSchema } from '@users/services/dto/change-email.dto';
+import { RefreshTokenSchema } from '@users/services/dto/refresh-token.dto';
+import { VerifyEmailSchema } from '@users/services/dto/verify-email.dto';
+import { DeactivateAccountSchema } from '@users/services/dto/deactivate-account.dto';
+import { LinkProviderSchema } from '@users/services/dto/link-provider.dto';
 
 // ── Companion schemas for DTOs without Zod ───────────────────────────
 const AlarmResponseSchema = z.object({
@@ -320,4 +329,34 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
     }),
   });
   Schemas.StoreInfoDTO = registry.register('StoreInfo', StoreInfoResponse);
+
+  // Account Management DTOs
+  Schemas.ForgotPasswordDTO = registry.register('ForgotPasswordDTO', ForgotPasswordSchema);
+  Schemas.ResetPasswordDTO = registry.register('ResetPasswordDTO', ResetPasswordSchema);
+  Schemas.ChangePasswordDTO = registry.register('ChangePasswordDTO', ChangePasswordSchema);
+  Schemas.ChangeEmailDTO = registry.register('ChangeEmailDTO', ChangeEmailSchema);
+  Schemas.RefreshTokenDTO = registry.register('RefreshTokenDTO', RefreshTokenSchema);
+  Schemas.VerifyEmailDTO = registry.register('VerifyEmailDTO', VerifyEmailSchema);
+  Schemas.DeactivateAccountDTO = registry.register('DeactivateAccountDTO', DeactivateAccountSchema);
+  Schemas.LinkProviderDTO = registry.register('LinkProviderDTO', LinkProviderSchema);
+
+  // Auth response (login + register) — includes refreshToken
+  const AuthResponseWithRefreshSchema = z.object({
+    user: Schemas.UserDTO,
+    token: z.string().openapi({ description: 'JWT access token' }),
+    refreshToken: z.string().optional().openapi({ description: 'Opaque refresh token (30-day expiry)' }),
+  });
+  Schemas.AuthResponseWithRefreshDTO = registry.register('AuthResponseWithRefresh', AuthResponseWithRefreshSchema);
+
+  // Generic message response
+  const MessageResponseSchema = z.object({
+    message: z.string().openapi({ description: 'Human-readable result message', example: 'Password reset successfully.' }),
+  });
+  Schemas.MessageResponseDTO = registry.register('MessageResponse', MessageResponseSchema);
+
+  // Reactivate user request
+  const ReactivateUserSchema = z.object({
+    userId: z.string().uuid().openapi({ description: 'ID of the user to reactivate' }),
+  });
+  Schemas.ReactivateUserDTO = registry.register('ReactivateUser', ReactivateUserSchema);
 }

@@ -109,6 +109,10 @@ export class App {
       .get<BotRateLimitService>(TYPES.BotRateLimitService)
       .destroy()
       .catch(() => {});
+    container
+      .get<import('@users/services/login-rate-limit.service').LoginRateLimitService>(TYPES.LoginRateLimitService)
+      .destroy()
+      .catch(() => {});
   }
 }
 

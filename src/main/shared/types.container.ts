@@ -103,4 +103,16 @@ export const TYPES = {
   ScheduleRepository: Symbol.for('ScheduleRepository'),
   ScheduleController: Symbol.for('ScheduleController'),
   StoreInfoController: Symbol.for('StoreInfoController'),
+  // Account Management module
+  EmailService: Symbol.for('EmailService'),
+  EmailQueues: Symbol.for('EmailQueues'),
+  TokenRepository: Symbol.for('TokenRepository'),
+  TokenManagementService: Symbol.for('TokenManagementService'),
+  PasswordResetService: Symbol.for('PasswordResetService'),
+  EmailVerificationService: Symbol.for('EmailVerificationService'),
+  AccountDeactivationService: Symbol.for('AccountDeactivationService'),
+  LoginRateLimitService: Symbol.for('LoginRateLimitService'),
+  AccountManagementController: Symbol.for('AccountManagementController'),
+  RedisClient: Symbol.for('RedisClient'),
+  LoginAttemptRepository: Symbol.for('LoginAttemptRepository'),
 };
