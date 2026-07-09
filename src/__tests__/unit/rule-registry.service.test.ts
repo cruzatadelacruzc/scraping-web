@@ -50,8 +50,14 @@ describe('RuleRegistryService', () => {
       expect(registry.get('nonexistent')).toEqual([]);
     });
 
-    it('kicks off async DB warm on construction', () => {
+    it('does NOT warm from DB on construction (lazy)', () => {
       registry = new RuleRegistryService(mockRepo as any, mockLogger as any);
+      expect(mockRepo.findAllEnabled).not.toHaveBeenCalled();
+    });
+
+    it('kicks off async DB warm on first get() call', () => {
+      registry = new RuleRegistryService(mockRepo as any, mockLogger as any);
+      registry.get('brands');
       expect(mockRepo.findAllEnabled).toHaveBeenCalled();
     });
   });
@@ -60,6 +66,7 @@ describe('RuleRegistryService', () => {
     it('replaces fallback with DB values after warm completes', async () => {
       mockRepo.findAllEnabled.mockResolvedValue([{ ruleKey: 'brands', values: ['db-brand-1', 'db-brand-2'], enabled: true }]);
       registry = new RuleRegistryService(mockRepo as any, mockLogger as any);
+      registry.get('brands'); // trigger lazy warm
       // Wait for the async _warmFromDb to resolve
       await Promise.resolve();
       await Promise.resolve();
@@ -71,6 +78,7 @@ describe('RuleRegistryService', () => {
     it('keeps fallback values when DB load fails', async () => {
       mockRepo.findAllEnabled.mockRejectedValue(new Error('DB down'));
       registry = new RuleRegistryService(mockRepo as any, mockLogger as any);
+      registry.get('brands'); // trigger lazy warm
       await Promise.resolve();
       await Promise.resolve();
 

@@ -24,6 +24,7 @@ interface ICacheEntry {
 export class RuleRegistryService {
   private static readonly TTL_MS = 30_000;
   private readonly _cache = new Map<string, ICacheEntry>();
+  private _warmStarted = false;
 
   public constructor(
     @inject(TYPES.RuleRepository) private readonly _repo: RuleRepository,
@@ -34,8 +35,6 @@ export class RuleRegistryService {
     for (const [key, values] of Object.entries(FALLBACK_RULES)) {
       this._cache.set(key, { values, expiresAt: Date.now() + RuleRegistryService.TTL_MS });
     }
-    // Eagerly load from DB (fire-and-forget)
-    this._warmFromDb();
   }
 
   /**
@@ -46,6 +45,10 @@ export class RuleRegistryService {
    * @returns {string[]} The word-list array, or [] if the key is unknown.
    */
   public get(ruleKey: string): string[] {
+    if (!this._warmStarted) {
+      this._warmStarted = true;
+      this._warmFromDb();
+    }
     const entry = this._cache.get(ruleKey);
     if (!entry) return [];
     if (entry.expiresAt <= Date.now()) {
