@@ -17,6 +17,8 @@ tmp/
 # Visual Studio Code
 ######################
 .vscode/settings.*
+.vscode/tasks.json
+.vscode/launch.json
 
 ############# Local resources AI Agents ###########
 .plans
