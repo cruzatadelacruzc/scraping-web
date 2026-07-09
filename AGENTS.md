@@ -158,6 +158,7 @@ Run before `git commit` — see @.claude/rules/compliance-checklist.md for the f
 | Add a new alarm condition                   | `.claude/skills/alarm-condition/SKILL.md`           |
 | Bot module (WhatsApp + Telegram)            | `.claude/skills/bots/SKILL.md`                      |
 | TypeScript best practices                   | `.claude/skills/typescript-best-practices/SKILL.md` |
+| Cron scraping scheduler                     | `.claude/skills/cron-scheduler/SKILL.md`            |
 | PostgreSQL / Prisma schema                  | `prisma/schema.prisma`                              |
 | MongoDB / Mongoose connection               | `src/main/config/db-config.ts`                      |
 | Queue port & adapters (BullMQ / Mock / SQS) | `src/main/shared/queue/`                            |

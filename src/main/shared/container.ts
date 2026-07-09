@@ -86,6 +86,14 @@ import { RuleRepository } from '@scrapers/services/attribute-extractor/repositor
 import { RuleRegistryService } from '@scrapers/services/attribute-extractor/rule-registry.service';
 import { RuleService } from '@admin/services/rule.service';
 import { RuleBasedExtractorService } from '@scrapers/services/attribute-extractor/rule-based-extractor.service';
+
+// Cron module
+import { StoreRegistry } from '@cron/store-registry';
+import { CronSchedulerService } from '@cron/services/scheduler.service';
+import { ScheduleRepository } from '@cron/repositories/schedule.repository';
+import { ScheduleService } from '@cron/services/schedule.service';
+import { ScheduleController } from '@cron/controllers/schedule.controller';
+import { StoreInfoController } from '@cron/controllers/schedule.controller';
 import { AttributeExtractorService } from '@scrapers/services/attribute-extractor/attribute-extractor.service';
 import { KeywordsCache } from '@scrapers/services/attribute-extractor/keywords-cache';
 import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
@@ -205,6 +213,14 @@ container.bind(TYPES.ScraperConfigRepository).to(ScraperConfigRepository);
 container.bind<RuleRepository>(TYPES.RuleRepository).to(RuleRepository).inSingletonScope();
 container.bind<RuleRegistryService>(TYPES.RuleRegistry).to(RuleRegistryService).inSingletonScope();
 container.bind<RuleService>(TYPES.RuleService).to(RuleService).inSingletonScope();
+
+// Cron module — automated scraping scheduler
+container.bind<StoreRegistry>(TYPES.StoreRegistry).to(StoreRegistry).inSingletonScope();
+container.bind<CronSchedulerService>(TYPES.CronSchedulerService).to(CronSchedulerService).inSingletonScope();
+container.bind<ScheduleRepository>(TYPES.ScheduleRepository).to(ScheduleRepository).inSingletonScope();
+container.bind<ScheduleService>(TYPES.ScheduleService).to(ScheduleService).inSingletonScope();
+container.bind<ScheduleController>(TYPES.ScheduleController).to(ScheduleController);
+container.bind<StoreInfoController>(TYPES.StoreInfoController).to(StoreInfoController);
 
 // JSONata-driven scraping
 container.bind<JsonataRunnerService>(TYPES.JsonataRunner).to(JsonataRunnerService).inSingletonScope();

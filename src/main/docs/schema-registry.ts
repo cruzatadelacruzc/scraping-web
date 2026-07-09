@@ -263,4 +263,61 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
         .openapi({ description: 'Non-empty array of values (replaces existing)', example: ['apple', 'samsung', 'xiaomi'] }),
     }),
   );
+
+  // Scraping schedules
+  const ScrapingScheduleResponse = z.object({
+    id: uuid('Schedule unique identifier'),
+    name: z.string().openapi({ description: 'Human-readable schedule name', example: 'Daily morning scrape' }),
+    store: z.string().openapi({ description: 'Store key this schedule targets', example: 'revolico' }),
+    cron: z.string().openapi({ description: 'Cron expression', example: '0 6 * * *' }),
+    enabled: z.boolean().openapi({ description: 'Whether the schedule is active', example: true }),
+    jobs: z.array(z.object({}).passthrough()).openapi({ description: 'Array of store-specific scraping job descriptors' }),
+    lastRunAt: z.string().nullable().openapi({ description: 'ISO timestamp of last execution' }),
+    createdAt: timestamp('Creation timestamp'),
+    updatedAt: timestamp('Last update timestamp'),
+  });
+  Schemas.ScrapingScheduleResponseDTO = registry.register('ScrapingScheduleResponse', ScrapingScheduleResponse);
+
+  Schemas.CreateScrapingScheduleDTO = registry.register(
+    'CreateScrapingSchedule',
+    z.object({
+      name: z.string().min(1).max(100).openapi({ description: 'Unique schedule name', example: 'Daily morning scrape' }),
+      store: z.string().min(1).openapi({ description: 'Store key', example: 'revolico' }),
+      cron: z.string().min(1).openapi({ description: 'Cron expression', example: '0 6 * * *' }),
+      enabled: z.boolean().optional().openapi({ description: 'Enable on creation (defaults to true)', example: true }),
+      jobs: z
+        .array(z.object({}).passthrough())
+        .min(1)
+        .openapi({ description: 'Array of job descriptors', example: [{ category: 'celulares' }] }),
+    }),
+  );
+
+  Schemas.UpdateScrapingScheduleDTO = registry.register(
+    'UpdateScrapingSchedule',
+    z.object({
+      name: z.string().min(1).max(100).optional(),
+      store: z.string().min(1).optional(),
+      cron: z.string().min(1).optional(),
+      enabled: z.boolean().optional(),
+      jobs: z.array(z.object({}).passthrough()).min(1).optional(),
+    }),
+  );
+
+  const StoreInfoResponse = z.object({
+    key: z.string().openapi({ description: 'Store key', example: 'revolico' }),
+    displayName: z.string().openapi({ description: 'Human-readable store name', example: 'Revolico' }),
+    scrapingQueue: z.string().openapi({ description: 'BullMQ queue name', example: 'PRODUCTS_SCRAPING' }),
+    jobSchema: z.object({
+      fields: z.array(
+        z.object({
+          name: z.string(),
+          type: z.enum(['string', 'number', 'boolean']),
+          required: z.boolean(),
+          label: z.string(),
+          placeholder: z.string().optional(),
+        }),
+      ),
+    }),
+  });
+  Schemas.StoreInfoDTO = registry.register('StoreInfo', StoreInfoResponse);
 }

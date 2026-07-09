@@ -135,6 +135,56 @@ src/main/scrapers/
 
 New stores (e.g. `porlalivre/`) add their own directory under `src/main/scrapers/` with store-specific models, controllers, and JSONata expressions. They import shared enrichment from `@scrapers/services/` — no need to reimplement attribute extraction or analytics.
 
+## Automated Scraping Scheduler
+
+The platform includes a **cron-based scheduler** that automates scraping — instead of manually calling the scraping endpoint for each category, you create persistent schedules that fire on cron expressions.
+
+### How it works
+
+1. Create a `ScrapingSchedule` via the admin API (endpoints documented in Swagger at `/api-docs` under **Admin - Scraping Schedules**).
+2. Each schedule targets a **store** (e.g. `revolico`) and carries a **cron expression** plus a list of **jobs** — store-specific scraping descriptors.
+3. At bootstrap the scheduler reads enabled schedules from PostgreSQL, registers them with `node-cron`, and enqueues scraping jobs to the correct BullMQ queue on each tick.
+4. Changes via the API (create, update, toggle, delete) take effect **immediately** — no restart required.
+
+### Store registration
+
+Each store module registers itself in the `StoreRegistry` at startup, publishing its queue name and a `jobSchema` that the admin dashboard uses for dynamic forms:
+
+```typescript
+// src/main/scrapers/revolico/index.ts
+registry.register('revolico', {
+  displayName: 'Revolico',
+  scrapingQueue: QUEUE_NAME.products_scraping,
+  jobSchema: {
+    fields: [
+      { name: 'category', type: 'string', required: true, label: 'Categoría' },
+      // ...
+    ],
+  },
+});
+```
+
+New stores auto-register the same way — the scheduler is store-agnostic.
+
+### Quick example
+
+```bash
+# Create a daily 6am schedule for two Revolico categories
+curl -X POST /api/admin/scraping-schedules \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "name": "Morning scrape",
+    "store": "revolico",
+    "cron": "0 6 * * *",
+    "jobs": [
+      {"category": "celulares", "totalPages": 2},
+      {"category": "electronicos"}
+    ]
+  }'
+```
+
+See `src/main/cron/` for the implementation and `.claude/skills/cron-scheduler/SKILL.md` for AI agent guidance.
+
 ## Deployment
 
 The `Deploy Scrapers API` workflow (`.github/workflows/ec2-deploy.yml`) builds the image, pushes it to Quay.io, and runs the container on a self-hosted runner on the production EC2 host. While the project is an MVP **without** a production host, both build and deploy jobs skip themselves — CI stays green and no work is performed.
@@ -172,6 +222,7 @@ The repository ships project-specific guidance for Claude Code (and other AI ass
 | TypeScript patterns           | [.claude/skills/typescript-best-practices/SKILL.md](.claude/skills/typescript-best-practices/SKILL.md) |
 | Scraper module                | [src/main/scrapers/CLAUDE.md](src/main/scrapers/CLAUDE.md)                                             |
 | Revolico scraper              | [.claude/skills/revolico-scraper/SKILL.md](.claude/skills/revolico-scraper/SKILL.md)                   |
+| Cron scheduler                | [.claude/skills/cron-scheduler/SKILL.md](.claude/skills/cron-scheduler/SKILL.md)                       |
 
 ## Recommended Claude Code plugin: superpowers
 

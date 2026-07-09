@@ -89,6 +89,17 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 - `src/main/scrapers/` — multi-store scraping architecture with enrichment pipeline.
 - See `src/main/scrapers/CLAUDE.md` for scraper-specific patterns (extraction, storage, analytics, attributes, LLM integration).
 
+### Cron Module
+
+- `src/main/cron/` — automated scraping scheduler. See `.claude/skills/cron-scheduler/SKILL.md` for agent instructions.
+- **StoreRegistry** (`store-registry.ts`): in-memory `Map<storeKey, IStoreConfig>`. Each store module calls `register()` at bootstrap; the scheduler resolves `store → queueName` via `get()`. Stores also publish a `jobSchema` (field descriptors) so the admin dashboard can render dynamic forms per store.
+- **CronSchedulerService** (`services/scheduler.service.ts`): node-cron runtime. Maintains a `Map<scheduleId, ScheduledTask>`. On tick: resolves store → queue, enqueues each job with error isolation, best-effort updates `lastRunAt`. Uses `require('node-cron')` with an inline type cast — the `.d.ts` at `src/main/types/node-cron.d.ts` works for `tsc` but not `ts-node-dev`.
+- **ScheduleService** (`services/schedule.service.ts`): CRUD orchestration. Every write (create/update/delete/toggle) syncs the in-memory scheduler immediately — no restart needed.
+- **ScheduleController**: REST endpoints at `/api/admin/scraping-schedules` and `/api/admin/stores`. All `SUPER_ADMIN` only. Endpoint details are in `swagger.json` (tag: `Admin - Scraping Schedules`).
+- **ScrapingSchedule** model (Prisma): `name`, `store`, `cron`, `enabled`, `jobs` (JSON array — opaque to the scheduler, each store interprets its own shape), `lastRunAt`. No tenant isolation (no `accountId`).
+- **DI**: 6 symbols in `types.container.ts` + bindings in `container.ts` (`StoreRegistry`, `CronSchedulerService`, `ScheduleService`, `ScheduleRepository`, `ScheduleController`, `StoreInfoController`).
+- **Adding a store**: create `scrapers/<store>/index.ts` with a `register<Store>Store(container)` function that calls `storeRegistry.register(key, config)`. Call it in `app.ts` before `scheduler.initialize()`.
+
 ## Creating New Components
 
 1. Add Symbol to `types.container.ts`
@@ -141,4 +152,4 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 
 ### Path aliases
 
-`@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`
+`@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`, `@cron/*`
