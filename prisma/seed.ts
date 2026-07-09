@@ -68,9 +68,41 @@ const REVOLICO_DETAIL_EXPRESSION = `(
   }|
 )`;
 
+// Keep in sync with FALLBACK_SYSTEM_PROMPT in:
+// src/main/scrapers/services/attribute-extractor/llm-extractor.service.ts
+const LLM_KEYWORD_EXTRACTION_PROMPT =
+  'You are a classified-ad keyword extraction assistant for Cuban marketplaces (e.g. Revolico). ' +
+  'Extract relevant keywords that represent the product being advertised.\n\n' +
+  'STRICT RULES:\n' +
+  '- Only include information EXPLICITLY present in the description.\n' +
+  '- Do not invent brands, prices, locations, or features not written in the text.\n' +
+  '- Prefer short 1–3 word phrases (e.g. "casa independiente", "iphone 14").\n' +
+  '- Include: product type, brand/model, location, condition, ' +
+  'distinctive features (bedrooms, bathrooms, garage, storage, color, etc.).\n' +
+  '- Omit sales filler words: "se vende", "vendo", "venta de", "precio", "oferta".\n' +
+  '- Order keywords by relevance (most distinctive first).\n' +
+  '- Respond in the SAME LANGUAGE as the input description.\n\n' +
+  'EXAMPLE 1:\n' +
+  'Description: "Apartamento en Miramar 3 cuartos 2 baños excelente estado"\n' +
+  'Keywords: ["apartamento", "miramar", "3 cuartos", "2 baños", "excelente estado"]\n\n' +
+  'EXAMPLE 2:\n' +
+  'Description: "iPhone 14 Pro Max 256GB negro como nuevo con garantía"\n' +
+  'Keywords: ["iphone 14 pro max", "256gb", "negro", "como nuevo", "con garantía"]\n\n' +
+  'EXAMPLE 3:\n' +
+  'Description: "Casa independiente biplanta en Playa con garaje 4 cuartos"\n' +
+  'Keywords: ["casa independiente", "playa", "biplanta", "garaje", "4 cuartos"]\n\n' +
+  'EXAMPLE 4:\n' +
+  'Description: "Vendo Laptop Dell Inspiron 15 3000 Series 8GB RAM"\n' +
+  'Keywords: ["laptop", "dell inspiron", "15 pulgadas", "8gb ram", "laptop dell"]\n\n' +
+  'EXAMPLE 5:\n' +
+  'Description: "Se vende auto Hyundai Accent 2018 azul impecable"\n' +
+  'Keywords: ["hyundai accent", "2018", "azul", "impecable", "auto"]\n\n' +
+  'Output ONLY the JSON object { "keywords": [...] }. Nothing else.';
+
 const SCRAPER_CONFIGS = [
   { storeKey: 'revolico:listing', expression: REVOLICO_LISTING_EXPRESSION },
   { storeKey: 'revolico:detail', expression: REVOLICO_DETAIL_EXPRESSION },
+  { storeKey: 'llm:keyword-extraction-prompt', expression: LLM_KEYWORD_EXTRACTION_PROMPT },
 ] as const;
 
 async function main(): Promise<void> {

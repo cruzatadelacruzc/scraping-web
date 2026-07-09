@@ -160,15 +160,44 @@ Three required env vars, one optional:
 | `LLM_MODEL` | Model identifier (e.g. `deepseek-v4-flash`) |
 | `LLM_API_KEY` | API key for the provider |
 | `LLM_ENABLE_REASONING` | (optional) Enables DeepSeek thinking mode. Defaults to `true`. Set to `false` to save tokens. |
+| `LLM_KEYWORD_EXTRACTION_PROMPT` | (optional) Custom system prompt for keyword extraction. Overrides the hardcoded fallback but is overridden by the DB-stored prompt. |
 
-If any variable is missing, LLM extraction is skipped silently and returns
-`{ keywords: [] }`. The system prompt is stored in the `ScraperConfig` table
-under store key `llm:keyword-extraction-prompt` and managed via the same
-CRUD API as scraper expressions. A hardcoded fallback prompt (~600 tokens,
-Spanish few-shot with 5 examples) is used when the DB prompt is unavailable.
+If any of `LLM_BASE_URL`, `LLM_MODEL`, or `LLM_API_KEY` is missing, LLM
+extraction is skipped silently and returns `{ keywords: [] }`.
 
-Output is validated by Zod (`z.array(z.string()).max(5)`) with `temperature:
-0`. Any failure (network, timeout, bad response) returns `{ keywords: [] }`.
+### Prompt management
+
+The system prompt for keyword extraction is resolved via a three-tier chain:
+
+```
+DB (ScraperConfig llm:keyword-extraction-prompt)
+  → Env var (LLM_KEYWORD_EXTRACTION_PROMPT)
+    → Hardcoded FALLBACK_SYSTEM_PROMPT
+```
+
+- **DB**: manageable at runtime via the ScraperConfig REST API — no restart
+  needed. The `llm:` prefix on the `storeKey` signals the repository to skip
+  JSONata validation, so plain-text prompts are accepted.
+- **Env var**: configurable at deploy time. Useful for ephemeral environments
+  or CI where seeding the DB is impractical.
+- **Hardcoded**: ~600-token Spanish few-shot with 5 examples. Safety net that
+  guarantees the pipeline never breaks on a missing config.
+
+To update the prompt at runtime:
+
+```bash
+curl -X PUT http://localhost:3000/api/revolicos/scraper-configs/llm:keyword-extraction-prompt \
+  -H "Authorization: Bearer <super-admin-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"expression": "You are a keyword extraction assistant. ..."}'
+```
+
+The change takes effect immediately (the registry cache is invalidated on API
+write). Seed the prompt via `npm run seed` to persist it across database resets.
+
+Output is validated by Zod (`z.array(z.string())` — no artificial keyword
+limit) with `temperature: 0`. Any failure (network, timeout, bad response)
+returns `{ keywords: [] }`.
 
 ## Adding a new store
 

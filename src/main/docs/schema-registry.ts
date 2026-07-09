@@ -88,7 +88,7 @@ const ScraperConfigResponseSchema = z.object({
     example: 'revolico:listing',
   }),
   expression: z.string().openapi({
-    description: 'JSONata expression evaluated against the scraped DOM tree',
+    description: 'JSONata expression (or plain-text prompt for storeKeys prefixed with "llm:")',
     example: '$ ~> | $ | { "products": $ | [*] } |',
   }),
   version: z.number().int().openapi({ description: 'Monotonic version counter', example: 1 }),
@@ -103,14 +103,14 @@ const ScraperConfigCreateSchema = z.object({
     example: 'revolico:listing',
   }),
   expression: z.string().min(1).openapi({
-    description: 'JSONata expression to persist',
+    description: 'JSONata expression to persist (or plain-text prompt for storeKeys prefixed with "llm:")',
     example: '$ ~> | $ | { "products": $ | [*] } |',
   }),
 });
 
 const ScraperConfigUpdateSchema = z.object({
   expression: z.string().min(1).openapi({
-    description: 'New JSONata expression',
+    description: 'New JSONata expression (or plain-text prompt for storeKeys prefixed with "llm:")',
     example: '$ ~> | $ | { "products": $ | [*] } |',
   }),
 });

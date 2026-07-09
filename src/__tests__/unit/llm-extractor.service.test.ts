@@ -47,6 +47,21 @@ describe('extractKeywords (Vercel AI SDK)', () => {
       expect(mockGenerateText).toHaveBeenCalledTimes(1);
     });
 
+    it('accepts more than 5 keywords when LLM returns them', async () => {
+      mockGenerateText.mockResolvedValueOnce({
+        text: '{"keywords": ["casa", "miramar", "3 cuartos", "garaje", "independiente", "planta alta", "patio"]}',
+        usage: undefined,
+      } as any);
+
+      const log = makeLogger();
+      const result = await extractKeywords('Casa en Miramar 3 cuartos garaje independiente planta alta patio', log);
+
+      // All 7 keywords are preserved — no artificial truncation
+      expect(result.keywords).toHaveLength(7);
+      expect(result.keywords).toEqual(['casa', 'miramar', '3 cuartos', 'garaje', 'independiente', 'planta alta', 'patio']);
+      expect(log.warn).not.toHaveBeenCalled();
+    });
+
     it('returns usage when provider reports token data', async () => {
       mockGenerateText.mockResolvedValueOnce({
         text: '{"keywords": ["iphone", "14 pro"]}',

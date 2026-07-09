@@ -68,19 +68,37 @@ export class AttributeExtractorService {
 
   // ---- private -------------------------------------------------------------
 
-  /** Reads the LLM system prompt from ScraperConfig (DB), falling back to the hardcoded one. */
+  /**
+   * Resolves the LLM system prompt with a three-tier fallback chain:
+   *
+   * 1. **DB** (`ScraperConfig` with `storeKey = "llm:keyword-extraction-prompt"`)
+   *    — manageable at runtime via the ScraperConfig API, no restart needed.
+   * 2. **Env var** (`LLM_KEYWORD_EXTRACTION_PROMPT`) — configurable at deploy
+   *    time, useful for ephemeral environments or CI.
+   * 3. **Hardcoded** (`FALLBACK_SYSTEM_PROMPT`) — safety net, always available.
+   *
+   * @returns {Promise<string>} The resolved system prompt.
+   */
   private async _loadSystemPrompt(): Promise<string> {
+    // 1. DB (gestionable en runtime sin reinicio)
     try {
       const cfg = await this._promptRegistry.get('llm:keyword-extraction-prompt');
       if (cfg?.expression) return cfg.expression;
     } catch (err) {
-      this._log.warn('Failed to load LLM prompt from DB — using hardcoded fallback', (err as Error).message);
+      this._log.warn('Failed to load LLM prompt from DB', (err as Error).message);
     }
 
-    // ALERT: DB prompt is missing — admin should run `npm run seed` or set it via API.
+    // 2. Env var (configurable a nivel de deploy)
+    const envPrompt = process.env.LLM_KEYWORD_EXTRACTION_PROMPT?.trim();
+    if (envPrompt) {
+      this._log.info('Using LLM_KEYWORD_EXTRACTION_PROMPT from environment');
+      return envPrompt;
+    }
+
+    // 3. Hardcoded fallback (red de seguridad)
     this._log.warn(
-      '[ALERT] llm:keyword-extraction-prompt not found in ScraperConfig. ' +
-        'Using hardcoded fallback prompt. Seed the DB or POST /api/revolicos/scraper-configs ' +
+      '[ALERT] llm:keyword-extraction-prompt not in DB and LLM_KEYWORD_EXTRACTION_PROMPT not set. ' +
+        'Using hardcoded fallback prompt. Seed the DB, set the env var, or PUT /api/revolicos/scraper-configs ' +
         'with storeKey="llm:keyword-extraction-prompt" to customize.',
     );
     return FALLBACK_SYSTEM_PROMPT;

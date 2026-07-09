@@ -66,22 +66,28 @@ export class ScraperConfigRepository {
 
   /**
    * Insert-or-update a row. Defense-in-depth: parses the expression via
-   * `JsonataRunnerService.validate` BEFORE persisting. Throws if invalid so a
-   * broken expression cannot land in the table and poison the next job.
+   * `JsonataRunnerService.validate` BEFORE persisting, unless the `storeKey`
+   * starts with `llm:` (those entries store natural-language prompts, not
+   * JSONata). Throws if a non-llm expression is invalid so a broken expression
+   * cannot land in the table and poison the next job.
    *
    * On update, the row's `version` is left untouched — the Prisma schema
    * bumps `updatedAt` automatically. Callers that need optimistic concurrency
    * should compare `version` outside this method.
    *
    * @param {string} storeKey - The ScraperConfig key.
-   * @param {string} expression - JSONata source.
+   * @param {string} expression - JSONata source, or plain-text prompt for `llm:*` keys.
    * @returns {Promise<ScraperConfigModel>} The persisted row.
-   * @throws {Error} If `runner.validate` returns `{ ok: false }`.
+   * @throws {Error} If `runner.validate` returns `{ ok: false }` for a non-llm key.
    */
   public async upsert(storeKey: string, expression: string): Promise<ScraperConfigModel> {
-    const validation = this._runner.validate(expression);
-    if (!validation.ok) {
-      throw new Error(`Invalid JSONata expression for storeKey="${storeKey}": ${validation.error}`);
+    // llm:* storeKeys hold natural-language prompts, not JSONata expressions.
+    // Skip JSONata validation so they can be managed via the ScraperConfig API.
+    if (!storeKey.startsWith('llm:')) {
+      const validation = this._runner.validate(expression);
+      if (!validation.ok) {
+        throw new Error(`Invalid JSONata expression for storeKey="${storeKey}": ${validation.error}`);
+      }
     }
     return this._prisma.scraperConfig.upsert({
       where: { storeKey },
