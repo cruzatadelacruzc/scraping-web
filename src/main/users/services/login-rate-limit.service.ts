@@ -46,6 +46,12 @@ export class LoginRateLimitService {
       lazyConnect: true,
       connectTimeout: 2000,
       maxLoadingRetryTime: 2000,
+      enableOfflineQueue: false,
+      retryStrategy(times: number): number | null {
+        // Give up after 3 retries (≈6s) so the fail-open path kicks in quickly
+        if (times > 3) return null;
+        return Math.min(times * 1000, 2000);
+      },
     });
   }
 
