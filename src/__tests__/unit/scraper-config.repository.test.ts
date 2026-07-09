@@ -115,6 +115,30 @@ describe('ScraperConfigRepository', () => {
         update: { expression: '{ "a": 1 }' },
       });
     });
+
+    it('skips JSONata validation for storeKeys starting with "llm:"', async () => {
+      const promptText = 'You are a helpful assistant. Extract keywords.';
+      const persisted = makeConfig({ storeKey: 'llm:keyword-extraction-prompt', expression: promptText, version: 1 });
+      prismaMock.scraperConfig.upsert.mockResolvedValueOnce(persisted);
+
+      const result = await repo.upsert('llm:keyword-extraction-prompt', promptText);
+
+      expect(result).toEqual(persisted);
+      expect(runnerMock.validate).not.toHaveBeenCalled();
+      expect(prismaMock.scraperConfig.upsert).toHaveBeenCalledWith({
+        where: { storeKey: 'llm:keyword-extraction-prompt' },
+        create: { storeKey: 'llm:keyword-extraction-prompt', expression: promptText },
+        update: { expression: promptText },
+      });
+    });
+
+    it('still validates JSONata for non-llm storeKeys', async () => {
+      runnerMock.validate.mockReturnValueOnce({ ok: false, error: 'Syntax error at position 1' });
+
+      await expect(repo.upsert('revolico:listing', ')(')).rejects.toThrow(/invalid jsonata/i);
+      expect(runnerMock.validate).toHaveBeenCalledWith(')(');
+      expect(prismaMock.scraperConfig.upsert).not.toHaveBeenCalled();
+    });
   });
 
   describe('findAll', () => {

@@ -27,6 +27,7 @@ let superAdminToken: string;
 
 const TEST_STORE_KEY = 'test:scraper-config:integration';
 const SECOND_STORE_KEY = 'test:scraper-config:list';
+const LLM_TEST_STORE_KEY = 'llm:test-prompt:integration';
 
 beforeAll(async () => {
   appInstance = new App();
@@ -72,7 +73,11 @@ beforeAll(async () => {
 afterAll(async () => {
   try {
     // Remove any ScraperConfig rows this test created (regardless of success)
-    await pgDb.query(`DELETE FROM public."ScraperConfig" WHERE "storeKey" IN ($1, $2)`, [TEST_STORE_KEY, SECOND_STORE_KEY]);
+    await pgDb.query(`DELETE FROM public."ScraperConfig" WHERE "storeKey" IN ($1, $2, $3)`, [
+      TEST_STORE_KEY,
+      SECOND_STORE_KEY,
+      LLM_TEST_STORE_KEY,
+    ]);
     // Delete bot-related FK tables first (each in its own try/catch — migration may not have run yet)
     try {
       await pgDb.query('DELETE FROM public."bot_link_audit" WHERE "accountId" = $1', [testAccountId]);
@@ -164,6 +169,28 @@ describe('POST /api/revolicos/scraper-configs', () => {
     expect(res.body.message.toLowerCase()).toContain('invalid jsonata');
   });
 
+  it('creates an llm: prefixed config with plain-text prompt (skips JSONata validation)', async () => {
+    const promptText = 'You are a helpful keyword extraction assistant for classified ads.';
+    const res = await request(app)
+      .post('/api/revolicos/scraper-configs')
+      .set('Authorization', `Bearer ${superAdminToken}`)
+      .send({ storeKey: LLM_TEST_STORE_KEY, expression: promptText });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.config).toMatchObject({
+      storeKey: LLM_TEST_STORE_KEY,
+      expression: promptText,
+      enabled: true,
+    });
+
+    // Verify it landed in Postgres
+    const dbRes = await pgDb.query(`SELECT "expression" FROM public."ScraperConfig" WHERE "storeKey" = $1`, [LLM_TEST_STORE_KEY]);
+    expect(dbRes.rows[0].expression).toBe(promptText);
+
+    // Cleanup the llm test row
+    await pgDb.query(`DELETE FROM public."ScraperConfig" WHERE "storeKey" = $1`, [LLM_TEST_STORE_KEY]);
+  });
+
   it('returns 400 when the body is missing required fields', async () => {
     const res = await request(app)
       .post('/api/revolicos/scraper-configs')
@@ -250,7 +277,7 @@ describe('PUT /api/revolicos/scraper-configs/:storeKey', () => {
   });
 
   afterEach(async () => {
-    await pgDb.query(`DELETE FROM public."ScraperConfig" WHERE "storeKey" = $1`, [TEST_STORE_KEY]);
+    await pgDb.query(`DELETE FROM public."ScraperConfig" WHERE "storeKey" IN ($1, $2)`, [TEST_STORE_KEY, LLM_TEST_STORE_KEY]);
   });
 
   it('updates the expression and the response reflects the new value', async () => {
@@ -290,5 +317,27 @@ describe('PUT /api/revolicos/scraper-configs/:storeKey', () => {
       .set('Authorization', `Bearer ${memberToken}`)
       .send({ expression: '$.foo' });
     expect(res.status).toBe(403);
+  });
+
+  it('accepts plain-text prompt for llm: prefixed keys (skips JSONata validation)', async () => {
+    // Seed the llm test row
+    const now = new Date();
+    await pgDb.query(
+      `INSERT INTO public."ScraperConfig" ("id", "storeKey", "expression", "version", "createdAt", "updatedAt") VALUES ($1, $2, 'Old prompt', 1, $3, $3) ON CONFLICT ("storeKey") DO NOTHING`,
+      [uuidv4(), LLM_TEST_STORE_KEY, now],
+    );
+
+    const newPrompt = 'You are an improved assistant. Extract only the most relevant keywords.';
+    const res = await request(app)
+      .put(`/api/revolicos/scraper-configs/${LLM_TEST_STORE_KEY}`)
+      .set('Authorization', `Bearer ${superAdminToken}`)
+      .send({ expression: newPrompt });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.config.expression).toBe(newPrompt);
+
+    // Verify it landed in Postgres
+    const dbRes = await pgDb.query(`SELECT "expression" FROM public."ScraperConfig" WHERE "storeKey" = $1`, [LLM_TEST_STORE_KEY]);
+    expect(dbRes.rows[0].expression).toBe(newPrompt);
   });
 });

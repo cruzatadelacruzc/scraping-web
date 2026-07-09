@@ -4,9 +4,11 @@ import { KeywordsCache } from '@scrapers/services/attribute-extractor/keywords-c
 import { EnrichmentMetricsService } from '@scrapers/services/enrichment-metrics.service';
 import { ILogger } from '@shared/logger.interface';
 
-// Mock the standalone LLM function
+// Mock the standalone LLM function — must export FALLBACK_SYSTEM_PROMPT
+// so _loadSystemPrompt() can fall back to it when DB + env var are missing.
 jest.mock('@scrapers/services/attribute-extractor/llm-extractor.service', () => ({
   extractKeywords: jest.fn(),
+  FALLBACK_SYSTEM_PROMPT: 'You are a classified-ad keyword extraction assistant — MOCK FALLBACK',
 }));
 
 import { extractKeywords } from '@scrapers/services/attribute-extractor/llm-extractor.service';
@@ -62,6 +64,125 @@ describe('AttributeExtractorService', () => {
       metricsMock,
       makeLogger() as unknown as ILogger,
     );
+  });
+
+  describe('_loadSystemPrompt resolution chain', () => {
+    const envBackup = process.env.LLM_KEYWORD_EXTRACTION_PROMPT;
+
+    afterEach(() => {
+      delete process.env.LLM_KEYWORD_EXTRACTION_PROMPT;
+      if (envBackup) process.env.LLM_KEYWORD_EXTRACTION_PROMPT = envBackup;
+    });
+
+    it('uses DB prompt when ScraperConfig row exists', async () => {
+      const dbPrompt = 'Custom DB prompt — you are a keyword extraction assistant.';
+
+      // Rebuild service with a registry that returns the DB prompt
+      const promptRegistryMock = {
+        get: jest.fn().mockResolvedValue({ expression: dbPrompt }),
+      } as any;
+
+      const srv = new AttributeExtractorService(
+        rulesMock as RuleBasedExtractorService,
+        cacheMock,
+        promptRegistryMock,
+        {
+          recordRuleHighConfidence: jest.fn(),
+          recordCacheHit: jest.fn(),
+          recordCacheMiss: jest.fn(),
+          recordLlmCall: jest.fn(),
+          recordLlmFailure: jest.fn(),
+        } as unknown as EnrichmentMetricsService,
+        makeLogger() as unknown as ILogger,
+      );
+
+      rulesMock.extract.mockReturnValue({ attributes: {}, confidence: 0, matchedCount: 0 });
+      cacheMock.get.mockResolvedValue(null);
+      mockExtractKeywords.mockResolvedValue({ keywords: ['test'] });
+
+      await srv.extract('some product');
+
+      // The 3rd argument to extractKeywords is the resolved system prompt
+      const systemPromptArg = mockExtractKeywords.mock.calls[0][2];
+      expect(systemPromptArg).toBe(dbPrompt);
+    });
+
+    it('falls back to LLM_KEYWORD_EXTRACTION_PROMPT env var when DB is missing', async () => {
+      const envPrompt = 'Custom env prompt — you are an env-based assistant.';
+      process.env.LLM_KEYWORD_EXTRACTION_PROMPT = envPrompt;
+
+      // Rebuild service with a registry that throws (simulating DB missing)
+      const promptRegistryMock = {
+        get: jest.fn().mockRejectedValue(new Error('CONFIG_MISSING')),
+      } as any;
+
+      const log = makeLogger();
+      const srv = new AttributeExtractorService(
+        rulesMock as RuleBasedExtractorService,
+        cacheMock,
+        promptRegistryMock,
+        {
+          recordRuleHighConfidence: jest.fn(),
+          recordCacheHit: jest.fn(),
+          recordCacheMiss: jest.fn(),
+          recordLlmCall: jest.fn(),
+          recordLlmFailure: jest.fn(),
+        } as unknown as EnrichmentMetricsService,
+        log as unknown as ILogger,
+      );
+
+      rulesMock.extract.mockReturnValue({ attributes: {}, confidence: 0, matchedCount: 0 });
+      cacheMock.get.mockResolvedValue(null);
+      mockExtractKeywords.mockResolvedValue({ keywords: ['test'] });
+
+      await srv.extract('some product');
+
+      const systemPromptArg = mockExtractKeywords.mock.calls[0][2];
+      expect(systemPromptArg).toBe(envPrompt);
+      expect(log.info).toHaveBeenCalledWith('Using LLM_KEYWORD_EXTRACTION_PROMPT from environment');
+    });
+
+    it('falls back to hardcoded FALLBACK_SYSTEM_PROMPT when DB and env var are both missing', async () => {
+      // Ensure env var is not set
+      const savedEnv = process.env.LLM_KEYWORD_EXTRACTION_PROMPT;
+      delete process.env.LLM_KEYWORD_EXTRACTION_PROMPT;
+
+      try {
+        // Rebuild service with a registry that throws (simulating DB missing)
+        const promptRegistryMock = {
+          get: jest.fn().mockRejectedValue(new Error('CONFIG_MISSING')),
+        } as any;
+
+        const log = makeLogger();
+        const localCache = makeCache();
+        const srv = new AttributeExtractorService(
+          rulesMock as RuleBasedExtractorService,
+          localCache,
+          promptRegistryMock,
+          {
+            recordRuleHighConfidence: jest.fn(),
+            recordCacheHit: jest.fn(),
+            recordCacheMiss: jest.fn(),
+            recordLlmCall: jest.fn(),
+            recordLlmFailure: jest.fn(),
+          } as unknown as EnrichmentMetricsService,
+          log as unknown as ILogger,
+        );
+
+        rulesMock.extract.mockReturnValue({ attributes: {}, confidence: 0, matchedCount: 0 });
+        mockExtractKeywords.mockResolvedValue({ keywords: ['test'] });
+
+        await srv.extract('some product');
+
+        // Verify extractKeywords was called with the fallback prompt as 3rd argument
+        expect(mockExtractKeywords).toHaveBeenCalled();
+        const systemPromptArg = mockExtractKeywords.mock.calls[0][2];
+        expect(systemPromptArg).toContain('MOCK FALLBACK');
+        expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('[ALERT]'));
+      } finally {
+        if (savedEnv) process.env.LLM_KEYWORD_EXTRACTION_PROMPT = savedEnv;
+      }
+    });
   });
 
   describe('orchestration', () => {

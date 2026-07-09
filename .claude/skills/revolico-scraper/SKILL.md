@@ -136,23 +136,43 @@ overwritten by the scraper — only the admin API modifies it.
 
 `ScraperConfig` (Postgres table, Prisma model) supports `storeKey` values
 with the `llm:` prefix. These keys skip JSONata expression validation in
-`ScraperConfigRegistry` because they store raw LLM prompts, not
-expressions.
+`ScraperConfigRepository.upsert()` because they store raw LLM prompts, not
+JSONata expressions.
 
 | Key | Purpose | Content |
 |---|---|---|
-| `llm:keyword-extraction-prompt` | System prompt for the LLM extractor | Instructions telling the LLM how to extract product attributes from a page |
+| `llm:keyword-extraction-prompt` | System prompt for the LLM extractor | Instructions telling the LLM how to extract keywords from a description |
 
-`llm:*` keys are read by `LlmExtractorService` (part of the attribute
-extraction pipeline). They are editable via the same
+### Prompt resolution chain
+
+`AttributeExtractorService._loadSystemPrompt()` resolves the prompt in three
+tiers:
+
+```
+1. DB (ScraperConfig llm:keyword-extraction-prompt)
+     ↓ fallback
+2. Env var (LLM_KEYWORD_EXTRACTION_PROMPT)
+     ↓ fallback
+3. Hardcoded FALLBACK_SYSTEM_PROMPT (in llm-extractor.service.ts)
+```
+
+- **DB**: manageable at runtime via `PUT/POST /api/revolicos/scraper-configs`.
+  Cache is invalidated on write — change takes effect immediately.
+- **Env var**: configurable at deploy time. No restart needed between deployments.
+- **Hardcoded**: safety net. An `[ALERT]` warning is logged when reached.
+
+### Editing `llm:*` keys
+
+`llm:*` keys are editable via the same
 `PUT/POST /api/revolicos/scraper-configs/:storeKey` API as expression
-keys. The API path invalidates the cache on write just like expression
-keys, but the consumer is the LLM service rather than the JSONata runner.
+keys. The `storeKey.startsWith('llm:')` guard in the repository skips
+JSONata validation, so plain-text prompts pass through. The API write
+invalidates the cache immediately.
 
 Future `llm:*` keys (e.g. `llm:category-classifier-prompt`,
 `llm:condition-evaluator-prompt`) follow the same pattern: store the
-prompt text in `ScraperConfig.value`, name it `llm:<purpose>`, and let
-the relevant service read it through `ScraperConfigRegistry`.
+prompt text in `ScraperConfig.expression`, name it `llm:<purpose>`, and
+let the relevant service read it through `ScraperConfigRegistry`.
 
 ## 11. Enrichment metrics
 

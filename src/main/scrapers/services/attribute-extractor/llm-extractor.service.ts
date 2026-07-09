@@ -5,7 +5,7 @@ import type { ILogger } from '@shared/logger.interface';
 
 // ---- Zod output schema -----------------------------------------------------
 const KeywordsOutputSchema = z.object({
-  keywords: z.array(z.string()).max(5).describe('Up to 5 relevant keywords extracted from the product description'),
+  keywords: z.array(z.string()).describe('Relevant keywords extracted from the product description'),
 });
 
 /**
@@ -51,7 +51,7 @@ function validateEnv(log?: Pick<ILogger, 'warn'>): {
 // Used when the DB-stored prompt (llm:keyword-extraction-prompt) is unavailable.
 export const FALLBACK_SYSTEM_PROMPT =
   'You are a classified-ad keyword extraction assistant for Cuban marketplaces (e.g. Revolico). ' +
-  'Extract up to 5 keywords that represent the product being advertised.\n\n' +
+  'Extract relevant keywords that represent the product being advertised.\n\n' +
   'STRICT RULES:\n' +
   '- Only include information EXPLICITLY present in the description.\n' +
   '- Do not invent brands, prices, locations, or features not written in the text.\n' +
@@ -81,13 +81,16 @@ export const FALLBACK_SYSTEM_PROMPT =
 // ---- public API ------------------------------------------------------------
 
 /**
- * Extracts up to 5 keywords from a product description using an LLM.
+ * Extracts relevant keywords from a product description using an LLM.
  *
  * Fully provider-agnostic — reads `LLM_BASE_URL`, `LLM_MODEL`, and
  * `LLM_API_KEY` from the environment. Works with any OpenAI-compatible
  * API (DeepSeek, OpenAI, Anthropic, custom proxies, etc.) via
  * `@ai-sdk/openai-compatible` and {@link generateText} with
  * `response_format: json_object` (injected via custom fetch).
+ *
+ * The LLM decides how many keywords to return based on the description
+ * content. No artificial limit is enforced.
  *
  * Returns `{ keywords: [] }` on any failure (missing env, network error,
  * timeout, bad response) — never throws.
@@ -96,7 +99,7 @@ export const FALLBACK_SYSTEM_PROMPT =
  * @param {Pick<ILogger, 'warn'>} [log] - Optional logger for diagnostics.
  * @param {string} [systemPrompt] - System prompt override (falls back to
  *   hardcoded prompt and finally to DB-stored llm:keyword-extraction-prompt).
- * @returns {Promise<ExtractKeywordsResult>} Up to 5 keywords plus optional LLM provider usage stats.
+ * @returns {Promise<ExtractKeywordsResult>} Keywords plus optional LLM provider usage stats.
  */
 export async function extractKeywords(
   description: string,

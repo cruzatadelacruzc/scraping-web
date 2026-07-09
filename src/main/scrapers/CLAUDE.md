@@ -7,22 +7,7 @@ applyTo: 'src/main/scrapers/**'
 
 ## 1. Module structure
 
-```
-src/main/scrapers/
-├── services/                          # Shared enrichment (attribute-extractor/)
-│   └── attribute-extractor/           # Rules → cache → LLM pipeline
-└── revolico/                          # Store-specific scraper
-    ├── index.ts                       # StoreRegistry registration for cron scheduler
-    ├── controllers/                   # Admin API for expressions, configs
-    ├── services/
-    │   ├── scraping/                  # DOM fetch, JSONata execution, config registry
-    │   └── analytics.service.ts       # Pure computed metrics
-    ├── repositories/
-    ├── models/                        # Mongoose Product schema
-    ├── errors/                        # JsonataExtractionError catalog
-    ├── queues.ts                      # IQueueModule wiring
-    └── README.md                      # Full flow, curl/SQL, "adding a scraper" recipe
-```
+See `src/main/scrapers/README.md` for the full directory tree. Key rules for agents:
 
 - **`scrapers/services/`** is shared across all stores. Currently contains only `attribute-extractor/` (keyword enrichment). Do NOT put store-specific logic here.
 - **`scrapers/<store>/`** is store-specific. Each store implements the queue module and its own scraping services. Add new stores at this level (e.g. `scrapers/wallapop/`).
@@ -42,81 +27,41 @@ Located in `scrapers/services/attribute-extractor/`. Pipeline: rules first, then
 
 Depends on: `RuleBasedExtractorService`, `KeywordsCache`, `ScraperConfigRegistryService`, `ILogger`.
 
-### 2.2 RuleBasedExtractorService
+### 2.2 Rule-based extraction
 
-`rule-based-extractor.service.ts`. Deterministic regex patterns for Spanish classified-ad descriptions. 13 pattern categories:
+`rule-based-extractor.service.ts` + `rule-registry.service.ts`. Deterministic regex patterns for Spanish classified-ad descriptions.
 
-- **6 word-list categories** (brands, conditions, colors, propertyTypes, locations, warrantyKeywords) are read from `RuleRegistryService` — an in-memory cache backed by the `Rule` table in PostgreSQL. Editable at runtime via `PUT /api/admin/rules/:ruleKey` (SUPER_ADMIN). Falls back to hardcoded `FALLBACK_RULES` when the DB is unreachable.
-- **7 regex categories** (rooms, bathrooms, garage, floors, storage, RAM, originalPrice) remain as inline code.
+- **13 categories**: 6 word-lists (brands, conditions, colors, propertyTypes, locations, warrantyKeywords) from `RuleRegistryService` + 7 inline regex (rooms, bathrooms, garage, floors, storage, RAM, originalPrice).
+- **Confidence** = `matchedCount / 13`. Threshold 0.4. Accent-stripping applied.
+- **Purely synchronous, no I/O** — `RuleRegistryService.get()` reads from an in-memory `Map`. Falls back to hardcoded `FALLBACK_RULES` when the DB is unreachable.
+- **Runtime editable** via `PUT /api/admin/rules/:ruleKey` (SUPER_ADMIN). See `.claude/skills/revolico-scraper/SKILL.md` §12 for the write-path contract (API invalidates cache; seed/SQL do not).
+- Canonical fallback values in `rule-fallbacks.ts` (also used by `prisma/seed.ts`).
 
-Confidence = `matchedCount / 13`. Threshold is 0.4 in the orchestrator. Accent-stripping applied to all input so `súper` matches `super`. Purely synchronous, no I/O — `RuleRegistryService.get()` reads from an in-memory `Map`.
-
-### 2.3 RuleRegistryService
-
-`rule-registry.service.ts`. In-memory cache for the six word-list categories used by `RuleBasedExtractorService`.
-
-- **Bootstrap**: Populates the cache with `FALLBACK_RULES` on construction (synchronous, sub-millisecond).
-- **DB warm**: Async load from `Rule` table replaces entries when complete. Logs a warning and keeps fallbacks on failure.
-- **Invalidation**: Called by `RuleService` after every API write (create/update). Evicts the key and re-fetches from DB.
-- **TTL**: 30 seconds. On expiry, returns stale values while triggering a background refresh.
-
-See `rule-fallbacks.ts` for the canonical fallback values (also used by `prisma/seed.ts`).
-
-### 2.4 extractKeywords() (LLM)
+### 2.3 extractKeywords() (LLM)
 
 `llm-extractor.service.ts`. Standalone async function (not a class). Uses Vercel AI SDK (`generateText` from `ai`) with `@ai-sdk/openai-compatible` provider and `response_format: json_object` injected via custom fetch (compatible with DeepSeek thinking mode). JSON output is parsed and Zod-validated manually.
 
-Three env vars drive it: `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`. If any is missing, returns `{ keywords: [] }` silently (logs a warning). Supports any OpenAI-compatible endpoint (DeepSeek, OpenAI, custom base URL). An optional `LLM_ENABLE_REASONING` env var controls DeepSeek-style thinking mode (defaults to `true`; set to `false` to save tokens on simple extraction tasks).
+Provider-agnostic — driven by `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`. See `src/main/scrapers/README.md` for the full env var table. Uses `LLM_ENABLE_REASONING` to control DeepSeek thinking mode (defaults to `true`).
 
-Output validated by Zod schema: `{ keywords: z.array(z.string()).max(5) }`. Temperature 0. Returns `{ keywords: [] }` on any failure (network, timeout, bad response, malformed JSON). Never throw.
+Output validated by `z.array(z.string())` — no artificial keyword limit; the LLM decides how many keywords are relevant. Returns `{ keywords: [] }` on any failure. Never throws. See Section 6 for prompt management.
 
 ### 2.4 KeywordsCache
 
-`keywords-cache.ts`. Two-layer cache:
-
-- **Layer 1 (memory)**: `Map<string, string[]>` -- sub-millisecond lookup, lives for the process lifetime.
-- **Layer 2 (MongoDB)**: `keyword_cache` collection with TTL index on `createdAt` (default 30 days, configured by `LLM_CACHE_TTL_DAYS` env var).
-
-Key: MD5 hex of `description.trim().toLowerCase()`. Mongo hits auto-promote to memory. Mongo write failures are silently swallowed (cache is best-effort). Instantiated directly (bind to self in container).
+`keywords-cache.ts`. Two-layer cache (memory `Map` + MongoDB `keyword_cache` collection, TTL via `LLM_CACHE_TTL_DAYS`). Key: MD5 of `description.trim().toLowerCase()`. Mongo hits auto-promote to memory. Write failures silently swallowed. Bind to self in container.
 
 ### 2.5 DI registration pattern
 
-All four classes (`AttributeExtractorService`, `RuleBasedExtractorService`, `KeywordsCache`, `RuleRegistryService`) are registered in `src/main/shared/container.ts`. They bind to themselves (class-as-token) because they have no interfaces:
-
-```typescript
-container.bind<RuleBasedExtractorService>(RuleBasedExtractorService).to(RuleBasedExtractorService).inSingletonScope();
-container.bind<AttributeExtractorService>(AttributeExtractorService).to(AttributeExtractorService).inSingletonScope();
-```
-
-`AnalyticsService` is registered via a Symbol: `container.bind<AnalyticsService>(TYPES.AnalyticsService).to(AnalyticsService).inSingletonScope()`.
-
-When adding a new shared service: bind to self (class token) unless a store-specific implementation is expected (then use a `TYPES.Symbol` in `types.container.ts`).
+Shared enrichment services bind to themselves (class-as-token) in `src/main/shared/container.ts`. Use `TYPES.Symbol` only for store-specific implementations. `AnalyticsService` is the exception — it uses a Symbol. All singletons.
 
 ## 3. Analytics service
 
 `revolico/services/analytics.service.ts`. Pure computation -- **no DB, no I/O, no side effects**. The caller persists results to MongoDB.
 
-5 metrics derived from history arrays:
-
-| Metric | Method | Window | Formula |
-|--------|--------|--------|---------|
-| `viewsPerDay` | `_computeViewsPerDay` | all-time | views / days since first scrape |
-| `priceTrend` | `_computePriceTrend` | last 5 points | linear regression; slope > 2% avg = upward, < -2% = downward |
-| `priceVolatility` | `_computePriceVolatility` | last 10 points | CV = stddev / mean |
-| `priceChanges` | (inline) | all-time | max(0, history.length - 1) |
-| `hotScore` | `_computeHotScore` | all-time | viewsPerDay * outstandingBonus * priceDropBonus |
-
-Returns `null` when the product has zero price history entries. The `hotScore` formula: `viewsPerDay * (isOutstanding ? 2.0 : 1.0) * (lastPrice < prevPrice ? 1.5 : 1.0)`, rounded to 2 decimals.
+5 metrics derived from history arrays — see `src/main/scrapers/README.md` for the full table. Returns `null` when the product has zero price history entries. The `hotScore` formula: `viewsPerDay * (isOutstanding ? 2.0 : 1.0) * (lastPrice < prevPrice ? 1.5 : 1.0)`, rounded to 2 decimals.
 
 ## 4. Queue flow
 
-Defined in `revolico/queues.ts`. Three queues registered via `IQueueModule`:
-
-```
-PRODUCTS_SCRAPING  ──(scrape listing page)──▶  PRODUCT_STORAGE  ──(upsert products)──▶  (enrichment hooks)
-                                                                                       │
-PRODUCT_SCRAPING   ◀──(fan-out detail pages)────────────────────────────────────────────┘
-```
+Defined in `revolico/queues.ts`. Three queues registered via `IQueueModule`. See `src/main/scrapers/README.md` for the full pipeline diagram.
 
 1. **PRODUCTS_SCRAPING**: JSONata-driven listing scraper (`GenericListingScraperService`). Expression from `ScraperConfig` `"revolico:listing"`. Emits `ProductDataFromListDTO[]`.
 2. **PRODUCT_STORAGE**: Upserts products via `ProductService`. Runs enrichment hooks (attribute extraction, analytics) here. Fans out per-product `PRODUCT_SCRAPING` jobs for detail scraping.
@@ -128,88 +73,38 @@ Failed-job listener logs at error level with `jobId`, `jobName`, `reason`, `data
 
 ## 5. MongoDB product model
 
-`revolico/models/product.model.ts`. Collection: `products` (Mongoose pluralizes `Product`).
+`revolico/models/product.model.ts`. Collection: `products` (Mongoose pluralizes `Product`). See `src/main/scrapers/README.md` for the full field table (core, detail, history arrays, enrichment).
 
-Key fields:
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `url` | string | Unique, upsert key |
-| `ID` | string | Unique, internal listing ID |
-| `price` | number | Current price |
-| `currency` | string | CUP, USD, etc. |
-| `description` | string | Raw listing text -- input for enrichment |
-| `isOutstanding` | boolean | Set by expression (`attrs.title = "Anuncio destacado"`) |
-| `isPromoted` | boolean | Set by **service** (`_mapRow`), NOT the expression. Promoted rows come from `result.promoted` array. |
-| `category` / `subcategory` | string | Listing taxonomy |
-| `location` | { state, municipality } | Extracted during scraping |
-| `seller` | { name, phone, email, whatsapp } | Extracted from listing |
-| `views` | number | Current view count |
-| `priceHistory` | [{ value, updatedAt }] | Appended on every upsert when price changes |
-| `viewsHistory` | [{ value, updatedAt }] | Appended when views change |
-| `isOutstandingHistory` | [{ value, updatedAt }] | Appended when outstanding status changes |
-| `isPromotedHistory` | [{ value, updatedAt }] | Appended when promoted status changes |
-| `locationHistory` | [{ value, updatedAt }] | Appended when location changes |
-
-Timestamps: `createdAt` / `updatedAt` via Mongoose `{ timestamps: true }`.
-
-**No tenant isolation** on MongoDB product data. Scraped products are shared across all tenants. Prisma tenant extensions do NOT apply here.
+Agent-critical notes:
+- **`isPromoted`** is set by the **service** (`_mapRow`), NOT the JSONata expression. Promoted rows come from `result.promoted` array.
+- **`isOutstanding`** IS set by the expression (`attrs.title = "Anuncio destacado"`).
+- History arrays use `$push` on upsert: `priceHistory`, `viewsHistory`, `isOutstandingHistory`, `isPromotedHistory`, `locationHistory`. Each entry is `{ value, updatedAt }`.
+- Timestamps: `createdAt` / `updatedAt` via Mongoose `{ timestamps: true }`.
+- **No tenant isolation** on MongoDB product data. Scraped products are shared across all tenants. Prisma tenant extensions do NOT apply here.
 
 ## 6. LLM prompt management
 
-The system prompt for keyword extraction is stored in the `ScraperConfig` database table (PostgreSQL, via Prisma), not hardcoded.
+Resolved in `AttributeExtractorService._loadSystemPrompt()` via three-tier chain:
+**DB** (`ScraperConfig llm:keyword-extraction-prompt`) → **env var** (`LLM_KEYWORD_EXTRACTION_PROMPT`) → **hardcoded** (`FALLBACK_SYSTEM_PROMPT`).
 
-- **Store key**: `llm:keyword-extraction-prompt`
-- **Field**: `expression` (string column, reused from JSONata expression storage)
-- **CRUD**: Existing `ScraperConfig` API at `PUT/POST/DELETE /api/revolicos/scraper-configs/:storeKey`
-- **Seed**: `npm run seed` inserts the canonical prompt into `ScraperConfig`
-- **Fallback**: `FALLBACK_SYSTEM_PROMPT` constant in `llm-extractor.service.ts` (~600 tokens, Spanish-language few-shot). Used ONLY when the DB prompt is missing or unreachable.
+### `llm:` prefix convention
 
-When the fallback is used, `AttributeExtractorService._loadSystemPrompt()` logs an `[ALERT]`-prefixed warning at warn level. This is a signal to the operator that the DB prompt is missing -- it should be seeded or set via API. The fallback ensures the pipeline never breaks on a missing config.
+`ScraperConfigRepository.upsert()` skips JSONata validation when
+`storeKey.startsWith('llm:')`. Plain-text prompts pass through the same API
+that validates JSONata for `revolico:*` keys. Future `llm:*` keys
+(e.g. `llm:category-classifier`) follow the same pattern.
 
-The `ScraperConfigRegistry` (in `revolico/services/scraping/`) caches each `storeKey` for 30 seconds. API writes invalidate the cache. Seed and raw SQL do NOT -- the worker picks up the new value on TTL expiry or process restart.
+### Managing the prompt
+
+- **API**: `PUT /api/revolicos/scraper-configs/llm:keyword-extraction-prompt` (runtime, no restart). Cache invalidates immediately.
+- **Env var**: `LLM_KEYWORD_EXTRACTION_PROMPT` (deploy-time). Used when DB row missing.
+- **Seed**: `npm run seed` inserts canonical prompt. Keep in sync with `FALLBACK_SYSTEM_PROMPT`.
+
+See `src/main/scrapers/README.md` for curl examples and `.claude/skills/revolico-scraper/SKILL.md` §10 for the full write-path contract.
 
 ## 7. Enrichment metrics
 
-`enrichment-metrics.service.ts`. In-memory singleton (no persistence) that accumulates counters across the enrichment pipeline. Exposed via admin API at `GET /api/admin/dashboard/enrichment` (`SUPER_ADMIN` only).
-
-### 7.1 Counters
-
-Every decision point in the 4-layer pipeline increments a counter:
-
-| Recorder | When | Layer |
-|----------|------|-------|
-| `recordEnrichment()` | Every `enrichProduct()` call | entry |
-| `recordEnrichmentHashSkip()` | Description unchanged since last enrichment | enrichmentHash guard |
-| `recordRuleHighConfidence()` | Rule confidence >= 0.4 | rule-based extractor |
-| `recordCacheHit()` | KeywordsCache hit (memory or MongoDB) | cache |
-| `recordCacheMiss()` | KeywordsCache miss (proceeds to LLM) | cache |
-| `recordLlmCall(usage)` | LLM returned successfully | LLM |
-| `recordLlmFailure()` | LLM threw (network, timeout, etc.) | LLM |
-
-### 7.2 LLM provider usage
-
-`extractKeywords()` now returns `ExtractKeywordsResult` which includes `usage?: LlmUsage` from the AI SDK `generateText` response. `LlmUsage` carries:
-- `promptCacheHitTokens` — tokens served from the provider's prompt cache
-- `promptCacheMissTokens` — tokens recomputed by the provider
-- `completionTokens` — tokens generated in the response
-
-These are accumulated in `recordLlmCall()`. The endpoint calculates rates and estimated savings.
-
-### 7.3 Admin endpoint
-
-`GET /api/admin/dashboard/enrichment` — `SUPER_ADMIN` only. Returns `EnrichmentMetricsSnapshot`:
-- All raw counters
-- Computed rates (skip rate, cache hit rate, LLM failure rate, LLM cache hit rate)
-- Token totals (prompt cache hit/miss, completion)
-- `estimatedSavingsUSD` — `(promptCacheHitTokens / 1e6) * LLM_COST_PER_MILLION_TOKENS`
-- `costPerMillionTokens` — value read from env var (0 if unset)
-
-### 7.4 Env var
-
-`LLM_COST_PER_MILLION_TOKENS` — price per 1M input tokens in USD. Optional.
-Examples: DeepSeek = 0.14, OpenAI = 2.50, Anthropic = 3.00.
-If unset, `estimatedSavingsUSD` is always 0.
+`enrichment-metrics.service.ts`. In-memory singleton (no persistence) that accumulates counters across the enrichment pipeline. See `src/main/scrapers/README.md` for the full counter table and admin endpoint response shape.
 
 ## 8. Store registration for cron scheduler
 
@@ -238,14 +133,17 @@ When adding a new store, follow this same pattern: create the `index.ts`, regist
 
 ## 9. Cross-references
 
-- `.claude/skills/revolico-scraper/SKILL.md` -- Revolico-specific gotchas: IIFE wrapper, CSS Modules selectors, JSONata expression administration (3 write paths, cache invalidation rules), `isPromoted` service vs expression, `JsonataExtractionError` code catalog
-- `src/main/scrapers/revolico/README.md` -- Human documentation: full architecture flow, curl/SQL transcripts, "adding a new scraper" recipe
-- `src/main/CLAUDE.md` -- General code patterns: DI, layers, queue system, logging, TDD workflow, coding constraints
-- `.claude/skills/testing/SKILL.md` -- Jest patterns, MongoMemoryServer, Prisma mocks, ALS mocks, ESM `jose` workaround
-- `src/main/shared/container.ts` -- DI registrations for all scraper services
-- `src/main/shared/types.container.ts` -- Symbol definitions (`TYPES.ScraperConfigRegistry`, `TYPES.AnalyticsService`, etc.)
-- `.claude/skills/cron-scheduler/SKILL.md` -- Cron scheduler agent instructions (StoreRegistry, CronSchedulerService, store registration)
-- `src/main/cron/store-registry.ts` -- Store registry interface (`IStoreConfig`, `IFieldSchema`)
+| File | Covers |
+|------|--------|
+| `src/main/scrapers/README.md` | Pipeline diagram, data model tables, env vars, enrichment metrics, prompt curl examples |
+| `src/main/scrapers/revolico/README.md` | Revolico architecture flow, curl/SQL transcripts, adding-a-scraper recipe |
+| `.claude/skills/revolico-scraper/SKILL.md` | IIFE wrapper, CSS Modules selectors, JSONata 3 write-paths, `isPromoted` vs expression, `JsonataExtractionError` catalog, `llm:*` keys, rule write-paths |
+| `src/main/CLAUDE.md` | DI, layers, queue system, logging, TDD workflow, coding constraints |
+| `.claude/skills/testing/SKILL.md` | Jest, MongoMemoryServer, Prisma mocks, ALS mocks, ESM `jose` workaround |
+| `.claude/skills/cron-scheduler/SKILL.md` | StoreRegistry, CronSchedulerService, store registration |
+| `src/main/shared/container.ts` | DI bindings |
+| `src/main/shared/types.container.ts` | Symbol definitions |
+| `src/main/cron/store-registry.ts` | `IStoreConfig`, `IFieldSchema` |
 
 ## 10. Coding constraints
 
