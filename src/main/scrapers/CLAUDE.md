@@ -12,6 +12,7 @@ src/main/scrapers/
 ├── services/                          # Shared enrichment (attribute-extractor/)
 │   └── attribute-extractor/           # Rules → cache → LLM pipeline
 └── revolico/                          # Store-specific scraper
+    ├── index.ts                       # StoreRegistry registration for cron scheduler
     ├── controllers/                   # Admin API for expressions, configs
     ├── services/
     │   ├── scraping/                  # DOM fetch, JSONata execution, config registry
@@ -210,7 +211,32 @@ These are accumulated in `recordLlmCall()`. The endpoint calculates rates and es
 Examples: DeepSeek = 0.14, OpenAI = 2.50, Anthropic = 3.00.
 If unset, `estimatedSavingsUSD` is always 0.
 
-## 8. Cross-references
+## 8. Store registration for cron scheduler
+
+Each store module must register itself in the `StoreRegistry` at bootstrap so the cron scheduler can route scraping jobs to the correct queue. Create an `index.ts` at the store root:
+
+```typescript
+// src/main/scrapers/revolico/index.ts
+export function registerRevolicoStore(container: Container): void {
+  const registry = container.get<StoreRegistry>(TYPES.StoreRegistry);
+  registry.register('revolico', {
+    displayName: 'Revolico',
+    scrapingQueue: QUEUE_NAME.products_scraping,
+    jobSchema: {
+      fields: [
+        { name: 'category', type: 'string', required: true, label: 'Categoría' },
+        // ... store-specific fields
+      ],
+    },
+  });
+}
+```
+
+Call it in `app.ts` before `scheduler.initialize()`. The `jobSchema` fields drive dynamic forms in the admin dashboard — each store defines what parameters its scraping jobs accept.
+
+When adding a new store, follow this same pattern: create the `index.ts`, register the store, and call it in `app.ts`.
+
+## 9. Cross-references
 
 - `.claude/skills/revolico-scraper/SKILL.md` -- Revolico-specific gotchas: IIFE wrapper, CSS Modules selectors, JSONata expression administration (3 write paths, cache invalidation rules), `isPromoted` service vs expression, `JsonataExtractionError` code catalog
 - `src/main/scrapers/revolico/README.md` -- Human documentation: full architecture flow, curl/SQL transcripts, "adding a new scraper" recipe
@@ -218,8 +244,10 @@ If unset, `estimatedSavingsUSD` is always 0.
 - `.claude/skills/testing/SKILL.md` -- Jest patterns, MongoMemoryServer, Prisma mocks, ALS mocks, ESM `jose` workaround
 - `src/main/shared/container.ts` -- DI registrations for all scraper services
 - `src/main/shared/types.container.ts` -- Symbol definitions (`TYPES.ScraperConfigRegistry`, `TYPES.AnalyticsService`, etc.)
+- `.claude/skills/cron-scheduler/SKILL.md` -- Cron scheduler agent instructions (StoreRegistry, CronSchedulerService, store registration)
+- `src/main/cron/store-registry.ts` -- Store registry interface (`IStoreConfig`, `IFieldSchema`)
 
-## 9. Coding constraints
+## 10. Coding constraints
 
 All constraints from `src/main/CLAUDE.md` apply, plus:
 
