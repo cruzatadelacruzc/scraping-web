@@ -300,7 +300,7 @@ container
   .bind<Redis>(TYPES.RedisClient)
   .toDynamicValue(() => {
     const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
-    return new Redis(redisUrl, {
+    const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
       lazyConnect: true,
       connectTimeout: 2000,
@@ -311,5 +311,8 @@ container
         return null;
       },
     });
+    // Prevent unhandled error events when Redis is unavailable
+    redis.on('error', () => {});
+    return redis;
   })
   .inSingletonScope();
