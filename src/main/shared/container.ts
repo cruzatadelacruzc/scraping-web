@@ -305,6 +305,11 @@ container
       lazyConnect: true,
       connectTimeout: 2000,
       maxLoadingRetryTime: 2000,
+      enableOfflineQueue: false,
+      retryStrategy(): number | null {
+        // Never retry — AuthMiddleware and rate limiter both fail-open
+        return null;
+      },
     });
   })
   .inSingletonScope();
