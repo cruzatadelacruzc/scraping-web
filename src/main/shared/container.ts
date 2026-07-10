@@ -298,21 +298,23 @@ container.bind(TYPES.AccountManagementController).to(AccountManagementController
 // Redis client (shared by rate limiter and JWT blacklist)
 container
   .bind<Redis>(TYPES.RedisClient)
-  .toDynamicValue(() => {
+  .toDynamicValue(ctx => {
     const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+    const log = ctx.container.get<ILogger>(TYPES.Logger);
     const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
       lazyConnect: true,
       connectTimeout: 2000,
       maxLoadingRetryTime: 2000,
       enableOfflineQueue: false,
-      retryStrategy(): number | null {
-        // Never retry — AuthMiddleware and rate limiter both fail-open
+      retryStrategy(times: number): number | null {
+        log.warn('Redis unavailable — JWT blacklist and rate limiting disabled', { attempt: times });
         return null;
       },
     });
-    // Prevent unhandled error events when Redis is unavailable
-    redis.on('error', () => {});
+    redis.on('error', (err: Error) => {
+      log.error('Redis connection error', { error: err.message });
+    });
     return redis;
   })
   .inSingletonScope();
