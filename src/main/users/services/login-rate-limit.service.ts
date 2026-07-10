@@ -52,6 +52,8 @@ export class LoginRateLimitService {
         return null;
       },
     });
+    // Prevent unhandled error events when Redis is unavailable
+    this._redis.on('error', () => {});
   }
 
   /**
