@@ -40,6 +40,7 @@ export class LoginRateLimitService {
   public constructor(@inject(TYPES.Logger) private readonly _log: ILogger) {
     this._log.context = LoginRateLimitService.name;
 
+    const log = this._log;
     const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
     this._redis = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
@@ -47,13 +48,16 @@ export class LoginRateLimitService {
       connectTimeout: 2000,
       maxLoadingRetryTime: 2000,
       enableOfflineQueue: false,
-      retryStrategy(): number | null {
-        // Never retry — fail-open kicks in immediately when Redis is down
+      retryStrategy(times: number): number | null {
+        // Fail-open: give up immediately so callers can fall back
+        log.warn('Redis unavailable for rate limiting — login will not be rate-limited', { attempt: times });
         return null;
       },
     });
-    // Prevent unhandled error events when Redis is unavailable
-    this._redis.on('error', () => {});
+    // Log Redis errors so they are visible in production monitoring
+    this._redis.on('error', (err: Error) => {
+      log.error('Redis connection error in rate limiter', { error: err.message });
+    });
   }
 
   /**
