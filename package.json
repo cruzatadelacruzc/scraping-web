@@ -20,12 +20,12 @@
     "prepare": "[[ $NODE_ENV != 'production' ]] && husky || exit 0",
     "migrate:dev": "prisma migrate dev",
     "seed": "ts-node -O '{\"types\":[\"node\"]}' prisma/seed.ts",
-    "admin-web:dev": "npm run dev -w apps/admin-web",
-    "admin-web:build": "npm run build -w apps/admin-web",
-    "admin-web:test": "npm run test -w apps/admin-web",
-    "admin-web:lint": "npm run lint -w apps/admin-web",
-    "admin-web:typecheck": "npm run typecheck -w apps/admin-web",
-    "admin-web:storybook": "npm run storybook -w apps/admin-web"
+    "admin-web-dev": "npm run dev --workspace=@bazaarsentinel/admin-web",
+    "admin-web-build": "npm run build --workspace=@bazaarsentinel/admin-web",
+    "admin-web-test": "npm run test --workspace=@bazaarsentinel/admin-web",
+    "admin-web-lint": "npm run lint --workspace=@bazaarsentinel/admin-web",
+    "admin-web-typecheck": "npm run typecheck --workspace=@bazaarsentinel/admin-web",
+    "admin-web-storybook": "npm run storybook --workspace=@bazaarsentinel/admin-web"
   },
   "prisma": {
     "seed": "ts-node -O '{\"types\":[\"node\"]}' prisma/seed.ts"

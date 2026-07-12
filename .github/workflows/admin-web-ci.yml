@@ -40,13 +40,13 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint -w apps/admin-web
+        run: npm run lint -w @bazaarsentinel/admin-web
 
       - name: Type check
-        run: npm run typecheck -w apps/admin-web
+        run: npm run typecheck -w @bazaarsentinel/admin-web
 
       - name: Test
-        run: npm run test -w apps/admin-web
+        run: npm run test -w @bazaarsentinel/admin-web
 
       - name: Build
-        run: npm run build -w apps/admin-web
+        run: npm run build -w @bazaarsentinel/admin-web
