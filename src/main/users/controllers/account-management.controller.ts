@@ -12,6 +12,7 @@ import { TokenManagementService } from '@users/services/token-management.service
 import { AccountDeactivationService } from '@users/services/account-deactivation.service';
 import { AuthService } from '@users/services/auth.service';
 import { UserService } from '@users/services/user.service';
+import { TokenService } from '@shared/security/token.service';
 import { ForgotPasswordDTO } from '@users/services/dto/forgot-password.dto';
 import { ResetPasswordDTO } from '@users/services/dto/reset-password.dto';
 import { ChangePasswordDTO } from '@users/services/dto/change-password.dto';
@@ -36,6 +37,7 @@ export class AccountManagementController {
     @inject(TYPES.AccountDeactivationService) private readonly _deactivation: AccountDeactivationService,
     @inject(TYPES.AuthService) private readonly _auth: AuthService,
     @inject(TYPES.UserService) private readonly _userService: UserService,
+    @inject(TYPES.TokenService) private readonly _tokenService: TokenService,
   ) {
     this._log.context = AccountManagementController.name;
   }
@@ -149,20 +151,33 @@ export class AccountManagementController {
   @httpPost('/refresh', ValidateRequestMiddleware.with(RefreshTokenDTO))
   public async refresh(req: Request, res: Response): Promise<void> {
     const dto = RefreshTokenDTO.from(req.body);
-    const newRefreshToken = await this._tokenMgmt.rotateRefreshToken(dto.refreshToken);
-    if (!newRefreshToken) {
+    const result = await this._tokenMgmt.rotateRefreshToken(dto.refreshToken);
+    if (!result) {
       ResponseHandler.badRequest(res, 'Invalid or expired refresh token');
       return;
     }
 
-    // Issue a new access token — we need the user info from the stored token
-    // The rotate method already validated the token; we extract userId from the
-    // stored token. For simplicity, the rotate method on its own doesn't return
-    // user info. We handle this by generating the access token from the refresh
-    // token's context.
-    //
-    // TODO: Extend rotateRefreshToken to return user context alongside the new token.
-    ResponseHandler.badRequest(res, 'Refresh token flow requires user context — see TODO');
+    try {
+      // Generate a new JWT access token using the user context from the rotated token
+      const token = this._tokenService.generateToken(result.userId, result.accountId, result.roles);
+
+      // Fetch the full user DTO for the response
+      const userDTO = await this._userService.getById(result.userId);
+      if (!userDTO) {
+        this._log.error('User not found after successful token rotation', { userId: result.userId });
+        ResponseHandler.badRequest(res, 'User not found');
+        return;
+      }
+
+      ResponseHandler.ok(res, {
+        token,
+        refreshToken: result.refreshToken,
+        user: userDTO,
+      });
+    } catch (err: unknown) {
+      this._log.error('Failed to issue new access token during refresh', { error: String(err) });
+      ResponseHandler.badRequest(res, 'Failed to issue new access token');
+    }
   }
 
   // ---------------------------------------------------------------------------

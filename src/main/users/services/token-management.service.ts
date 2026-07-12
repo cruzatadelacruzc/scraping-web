@@ -4,6 +4,8 @@ import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
 import { TokenRepository } from '@users/repositories/token.repository';
 import { TokenService } from '@shared/security/token.service';
+import { UserRepository } from '@users/repositories/user.repository';
+import { IRefreshTokenResult } from '@users/services/dto/refresh-token-result.dto';
 
 /**
  * Manages refresh token lifecycle: issue, rotate, revoke, and theft detection.
@@ -24,6 +26,7 @@ export class TokenManagementService {
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.TokenRepository) private readonly _tokenRepo: TokenRepository,
     @inject(TYPES.TokenService) private readonly _tokenService: TokenService,
+    @inject(UserRepository) private readonly _userRepo: UserRepository,
   ) {
     this._log.context = TokenManagementService.name;
   }
@@ -49,10 +52,13 @@ export class TokenManagementService {
    * issues a new one in the same family. If the incoming token was already
    * replaced (possible theft), the entire family is revoked.
    *
+   * On success returns the new refresh token along with the user context
+   * (userId, accountId, roles) needed to issue a new JWT access token.
+   *
    * @param rawToken - The raw refresh token from the client.
-   * @returns The new raw refresh token, or `null` if the token is invalid/revoked/theft-detected.
+   * @returns The new refresh token with user context, or `null` if the token is invalid/revoked/theft-detected.
    */
-  public async rotateRefreshToken(rawToken: string): Promise<string | null> {
+  public async rotateRefreshToken(rawToken: string): Promise<IRefreshTokenResult | null> {
     const tokenHash = this._hashToken(rawToken);
     const stored = await this._tokenRepo.findRefreshTokenByHash(tokenHash);
 
@@ -89,7 +95,19 @@ export class TokenManagementService {
     // Mark old token as replaced
     await this._tokenRepo.replaceRefreshToken(stored.id, newToken.id);
 
-    return newRawToken;
+    // Fetch user context so the caller can issue a JWT
+    const user = await this._userRepo.findById(stored.userId);
+    if (!user) {
+      this._log.error('User not found for refresh token', { userId: stored.userId });
+      return null;
+    }
+
+    return {
+      refreshToken: newRawToken,
+      userId: user.id,
+      accountId: user.accountId,
+      roles: user.roles.map(r => r.name),
+    };
   }
 
   /**
