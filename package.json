@@ -113,6 +113,10 @@
     "src/**/*.{js,ts}": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "apps/admin-web/src/**/*.{ts,tsx}": [
+      "eslint --fix --config apps/admin-web/eslint.config.js",
+      "prettier --write"
     ]
   }
 }
