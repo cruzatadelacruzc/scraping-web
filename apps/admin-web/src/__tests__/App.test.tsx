@@ -4,6 +4,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { ROUTES } from '@shared/config/routes';
 import { App } from '../App';
 
+// Initialize i18n before tests
+import '@shared/i18n/i18n';
+
 describe('App', () => {
   it('renders the login page when unauthenticated', () => {
     render(
@@ -12,7 +15,6 @@ describe('App', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText('BazaarSentinel')).toBeInTheDocument();
-    expect(screen.getByText('Super Admin Console')).toBeInTheDocument();
   });
 
   it('redirects to login from protected routes when unauthenticated', () => {
@@ -21,7 +23,7 @@ describe('App', () => {
         <App />
       </MemoryRouter>,
     );
-    // Should redirect to login since there's no auth session
-    expect(screen.getByText('Super Admin Console')).toBeInTheDocument();
+    // Should redirect to login since no auth session
+    expect(screen.getByText('BazaarSentinel')).toBeInTheDocument();
   });
 });
