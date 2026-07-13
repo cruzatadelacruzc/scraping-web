@@ -85,7 +85,7 @@ export class AuthService {
     return {
       userId: data.user.id,
       accountId: data.user.accountId,
-      roles: data.user.roles.map((r) => r as RoleType),
+      roles: data.user.roles.map((r) => r.name as RoleType),
       expiresAt: Date.now() + JWT_TTL_MS,
     };
   }

@@ -43,7 +43,7 @@ describe('AuthService', () => {
         id: 'user-1',
         email: 'admin@test.dev',
         accountId: 'account-1',
-        roles: ['SUPER_ADMIN'],
+        roles: [{ id: 'role-1', name: 'SUPER_ADMIN' }],
       },
     };
 
@@ -75,7 +75,7 @@ describe('AuthService', () => {
         id: 'user-1',
         email: 'admin@test.dev',
         accountId: 'account-1',
-        roles: ['ACCOUNT_OWNER'],
+        roles: [{ id: 'role-2', name: 'ACCOUNT_OWNER' }],
       },
     };
 

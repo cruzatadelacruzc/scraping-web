@@ -14,7 +14,7 @@ export const handlers = [
           id: 'mock-user-1',
           email: 'admin@bazaarsentinel.dev',
           accountId: 'mock-account-1',
-          roles: ['SUPER_ADMIN'],
+          roles: [{ id: 'role-1', name: 'SUPER_ADMIN' }],
         },
       });
     }
