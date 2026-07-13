@@ -13,7 +13,7 @@ const { mockList, mockDelete, mockGetById } = vi.hoisted(() => ({
 
 // Mock i18n
 vi.mock('react-i18next', () => ({
-  initReactI18next: { type: '3rdParty', init: () => {} },
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
     t: (key: string, vars?: Record<string, unknown>) => {
       if (vars) {
