@@ -19,23 +19,21 @@ const NAV_ITEMS: readonly NavItem[] = [
   { labelKey: 'nav.settings', path: ROUTES.SETTINGS },
 ];
 
+function navLinkClassName({ isActive }: { isActive: boolean }): string {
+  return `rounded-md px-sm py-xs text-body-sm transition-colors ${
+    isActive
+      ? 'bg-primary/10 font-medium text-primary'
+      : 'text-on-surface-variant hover:bg-surface-container-high'
+  }`;
+}
+
 export function SideNav(): JSX.Element {
   const { t } = useTranslation();
 
   return (
     <nav className="flex w-60 shrink-0 flex-col border-r border-outline-variant bg-surface-container-low p-sm">
       {NAV_ITEMS.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          className={({ isActive }) =>
-            `rounded-md px-sm py-xs text-body-sm transition-colors ${
-              isActive
-                ? 'bg-primary/10 font-medium text-primary'
-                : 'text-on-surface-variant hover:bg-surface-container-high'
-            }`
-          }
-        >
+        <NavLink key={item.path} to={item.path} className={navLinkClassName}>
           {t(item.labelKey)}
         </NavLink>
       ))}

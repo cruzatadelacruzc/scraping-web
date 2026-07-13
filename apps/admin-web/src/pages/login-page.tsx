@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '@features/auth/components/login-form';
@@ -16,10 +16,13 @@ export function LoginPage(): JSX.Element {
     if (isAuthenticated) navigate(ROUTES.DASHBOARD, { replace: true });
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (values: LoginFormValues): Promise<void> => {
-    await login(values);
-    navigate(ROUTES.DASHBOARD, { replace: true });
-  };
+  const handleSubmit = useCallback(
+    async (values: LoginFormValues): Promise<void> => {
+      await login(values);
+      navigate(ROUTES.DASHBOARD, { replace: true });
+    },
+    [login, navigate],
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface">
