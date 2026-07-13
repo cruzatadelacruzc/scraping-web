@@ -5,10 +5,9 @@ export function mapAccountDTOToViewModel(dto: AccountDTO): AccountViewModel {
   return {
     id: dto.id,
     name: dto.name,
-    status: dto.status,
-    ownerEmail: dto.ownerEmail,
     userCount: dto.userCount,
-    planName: dto.planName,
+    subscriptionCount: dto.subscriptionCount,
+    alarmCount: dto.alarmCount,
     createdAt: new Date(dto.createdAt),
   };
 }

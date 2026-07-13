@@ -1,9 +1,8 @@
 export interface AccountViewModel {
   id: string;
   name: string;
-  status: string;
-  ownerEmail: string;
   userCount: number;
-  planName: string;
+  subscriptionCount: number;
+  alarmCount: number;
   createdAt: Date;
 }

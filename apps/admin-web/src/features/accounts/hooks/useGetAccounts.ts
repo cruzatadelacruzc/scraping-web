@@ -7,14 +7,15 @@ import type { AccountViewModel } from '../view-models/account-view-model';
 interface Params {
   page: number;
   limit: number;
-  search?: string;
 }
 
 export function useGetAccounts(params: Params) {
+  const skip = (params.page - 1) * params.limit;
+
   return useQuery({
-    queryKey: ['accounts', params],
+    queryKey: ['accounts', { page: params.page, limit: params.limit }],
     queryFn: async ({ signal }) => {
-      const response = await accountsService.list({ ...params, signal });
+      const response = await accountsService.list({ skip, limit: params.limit, signal });
       return {
         items: response.data.accounts.map(mapAccountDTOToViewModel) as AccountViewModel[],
         total: response.data.total,
