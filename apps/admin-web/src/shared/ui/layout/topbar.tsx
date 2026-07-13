@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Shield } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
+import { Shield } from 'lucide-react';
 
 export function TopBar(): JSX.Element {
   const { t } = useTranslation();

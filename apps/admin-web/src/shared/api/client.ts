@@ -56,7 +56,6 @@ export function configureAuthHandlers(handlers: AuthHandlers): void {
       }
 
       try {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         const res = await axios.post<{ data: { token: string; refreshToken: string } }>(
           `${ENV.API_BASE_URL}/auth/refresh`,
           { refreshToken },

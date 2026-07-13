@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield } from 'lucide-react';
 import { LoginForm } from '@features/auth/components/login-form';
 import type { LoginFormValues } from '@features/auth/schemas/login.schema';
 import { useIsAuthenticated, useLogin } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
+import { Shield } from 'lucide-react';
 
 export function LoginPage(): JSX.Element {
   const login = useLogin();
