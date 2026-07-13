@@ -57,7 +57,7 @@ export function configureAuthHandlers(handlers: AuthHandlers): void {
 
       try {
         const res = await axios.post<{ data: { token: string; refreshToken: string } }>(
-          `${API_BASE}/auth/refresh`,
+          `${ENV.API_BASE_URL}/auth/refresh`,
           { refreshToken },
         );
         const tokens = res.data.data;
