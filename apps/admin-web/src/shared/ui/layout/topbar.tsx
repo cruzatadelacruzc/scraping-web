@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Shield } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
 
@@ -14,12 +15,22 @@ export function TopBar(): JSX.Element {
 
   return (
     <header className="sticky top-0 z-50 flex h-12 items-center justify-between border-b border-outline-variant bg-surface px-md">
+      {/* Brand */}
       <div className="flex items-center gap-sm">
-        <a href={ROUTES.DASHBOARD} className="text-sm font-semibold text-on-surface">
-          {t('auth.title')}
-        </a>
+        <div className="flex h-8 w-8 items-center justify-center rounded bg-primary-container text-on-primary-container">
+          <Shield size={18} />
+        </div>
+        <div>
+          <a href={ROUTES.DASHBOARD} className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
+            BazaarSentinel
+          </a>
+          <span className="ml-sm font-label-xs text-label-xs uppercase tracking-widest text-on-surface-variant">
+            Admin Suite
+          </span>
+        </div>
       </div>
 
+      {/* User */}
       <div className="flex items-center gap-sm">
         {user && (
           <>

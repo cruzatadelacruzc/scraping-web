@@ -28,6 +28,7 @@ export class AuthService {
    * @throws Error with a user-friendly message on failure.
    */
   public async login(username: string, password: string): Promise<AuthSession> {
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     const url = `${ENV.API_BASE_URL}/auth/login`;
     const res = await fetch(url, {
       method: 'POST',
@@ -59,6 +60,7 @@ export class AuthService {
       throw new Error('No refresh token available');
     }
 
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     const res = await fetch(`${ENV.API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

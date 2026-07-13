@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Shield } from 'lucide-react';
 import { LoginForm } from '@features/auth/components/login-form';
 import type { LoginFormValues } from '@features/auth/schemas/login.schema';
 import { useIsAuthenticated, useLogin } from '@shared/auth';
@@ -28,8 +29,19 @@ export function LoginPage(): JSX.Element {
     <div className="flex min-h-screen items-center justify-center bg-surface">
       <div className="w-full max-w-sm space-y-lg">
         <div className="text-center">
-          <h1 className="text-headline-lg text-on-surface">{t('auth.title')}</h1>
-          <p className="mt-sm text-body-md text-on-surface-variant">{t('auth.subtitle')}</p>
+          <div className="mb-md flex items-center justify-center gap-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded bg-primary-container text-on-primary-container">
+              <Shield size={22} />
+            </div>
+            <div className="text-left">
+              <h1 className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
+                BazaarSentinel
+              </h1>
+              <span className="font-label-xs text-label-xs uppercase tracking-widest text-on-surface-variant">
+                Admin Suite
+              </span>
+            </div>
+          </div>
         </div>
         <LoginForm onSubmit={handleSubmit} />
       </div>

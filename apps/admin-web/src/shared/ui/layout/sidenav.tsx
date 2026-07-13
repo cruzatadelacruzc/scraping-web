@@ -35,22 +35,6 @@ export function SideNav(): JSX.Element {
 
   return (
     <nav className="flex w-60 shrink-0 flex-col border-r border-outline-variant bg-surface-container-low py-sm">
-      {/* Brand */}
-      <div className="mb-xl flex items-center gap-sm px-md">
-        <div className="flex h-8 w-8 items-center justify-center rounded bg-primary-container text-on-primary-container">
-          <Shield size={18} />
-        </div>
-        <div>
-          <h1 className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
-            BazaarSentinel
-          </h1>
-          <span className="font-label-xs text-label-xs uppercase tracking-widest text-on-surface-variant">
-            Admin Suite
-          </span>
-        </div>
-      </div>
-
-      {/* Nav items */}
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         return (
