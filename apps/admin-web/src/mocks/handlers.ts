@@ -57,4 +57,16 @@ export const handlers = [
       costSavings: 342.5,
     });
   }),
+
+  // Admin — GET /api/admin/accounts
+  http.get(`${API_BASE}/admin/accounts`, () => {
+    return HttpResponse.json({
+      items: [
+        { id: '1', name: 'Acme Corp', status: 'active', ownerEmail: 'admin@acme.dev', userCount: 12, planName: 'Pro', createdAt: '2024-01-15T10:30:00Z', updatedAt: '2024-06-01T10:30:00Z' },
+        { id: '2', name: 'Globex Inc', status: 'suspended', ownerEmail: 'ceo@globex.dev', userCount: 3, planName: 'Basic', createdAt: '2024-03-20T10:30:00Z', updatedAt: '2024-05-10T10:30:00Z' },
+        { id: '3', name: 'Initech', status: 'deleted', ownerEmail: 'admin@initech.dev', userCount: 0, planName: 'Starter', createdAt: '2023-11-01T10:30:00Z', updatedAt: '2024-07-01T10:30:00Z' },
+      ],
+      total: 3,
+    });
+  }),
 ];

@@ -15,21 +15,21 @@ export class AuthService {
   public constructor(private readonly _storage: ITokenStorage) {}
 
   /**
-   * Authenticates with email/password and returns a session.
+   * Authenticates with username/password and returns a session.
    * Stores tokens in the configured ITokenStorage backend.
    *
-   * @throws `'Invalid credentials'` on 401.
+   * @throws Error with a user-friendly message on failure.
    */
-  public async login(email: string, password: string): Promise<AuthSession> {
+  public async login(username: string, password: string): Promise<AuthSession> {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     });
 
     if (!res.ok) {
-      if (res.status === 401) throw new Error('Invalid credentials');
-      throw new Error(`Login failed: ${String(res.status)}`);
+      const message = await this._extractErrorMessage(res);
+      throw new Error(message);
     }
 
     const data = (await res.json()) as AuthResponse;
@@ -88,5 +88,28 @@ export class AuthService {
       roles: data.user.roles.map((r) => r as RoleType),
       expiresAt: Date.now() + JWT_TTL_MS,
     };
+  }
+
+  /** Extracts a user-friendly error message from the backend response. */
+  private async _extractErrorMessage(res: Response): Promise<string> {
+    if (res.status === 401) return 'Invalid credentials';
+
+    try {
+      const body = (await res.json()) as Record<string, unknown>;
+      if (typeof body.message === 'string' && body.message.length > 0) {
+        return body.message;
+      }
+      // Zod validation errors from backend
+      if (Array.isArray(body.error)) {
+        const messages = (body.error as Array<{ message: string }>)
+          .map((e) => e.message)
+          .join(', ');
+        if (messages.length > 0) return messages;
+      }
+    } catch {
+      // Response is not JSON — use status text
+    }
+
+    return `Request failed (${String(res.status)})`;
   }
 }

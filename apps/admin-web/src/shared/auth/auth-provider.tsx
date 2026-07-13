@@ -59,7 +59,7 @@ export function AuthProvider({ authService, sessionManager, storage, children }:
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-      const newSession = await authService.login(credentials.email, credentials.password);
+      const newSession = await authService.login(credentials.username, credentials.password);
       sessionManager.start(newSession);
       setSession(newSession);
     },

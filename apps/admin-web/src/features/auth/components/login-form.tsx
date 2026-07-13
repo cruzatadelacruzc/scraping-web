@@ -41,18 +41,18 @@ export function LoginForm({ onSubmit }: Props): JSX.Element {
       )}
 
       <div>
-        <label htmlFor="email" className="mb-xs block text-label-md font-mono text-on-surface-variant">
+        <label htmlFor="username" className="mb-xs block text-label-md font-mono text-on-surface-variant">
           {t('auth.emailOrUsername')}
         </label>
         <input
-          id="email"
+          id="username"
           type="text"
           autoComplete="username"
-          {...register('email')}
+          {...register('username')}
           className="w-full rounded-md border border-outline-variant bg-surface-container-low p-sm text-sm text-on-surface placeholder:text-muted focus:border-primary focus:outline-none"
           placeholder={t('auth.emailPlaceholder')}
         />
-        {errors.email && <p className="mt-xs text-body-sm text-danger">{errors.email.message}</p>}
+        {errors.username && <p className="mt-xs text-body-sm text-danger">{errors.username.message}</p>}
       </div>
 
       <div>

@@ -15,7 +15,7 @@ export interface AuthSession {
 
 /** Credentials for local login. */
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
