@@ -28,7 +28,8 @@ export class AuthService {
    * @throws Error with a user-friendly message on failure.
    */
   public async login(username: string, password: string): Promise<AuthSession> {
-    const res = await fetch(`${ENV.API_BASE_URL}/auth/login`, {
+    const url = `${ENV.API_BASE_URL}/auth/login`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
