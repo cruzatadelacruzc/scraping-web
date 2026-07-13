@@ -1,4 +1,4 @@
-export function App() {
+export function App(): JSX.Element {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface">
       <div className="text-center">
