@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
+import { ROUTES } from '@shared/config/routes';
 import type { LucideIcon } from 'lucide-react';
 import { BarChart3, Bell, Cog, Database, Layers, Search, Shield, Users } from 'lucide-react';
-import { ROUTES } from '@shared/config/routes';
 
 interface NavItem {
   labelKey: string;

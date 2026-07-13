@@ -1,15 +1,12 @@
 import { useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Shield } from 'lucide-react';
 import { LoginForm } from '@features/auth/components/login-form';
 import type { LoginFormValues } from '@features/auth/schemas/login.schema';
 import { useIsAuthenticated, useLogin } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
-import { Shield } from 'lucide-react';
 
 export function LoginPage(): JSX.Element {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { t } = useTranslation();
   const login = useLogin();
   const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();
