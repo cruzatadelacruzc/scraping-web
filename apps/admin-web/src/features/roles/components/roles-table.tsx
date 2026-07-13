@@ -15,6 +15,7 @@ export function RolesTable(): JSX.Element {
   const createRole = useCreateRole();
   const deleteRole = useDeleteRole();
   const currentUser = useCurrentUser();
+  const userRoleNames = currentUser?.roles.map(String) ?? [];
 
   // Inline create form state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -185,7 +186,7 @@ export function RolesTable(): JSX.Element {
                 <td className="p-sm font-medium text-on-surface">{role.name}</td>
                 <td className="p-sm font-mono text-on-surface-variant">{role.userCount}</td>
                 <td className="p-sm">
-                  {currentUser?.roles.some((r) => String(r) === role.name) ? (
+                  {userRoleNames.includes(role.name) ? (
                     <button
                       disabled
                       className="cursor-not-allowed rounded-sm p-1 text-on-surface-variant opacity-40"
