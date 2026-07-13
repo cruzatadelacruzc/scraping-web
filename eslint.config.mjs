@@ -5,7 +5,7 @@ import jest from 'eslint-plugin-jest';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 export default [
-  { ignores: ['dist/**/*'] },
+  { ignores: ['dist/**/*', 'apps/**/*'] },
   { files: ['src/**/*.{js,ts}'] },
   { files: ['src/**/*.js'], languageOptions: { sourceType: 'commonjs' } },
   { languageOptions: { globals: globals.node } },

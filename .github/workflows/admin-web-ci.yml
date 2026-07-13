@@ -1,0 +1,52 @@
+name: Admin Web CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'apps/admin-web/**'
+      - 'package-lock.json'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'apps/admin-web/**'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+concurrency:
+  group: admin-web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint -w @bazaarsentinel/admin-web
+
+      - name: Type check
+        run: npm run typecheck -w @bazaarsentinel/admin-web
+
+      - name: Test
+        run: npm run test -w @bazaarsentinel/admin-web
+
+      - name: Build
+        run: npm run build -w @bazaarsentinel/admin-web
