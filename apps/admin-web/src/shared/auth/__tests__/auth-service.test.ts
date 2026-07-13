@@ -8,7 +8,7 @@ function mockResponse(data: AuthResponse): Response {
   return {
     ok: true,
     status: 200,
-    json: () => Promise.resolve(data),
+    json: () => Promise.resolve({ status: 'success', message: 'OK', data }),
   } as Response;
 }
 

@@ -1,17 +1,11 @@
-import { ENV } from '@shared/config/env';
 import type { ITokenStorage } from './token-storage.interface';
 import type { AuthResponse, AuthSession } from './types';
 import type { RoleType } from './types';
 
+const API_BASE = 'http://localhost:3000/api';
+
 /** JWT TTL: 1 day in ms. Must match JWT_EXPIRATION env var on backend. */
 const JWT_TTL_MS = 24 * 60 * 60 * 1000;
-
-/** Backend wraps all responses in { status, message, data }. */
-interface BackendEnvelope<T> {
-  status: string;
-  message: string;
-  data: T;
-}
 
 /**
  * Single boundary between the auth system and the backend API.
@@ -27,7 +21,7 @@ export class AuthService {
    * @throws Error with a user-friendly message on failure.
    */
   public async login(username: string, password: string): Promise<AuthSession> {
-    const res = await fetch(`${ENV.API_BASE_URL}/auth/login`, {
+    const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -38,9 +32,10 @@ export class AuthService {
       throw new Error(message);
     }
 
-    const envelope = (await res.json()) as BackendEnvelope<AuthResponse>;
-    this._persistTokens(envelope.data);
-    return this._toSession(envelope.data);
+    const body = await res.json();
+    const data = (body.data as AuthResponse) ?? body;
+    this._persistTokens(data);
+    return this._toSession(data);
   }
 
   /**
@@ -57,7 +52,7 @@ export class AuthService {
       throw new Error('No refresh token available');
     }
 
-    const res = await fetch(`${ENV.API_BASE_URL}/auth/refresh`, {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -68,9 +63,9 @@ export class AuthService {
       throw new Error('Session expired');
     }
 
-    const envelope = (await res.json()) as BackendEnvelope<AuthResponse>;
-    this._persistTokens(envelope.data);
-    return this._toSession(envelope.data);
+    const data = (await res.json()) as AuthResponse;
+    this._persistTokens(data);
+    return this._toSession(data);
   }
 
   /** Clears stored tokens. Call on explicit logout. */
@@ -105,6 +100,7 @@ export class AuthService {
       if (typeof body.message === 'string' && body.message.length > 0) {
         return body.message;
       }
+      // Zod validation errors from backend
       if (Array.isArray(body.error)) {
         const messages = (body.error as Array<{ message: string }>)
           .map((e) => e.message)
