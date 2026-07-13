@@ -1,0 +1,16 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - heading "BazaarSentinel" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Super Admin Console
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: Email
+        - textbox "Email" [ref=e11]:
+          - /placeholder: admin@bazaarsentinel.dev
+      - generic [ref=e12]:
+        - generic [ref=e13]: Password
+        - textbox "Password" [ref=e14]:
+          - /placeholder: ••••••••
+      - button "Sign in" [ref=e15] [cursor=pointer]
+  - region "Notifications alt+T"

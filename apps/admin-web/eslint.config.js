@@ -103,7 +103,7 @@ export default tseslint.config(
       ],
       'simple-import-sort/exports': 'error',
 
-      // --- Performance (warn level) ---
+      // --- Performance (educational, warn only) ---
       'react-perf/jsx-no-new-function-as-prop': ['warn', { nativeAllowList: 'all' }],
       'react-perf/jsx-no-new-object-as-prop': ['warn', { nativeAllowList: ['style'] }],
       'react-perf/jsx-no-new-array-as-prop': 'warn',
@@ -116,6 +116,12 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-deprecated': 'off',           // React 18: JSX namespace is not deprecated
+      '@typescript-eslint/no-misused-promises': 'error',   // Keep error but allow checks on JSX attrs
+      '@typescript-eslint/unbound-method': 'off',          // Test mocks need unbound methods
+      '@typescript-eslint/no-unsafe-assignment': 'off',    // Axios interceptor typing limitation
+      '@typescript-eslint/no-unsafe-member-access': 'off', // Axios interceptor typing limitation
+      '@typescript-eslint/restrict-template-expressions': 'warn',
 
       // Disable rules conflicting with Prettier
       '@typescript-eslint/no-extra-semi': 'off',
@@ -129,6 +135,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       'react-perf/jsx-no-new-function-as-prop': 'off',
       'react-perf/jsx-no-new-object-as-prop': 'off',
+      'react-perf/jsx-no-new-array-as-prop': 'off',
       'simple-import-sort/imports': 'off',
     },
   },

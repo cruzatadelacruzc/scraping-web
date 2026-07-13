@@ -6,9 +6,10 @@ module.exports = {
   globalSetup: '<rootDir>/src/__tests__/globalSetup.ts',
   globalTeardown: '<rootDir>/src/__tests__/globalTeardown.ts',
   testMatch: ['**/__tests__/**/*.test.ts'],
+  testPathIgnorePatterns: ['<rootDir>/apps/'],
   // Ignore compiled output and the build cache so Jest's haste-map doesn't
   // pick up duplicate __mocks__ folders from `dist/`.
-  modulePathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/'],
+  modulePathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/', '<rootDir>/apps/'],
   moduleDirectories: ['node_modules', 'src/main'],
   testEnvironment: 'node',
   maxWorkers: 1,
