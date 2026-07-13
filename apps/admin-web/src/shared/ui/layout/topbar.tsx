@@ -1,7 +1,9 @@
-import { useCurrentUser,useLogout } from '@shared/auth';
+import { useTranslation } from 'react-i18next';
+import { useCurrentUser, useLogout } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
 
 export function TopBar(): JSX.Element {
+  const { t } = useTranslation();
   const user = useCurrentUser();
   const logout = useLogout();
 
@@ -14,7 +16,7 @@ export function TopBar(): JSX.Element {
     <header className="sticky top-0 z-50 flex h-12 items-center justify-between border-b border-outline-variant bg-surface px-md">
       <div className="flex items-center gap-sm">
         <a href={ROUTES.DASHBOARD} className="text-sm font-semibold text-on-surface">
-          BazaarSentinel
+          {t('auth.title')}
         </a>
       </div>
 
@@ -26,7 +28,7 @@ export function TopBar(): JSX.Element {
           onClick={handleLogout}
           className="rounded-md px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high"
         >
-          Sign out
+          {t('auth.signOut')}
         </button>
       </div>
     </header>

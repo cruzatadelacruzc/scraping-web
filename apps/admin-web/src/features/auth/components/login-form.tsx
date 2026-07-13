@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 
 import type { LoginFormValues } from '../schemas/login.schema';
 import { loginSchema } from '../schemas/login.schema';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function LoginForm({ onSubmit }: Props): JSX.Element {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const {
     register,
@@ -24,7 +26,7 @@ export function LoginForm({ onSubmit }: Props): JSX.Element {
     try {
       await onSubmit(values);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : t('auth.loginFailed'));
     }
   };
 
@@ -40,22 +42,22 @@ export function LoginForm({ onSubmit }: Props): JSX.Element {
 
       <div>
         <label htmlFor="email" className="mb-xs block text-label-md font-mono text-on-surface-variant">
-          Email
+          {t('auth.emailOrUsername')}
         </label>
         <input
           id="email"
-          type="email"
-          autoComplete="email"
+          type="text"
+          autoComplete="username"
           {...register('email')}
           className="w-full rounded-md border border-outline-variant bg-surface-container-low p-sm text-sm text-on-surface placeholder:text-muted focus:border-primary focus:outline-none"
-          placeholder="admin@bazaarsentinel.dev"
+          placeholder={t('auth.emailPlaceholder')}
         />
         {errors.email && <p className="mt-xs text-body-sm text-danger">{errors.email.message}</p>}
       </div>
 
       <div>
         <label htmlFor="password" className="mb-xs block text-label-md font-mono text-on-surface-variant">
-          Password
+          {t('auth.password')}
         </label>
         <input
           id="password"
@@ -63,7 +65,7 @@ export function LoginForm({ onSubmit }: Props): JSX.Element {
           autoComplete="current-password"
           {...register('password')}
           className="w-full rounded-md border border-outline-variant bg-surface-container-low p-sm text-sm text-on-surface placeholder:text-muted focus:border-primary focus:outline-none"
-          placeholder="••••••••"
+          placeholder={t('auth.passwordPlaceholder')}
         />
         {errors.password && (
           <p className="mt-xs text-body-sm text-danger">{errors.password.message}</p>
@@ -75,7 +77,7 @@ export function LoginForm({ onSubmit }: Props): JSX.Element {
         disabled={isSubmitting}
         className="w-full rounded-md bg-primary-container p-sm text-sm font-semibold text-on-primary-container transition-colors hover:opacity-90 disabled:opacity-50"
       >
-        {isSubmitting ? 'Signing in…' : 'Sign in'}
+        {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
       </button>
     </form>
   );

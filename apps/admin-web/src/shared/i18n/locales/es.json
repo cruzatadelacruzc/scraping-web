@@ -1,0 +1,43 @@
+{
+  "auth": {
+    "title": "BazaarSentinel",
+    "subtitle": "Consola de Super Admin",
+    "emailOrUsername": "Correo o usuario",
+    "emailPlaceholder": "Ingresa tu correo o usuario",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "signOut": "Cerrar sesión",
+    "invalidCredentials": "Credenciales inválidas",
+    "sessionExpired": "Sesión expirada",
+    "loginFailed": "Error al iniciar sesión"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "accounts": "Cuentas",
+    "users": "Usuarios",
+    "roles": "Roles",
+    "products": "Productos",
+    "scrapers": "Scrapers",
+    "rules": "Reglas",
+    "queues": "Colas",
+    "settings": "Configuración"
+  },
+  "common": {
+    "notFound": "404 — No Encontrado",
+    "notFoundDesc": "Esta página no existe.",
+    "loading": "Cargando…",
+    "error": "Algo salió mal",
+    "retry": "Reintentar"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Resumen y KPIs aparecerán aquí.",
+    "totalAccounts": "Total de Cuentas",
+    "activeUsers": "Usuarios Activos",
+    "productsScraped": "Productos Scrapeados",
+    "alarmsFiring": "Alarmas Activas",
+    "systemHealth": "Salud del Sistema"
+  }
+}
