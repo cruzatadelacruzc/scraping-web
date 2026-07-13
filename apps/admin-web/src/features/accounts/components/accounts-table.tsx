@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useGetAccounts } from '../hooks/useGetAccounts';
+import { AccountDetailDrawer } from './account-detail-drawer';
 
 const PAGE_SIZE = 20;
 
 export function AccountsTable(): JSX.Element {
   const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data, isLoading, isError, error } = useGetAccounts({ page, limit: PAGE_SIZE });
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
@@ -56,7 +58,11 @@ export function AccountsTable(): JSX.Element {
           </thead>
           <tbody>
             {data.items.map((account) => (
-              <tr key={account.id} className="border-b border-outline-variant transition-colors hover:bg-surface-container-high">
+              <tr
+                key={account.id}
+                className="cursor-pointer border-b border-outline-variant transition-colors hover:bg-surface-container-high"
+                onClick={() => setSelectedId(account.id)}
+              >
                 <td className="p-sm font-medium text-on-surface">{account.name}</td>
                 <td className="p-sm font-mono text-on-surface-variant">{account.userCount}</td>
                 <td className="p-sm font-mono text-on-surface-variant">{account.subscriptionCount}</td>
@@ -92,6 +98,8 @@ export function AccountsTable(): JSX.Element {
           </button>
         </div>
       </div>
+
+      <AccountDetailDrawer accountId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }
