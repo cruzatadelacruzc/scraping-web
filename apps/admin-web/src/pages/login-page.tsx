@@ -1,13 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Shield } from 'lucide-react';
 import { LoginForm } from '@features/auth/components/login-form';
 import type { LoginFormValues } from '@features/auth/schemas/login.schema';
 import { useIsAuthenticated, useLogin } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
+import { Shield } from 'lucide-react';
 
 export function LoginPage(): JSX.Element {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { t } = useTranslation();
   const login = useLogin();
   const isAuthenticated = useIsAuthenticated();
@@ -37,9 +38,6 @@ export function LoginPage(): JSX.Element {
               <h1 className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
                 BazaarSentinel
               </h1>
-              <span className="font-label-xs text-label-xs uppercase tracking-widest text-on-surface-variant">
-                Admin Suite
-              </span>
             </div>
           </div>
         </div>

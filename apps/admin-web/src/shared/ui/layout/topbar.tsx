@@ -24,9 +24,6 @@ export function TopBar(): JSX.Element {
           <a href={ROUTES.DASHBOARD} className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
             BazaarSentinel
           </a>
-          <span className="ml-sm font-label-xs text-label-xs uppercase tracking-widest text-on-surface-variant">
-            Admin Suite
-          </span>
         </div>
       </div>
 
