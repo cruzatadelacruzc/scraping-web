@@ -21,16 +21,20 @@ export interface EnrichmentSnapshot {
   totalEnrichments: number;
   enrichmentHashSkips: number;
   enrichmentHashSkipRate: number;
+  ruleHighConfidence: number;
+  ruleHighConfidenceRate: number;
   cacheHits: number;
-  cacheHitsRate: number;
-  keywordHits: number;
-  keywordHitsRate: number;
+  cacheMisses: number;
+  cacheHitRate: number;
   llmCalls: number;
-  llmPromptCacheHits: number;
-  llmPromptCacheHitRate: number;
-  costPerMillion: number;
-  estimatedCost: number;
-  estimatedSavings: number;
+  llmFailures: number;
+  llmFailureRate: number;
+  llmPromptCacheHitTokens: number;
+  llmPromptCacheMissTokens: number;
+  llmCompletionTokens: number;
+  llmCacheHitRate: number;
+  estimatedSavingsUSD: number;
+  costPerMillionTokens: number;
 }
 
 export function useDashboardMetrics() {
