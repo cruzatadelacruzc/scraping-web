@@ -11,7 +11,7 @@ export const handlers = [
   // Auth — POST /api/auth/login
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     const body = (await request.json()) as { username: string; password: string };
-    if (body.username === 'admin' && body.password === 'password') {
+    if (body.username === 'admin' && (body.password === 'password' || body.password === 'ChangeMe123')) {
       return HttpResponse.json(envelope({
         token: 'mock-jwt-token',
         refreshToken: 'mock-refresh-token',
