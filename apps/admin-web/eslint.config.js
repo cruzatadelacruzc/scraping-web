@@ -103,10 +103,10 @@ export default tseslint.config(
       ],
       'simple-import-sort/exports': 'error',
 
-      // --- Performance (warn level) ---
-      'react-perf/jsx-no-new-function-as-prop': ['warn', { nativeAllowList: 'all' }],
-      'react-perf/jsx-no-new-object-as-prop': ['warn', { nativeAllowList: ['style'] }],
-      'react-perf/jsx-no-new-array-as-prop': 'warn',
+      // --- Performance (educational, off in CI) ---
+      'react-perf/jsx-no-new-function-as-prop': 'off',
+      'react-perf/jsx-no-new-object-as-prop': 'off',
+      'react-perf/jsx-no-new-array-as-prop': 'off',
 
       // --- Vite HMR ---
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
@@ -135,6 +135,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       'react-perf/jsx-no-new-function-as-prop': 'off',
       'react-perf/jsx-no-new-object-as-prop': 'off',
+      'react-perf/jsx-no-new-array-as-prop': 'off',
       'simple-import-sort/imports': 'off',
     },
   },
