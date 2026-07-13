@@ -1,0 +1,9 @@
+# Vite env files (local overrides only — .env is committed with safe defaults)
+.env.local
+.env.*.local
+
+# Build output
+dist/
+
+# Storybook
+storybook-static/

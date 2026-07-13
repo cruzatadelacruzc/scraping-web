@@ -42,6 +42,7 @@ describe('AuthService', () => {
       user: {
         id: 'user-1',
         email: 'admin@test.dev',
+        username: 'admin',
         accountId: 'account-1',
         roles: [{ id: '550e8400-e29b-41d4-a716-446655440001', name: 'SUPER_ADMIN' }],
       },
@@ -74,6 +75,7 @@ describe('AuthService', () => {
       user: {
         id: 'user-1',
         email: 'admin@test.dev',
+        username: 'admin',
         accountId: 'account-1',
         roles: [{ id: '550e8400-e29b-41d4-a716-446655440002', name: 'ACCOUNT_OWNER' }],
       },

@@ -9,6 +9,8 @@ export enum RoleType {
 export interface AuthSession {
   userId: string;
   accountId: string;
+  username: string;
+  email: string;
   roles: RoleType[];
   expiresAt: number; // Unix timestamp ms
 }
@@ -26,6 +28,7 @@ export interface AuthResponse {
   user: {
     id: string;
     email: string;
+    username: string;
     accountId: string;
     roles: Array<{ id: string; name: string }>;
   };

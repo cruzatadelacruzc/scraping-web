@@ -22,11 +22,17 @@ export function TopBar(): JSX.Element {
 
       <div className="flex items-center gap-sm">
         {user && (
-          <span className="text-body-sm text-on-surface-variant">{user.userId}</span>
+          <>
+            <span className="text-body-sm font-medium text-on-surface">{user.username}</span>
+            <span className="rounded-sm bg-surface-container-high px-xs py-0.5 text-label-xs font-mono text-primary">
+              {user.roles[0]}
+            </span>
+          </>
         )}
         <button
           onClick={handleLogout}
           className="rounded-md px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high"
+          aria-label={t('auth.signOut')}
         >
           {t('auth.signOut')}
         </button>
