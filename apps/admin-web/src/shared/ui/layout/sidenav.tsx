@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, Bell, Cog, Database, Layers, Search, ShieldCheck, UserCheck, Users } from 'lucide-react';
+import { BarChart3, Bell, Cog, Database, Layers, Search, ShieldCheck, Users } from 'lucide-react';
 import { ROUTES } from '@shared/config/routes';
 
 interface NavItem {
