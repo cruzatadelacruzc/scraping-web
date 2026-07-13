@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { accountsService } from '../services/accounts-service';
 import { mapAccountDTOToViewModel } from '../mappers/account-mapper';
-import type { AccountViewModel } from '../view-models/account-view-model';
 
 interface UseGetAccountsParams {
   page: number;
@@ -11,7 +10,7 @@ interface UseGetAccountsParams {
 export function useGetAccounts(params: UseGetAccountsParams) {
   return useQuery({
     queryKey: ['accounts', 'list', params],
-    queryFn: async ({ signal }) => {
+    queryFn: async () => {
       const response = await accountsService.list({ ...params });
       return {
         items: response.data.items.map(mapAccountDTOToViewModel),
