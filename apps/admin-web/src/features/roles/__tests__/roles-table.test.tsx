@@ -24,6 +24,7 @@ vi.mock('@shared/auth', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => {} },
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
       if (options) {
