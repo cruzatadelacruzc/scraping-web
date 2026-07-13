@@ -16,7 +16,7 @@ export function useGetAccounts(params: Params) {
     queryFn: async ({ signal }) => {
       const response = await accountsService.list({ ...params, signal });
       return {
-        items: response.data.items.map(mapAccountDTOToViewModel) as AccountViewModel[],
+        items: response.data.accounts.map(mapAccountDTOToViewModel) as AccountViewModel[],
         total: response.data.total,
       };
     },

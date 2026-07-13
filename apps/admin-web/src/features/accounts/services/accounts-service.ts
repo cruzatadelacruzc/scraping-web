@@ -11,7 +11,7 @@ export interface AccountDTO {
 }
 
 export interface AccountListResponse {
-  items: AccountDTO[];
+  accounts: AccountDTO[];
   total: number;
 }
 
