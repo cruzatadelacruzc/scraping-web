@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCurrentUser } from '@shared/auth';
 import { AlertDialog } from '@shared/ui/alert-dialog';
 import { Search, Trash2 } from 'lucide-react';
-import { useCurrentUser } from '@shared/auth';
 
 import { useDeleteAccount } from '../hooks/useDeleteAccount';
 import { useGetAccounts } from '../hooks/useGetAccounts';

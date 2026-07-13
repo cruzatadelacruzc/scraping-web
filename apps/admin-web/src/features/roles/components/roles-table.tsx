@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCurrentUser } from '@shared/auth';
 import { Check, MoreHorizontal, Plus, Trash2, X } from 'lucide-react';
 
-import { useCurrentUser } from '@shared/auth';
 import { useCreateRole } from '../hooks/useCreateRole';
 import { useDeleteRole } from '../hooks/useDeleteRole';
 import { useGetRoles } from '../hooks/useGetRoles';
