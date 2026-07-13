@@ -29,15 +29,30 @@
     "notFoundDesc": "Esta página no existe.",
     "loading": "Cargando…",
     "error": "Algo salió mal",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "noData": "Sin datos disponibles"
   },
   "dashboard": {
     "title": "Panel",
-    "subtitle": "Resumen y KPIs aparecerán aquí.",
     "totalAccounts": "Total de Cuentas",
     "activeUsers": "Usuarios Activos",
     "productsScraped": "Productos Scrapeados",
-    "alarmsFiring": "Alarmas Activas",
-    "systemHealth": "Salud del Sistema"
+    "activeSubscriptions": "Suscripciones Activas",
+    "systemHealth": "Salud del Sistema",
+    "enrichment": "Pipeline de Enriquecimiento",
+    "cacheHitRate": "Tasa de Aciertos",
+    "llmCalls": "Llamadas LLM",
+    "totalEnrichments": "Total Enriquecidos",
+    "estimatedSavings": "Ahorro Est.",
+    "rulesAtGlance": "Vistazo a Reglas",
+    "rulesErrors": "Reglas con errores",
+    "rulesLastModified": "Última modificación",
+    "noRules": "Sin reglas configuradas",
+    "viewRules": "Ver Rules Engine",
+    "quickActions": "Acciones Rápidas",
+    "newAccount": "Nueva Cuenta",
+    "newSchedule": "Nuevo Scraping Programado",
+    "viewQueues": "Ver Colas",
+    "viewAccounts": "Ver Cuentas"
   }
 }

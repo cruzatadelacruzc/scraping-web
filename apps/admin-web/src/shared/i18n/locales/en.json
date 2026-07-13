@@ -29,15 +29,30 @@
     "notFoundDesc": "This page does not exist.",
     "loading": "Loading…",
     "error": "Something went wrong",
-    "retry": "Retry"
+    "retry": "Retry",
+    "noData": "No data available"
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Overview and KPIs will appear here.",
     "totalAccounts": "Total Accounts",
     "activeUsers": "Active Users",
     "productsScraped": "Products Scraped",
-    "alarmsFiring": "Alarms Firing",
-    "systemHealth": "System Health"
+    "activeSubscriptions": "Active Subscriptions",
+    "systemHealth": "System Health",
+    "enrichment": "Enrichment Pipeline",
+    "cacheHitRate": "Cache Hit Rate",
+    "llmCalls": "LLM Calls",
+    "totalEnrichments": "Total Enrichments",
+    "estimatedSavings": "Est. Savings",
+    "rulesAtGlance": "Rules at a Glance",
+    "rulesErrors": "Rules with errors",
+    "rulesLastModified": "Last modified",
+    "noRules": "No rules configured",
+    "viewRules": "View Rules Engine",
+    "quickActions": "Quick Actions",
+    "newAccount": "New Account",
+    "newSchedule": "New Scraping Schedule",
+    "viewQueues": "View Queues",
+    "viewAccounts": "View Accounts"
   }
 }

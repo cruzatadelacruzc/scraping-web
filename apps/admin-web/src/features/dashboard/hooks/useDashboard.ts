@@ -1,20 +1,69 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@shared/api/client';
+import { ENV } from '@shared/config/env';
 
-interface DashboardData {
+export interface DashboardMetrics {
+  productCount: number;
+  categoriesBreakdown: Array<{ category: string; count: number }>;
   totalAccounts: number;
-  activeUsers: number;
-  productsScraped: number;
-  alarmsFiring: number;
+  totalUsers: number;
+  activeSubscriptions: number;
+  recentProducts: Array<Record<string, unknown>>;
 }
 
-export function useDashboard() {
-  return useQuery<DashboardData>({
+export interface HealthStatus {
+  services: Array<{ service: string; status: 'connected' | 'error'; error?: string }>;
+  timestamp: string;
+}
+
+export interface EnrichmentSnapshot {
+  startedAt: string;
+  totalEnrichments: number;
+  enrichmentHashSkips: number;
+  enrichmentHashSkipRate: number;
+  cacheHits: number;
+  cacheHitsRate: number;
+  keywordHits: number;
+  keywordHitsRate: number;
+  llmCalls: number;
+  llmPromptCacheHits: number;
+  llmPromptCacheHitRate: number;
+  costPerMillion: number;
+  estimatedCost: number;
+  estimatedSavings: number;
+}
+
+export function useDashboardMetrics() {
+  return useQuery<DashboardMetrics>({
     queryKey: ['dashboard'],
     queryFn: async () => {
-      const { data } = await apiClient.get<DashboardData>('/admin/dashboard');
+      const { data } = await apiClient.get<DashboardMetrics>('/admin/dashboard');
       return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 min (standard tier)
+    staleTime: ENV.STALE_TIME_STANDARD,
+  });
+}
+
+export function useHealthStatus() {
+  return useQuery<HealthStatus>({
+    queryKey: ['dashboard', 'health'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<HealthStatus>('/admin/dashboard/health');
+      return data;
+    },
+    staleTime: ENV.STALE_TIME_REALTIME,
+    refetchInterval: ENV.STALE_TIME_REALTIME,
+  });
+}
+
+export function useEnrichmentMetrics() {
+  return useQuery<EnrichmentSnapshot>({
+    queryKey: ['dashboard', 'enrichment'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<EnrichmentSnapshot>('/admin/dashboard/enrichment');
+      return data;
+    },
+    staleTime: ENV.STALE_TIME_REALTIME,
+    refetchInterval: ENV.STALE_TIME_REALTIME,
   });
 }
