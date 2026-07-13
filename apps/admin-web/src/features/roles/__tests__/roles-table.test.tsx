@@ -10,6 +10,19 @@ import type { RoleViewModel } from '../view-models/role-view-model';
 // Mocks
 // ---------------------------------------------------------------------------
 
+vi.mock('@shared/auth', () => ({
+  useCurrentUser: () => ({
+    userId: 'user-1',
+    accountId: 'acc-1',
+    roles: ['SUPER_ADMIN'],
+    username: 'admin',
+    email: 'admin@test.dev',
+  }),
+  useIsAuthenticated: () => true,
+  useLogin: () => vi.fn(),
+  useLogout: () => vi.fn(),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
@@ -217,7 +230,7 @@ describe('RolesTable', () => {
 
   it('shows delete confirmation AlertDialog and calls delete on confirm', async () => {
     mockUseGetRoles.mockReturnValue({
-      data: { items: [mockRoles[0]], total: 1 },
+      data: { items: [mockRoles[1]], total: 1 },
       isLoading: false,
       isError: false,
       error: null,
@@ -243,12 +256,12 @@ describe('RolesTable', () => {
     // Confirm delete
     await userEvent.click(screen.getByText('roles.delete.confirm'));
 
-    expect(deleteMutate).toHaveBeenCalledWith('1', expect.objectContaining({ onSuccess: expect.any(Function) }));
+    expect(deleteMutate).toHaveBeenCalledWith('2', expect.objectContaining({ onSuccess: expect.any(Function) }));
   });
 
   it('cancels delete when cancel is clicked in AlertDialog', async () => {
     mockUseGetRoles.mockReturnValue({
-      data: { items: [mockRoles[0]], total: 1 },
+      data: { items: [mockRoles[1]], total: 1 },
       isLoading: false,
       isError: false,
       error: null,
