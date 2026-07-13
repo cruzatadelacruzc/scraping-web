@@ -49,29 +49,49 @@ export const handlers = [
   // Admin — GET /api/admin/dashboard
   http.get(`${API_BASE}/admin/dashboard`, () => {
     return HttpResponse.json(envelope({
+      productCount: 12840,
+      categoriesBreakdown: [
+        { category: 'electronics', count: 4200 },
+        { category: 'vehicles', count: 3100 },
+        { category: 'realestate', count: 2800 },
+        { category: 'services', count: 2740 },
+      ],
       totalAccounts: 42,
-      activeUsers: 156,
-      productsScraped: 12840,
-      alarmsFiring: 3,
-      recentActivity: [],
+      totalUsers: 156,
+      activeSubscriptions: 38,
+      recentProducts: [],
     }));
   }),
 
   // Admin — GET /api/admin/dashboard/health
   http.get(`${API_BASE}/admin/dashboard/health`, () => {
     return HttpResponse.json(envelope({
-      db: 'healthy',
-      redis: 'healthy',
-      scraperUptime: 99.8,
+      services: [
+        { service: 'mongodb', status: 'connected' },
+        { service: 'postgres', status: 'connected' },
+        { service: 'redis', status: 'connected' },
+      ],
+      timestamp: new Date().toISOString(),
     }));
   }),
 
   // Admin — GET /api/admin/dashboard/enrichment
   http.get(`${API_BASE}/admin/dashboard/enrichment`, () => {
     return HttpResponse.json(envelope({
-      cacheHitRate: 87.5,
-      tokenConsumption: 125000,
-      costSavings: 342.5,
+      startedAt: new Date().toISOString(),
+      totalEnrichments: 5432,
+      enrichmentHashSkips: 1200,
+      enrichmentHashSkipRate: 0.22,
+      cacheHits: 3800,
+      cacheHitsRate: 0.87,
+      keywordHits: 890,
+      keywordHitsRate: 0.21,
+      llmCalls: 342,
+      llmPromptCacheHits: 120,
+      llmPromptCacheHitRate: 0.35,
+      costPerMillion: 15.0,
+      estimatedCost: 51.30,
+      estimatedSavings: 342.50,
     }));
   }),
 

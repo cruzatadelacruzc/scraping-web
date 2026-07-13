@@ -68,10 +68,10 @@ export function DashboardPage(): JSX.Element {
             </div>
           ) : enrichment ? (
             <div className="mt-md grid grid-cols-2 gap-sm">
-              <MetricItem label={t('dashboard.cacheHitRate')} value={`${(enrichment.cacheHitsRate * 100).toFixed(1)}%`} />
-              <MetricItem label={t('dashboard.llmCalls')} value={enrichment.llmCalls.toLocaleString()} />
-              <MetricItem label={t('dashboard.totalEnrichments')} value={enrichment.totalEnrichments.toLocaleString()} />
-              <MetricItem label={t('dashboard.estimatedSavings')} value={`$${enrichment.estimatedSavings.toFixed(2)}`} />
+              <MetricItem label={t('dashboard.cacheHitRate')} value={`${((enrichment.cacheHitsRate ?? 0) * 100).toFixed(1)}%`} />
+              <MetricItem label={t('dashboard.llmCalls')} value={(enrichment.llmCalls ?? 0).toLocaleString()} />
+              <MetricItem label={t('dashboard.totalEnrichments')} value={(enrichment.totalEnrichments ?? 0).toLocaleString()} />
+              <MetricItem label={t('dashboard.estimatedSavings')} value={`$${(enrichment.estimatedSavings ?? 0).toFixed(2)}`} />
             </div>
           ) : <p className="mt-md text-body-sm text-on-surface-variant">{t('common.noData')}</p>}
         </section>
