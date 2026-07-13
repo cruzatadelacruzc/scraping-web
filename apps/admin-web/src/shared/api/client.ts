@@ -1,5 +1,5 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { ENV } from '@shared/config/env';
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 const apiClient = axios.create({ baseURL: ENV.API_BASE_URL });
 

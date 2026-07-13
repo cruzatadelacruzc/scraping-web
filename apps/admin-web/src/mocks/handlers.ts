@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 const API_BASE = 'http://localhost:3000/api';
 
 /** Backend wraps all responses in { status, message, data }. */
-function envelope<T>(data: T): object {
+function envelope(data: unknown): object {
   return { status: 'success', message: 'OK', data };
 }
 

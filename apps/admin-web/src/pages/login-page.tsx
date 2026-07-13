@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '@features/auth/components/login-form';
 import type { LoginFormValues } from '@features/auth/schemas/login.schema';
 import { useIsAuthenticated, useLogin } from '@shared/auth';

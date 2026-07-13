@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
 
 import type { LoginFormValues } from '../schemas/login.schema';
@@ -72,7 +72,7 @@ export function LoginForm({ onSubmit }: Props): JSX.Element {
           />
           <button
             type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
+            onClick={() => { setShowPassword((prev) => !prev); }}
             className="absolute right-0 top-0 flex h-full items-center px-sm text-on-surface-variant hover:text-on-surface"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >

@@ -1,18 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@shared/api/client';
 import { ENV } from '@shared/config/env';
+import { useQuery } from '@tanstack/react-query';
 
 export interface DashboardMetrics {
   productCount: number;
-  categoriesBreakdown: Array<{ category: string; count: number }>;
+  categoriesBreakdown: { category: string; count: number }[];
   totalAccounts: number;
   totalUsers: number;
   activeSubscriptions: number;
-  recentProducts: Array<Record<string, unknown>>;
+  recentProducts: Record<string, unknown>[];
 }
 
 export interface HealthStatus {
-  services: Array<{ service: string; status: 'connected' | 'error'; error?: string }>;
+  services: { service: string; status: 'connected' | 'error'; error?: string }[];
   timestamp: string;
 }
 

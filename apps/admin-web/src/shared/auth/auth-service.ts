@@ -1,4 +1,5 @@
 import { ENV } from '@shared/config/env';
+
 import type { ITokenStorage } from './token-storage.interface';
 import type { AuthResponse, AuthSession } from './types';
 import type { RoleType } from './types';
@@ -108,7 +109,7 @@ export class AuthService {
         return body.message;
       }
       if (Array.isArray(body.error)) {
-        const messages = (body.error as Array<{ message: string }>)
+        const messages = (body.error as { message: string }[])
           .map((e) => e.message)
           .join(', ');
         if (messages.length > 0) return messages;

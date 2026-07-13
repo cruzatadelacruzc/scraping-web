@@ -30,6 +30,6 @@ export interface AuthResponse {
     email: string;
     username: string;
     accountId: string;
-    roles: Array<{ id: string; name: string }>;
+    roles: { id: string; name: string }[];
   };
 }
