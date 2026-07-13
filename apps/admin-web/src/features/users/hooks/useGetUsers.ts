@@ -1,18 +1,31 @@
-import { useQuery } from '@tanstack/react-query';
 import { ENV } from '@shared/config/env';
-import { usersService } from '../services/users-service';
-import { mapUserDTOToViewModel } from '../mappers/user-mapper';
-import type { UserViewModel } from '../view-models/user-view-model';
+import { useQuery } from '@tanstack/react-query';
 
-export function useGetUsers(params: { page: number; limit: number }) {
+import { mapUserDTOToViewModel } from '../mappers/user-mapper';
+import { usersService } from '../services/users-service';
+
+import { userKeys } from './query-keys';
+
+interface UseGetUsersParams {
+  page: number;
+  limit: number;
+  search?: string;
+}
+
+export function useGetUsers(params: UseGetUsersParams) {
   const skip = (params.page - 1) * params.limit;
 
   return useQuery({
-    queryKey: ['users', params],
+    queryKey: userKeys.list({ page: params.page, limit: params.limit, search: params.search ?? '' }),
     queryFn: async ({ signal }) => {
-      const response = await usersService.list({ skip, limit: params.limit, signal });
+      const response = await usersService.list({
+        skip,
+        limit: params.limit,
+        search: params.search,
+        signal,
+      });
       return {
-        items: response.data.users.map(mapUserDTOToViewModel) as UserViewModel[],
+        items: response.data.users.map(mapUserDTOToViewModel),
         total: response.data.total,
       };
     },

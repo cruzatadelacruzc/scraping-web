@@ -30,7 +30,130 @@
     "loading": "Loading…",
     "error": "Something went wrong",
     "retry": "Retry",
-    "noData": "No data available"
+    "noData": "No data available",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "accounts": {
+    "searchPlaceholder": "Search accounts…",
+    "table": {
+      "name": "Name",
+      "users": "Users",
+      "subscriptions": "Subscriptions",
+      "alarms": "Alarms",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "No accounts found",
+      "description": "Accounts will appear here once tenants sign up."
+    },
+    "error": {
+      "message": "Failed to load accounts."
+    },
+    "cannotDeleteSelf": "Cannot delete your own account",
+    "delete": {
+      "title": "Delete account?",
+      "description": "This will permanently delete the account and all of its data. This action cannot be undone.",
+      "confirm": "Delete permanently",
+      "cancel": "Cancel",
+      "success": "Account deleted successfully",
+      "error": "Failed to delete account"
+    },
+    "selected": {
+      "count": "{{count}} selected",
+      "delete": "Delete selected"
+    },
+    "pagination": {
+      "info": "Page {{page}} of {{totalPages}} · {{total}} total",
+      "prev": "‹ Prev",
+      "next": "Next ›"
+    },
+    "drawer": {
+      "title": "Account Detail",
+      "close": "Close drawer",
+      "error": "Failed to load account details.",
+      "name": "Name",
+      "accountId": "Account ID",
+      "users": "Users",
+      "subscriptions": "Subscriptions",
+      "alarms": "Alarms",
+      "created": "Created"
+    }
+  },
+  "roles": {
+    "table": {
+      "title": "Roles ({{count}})",
+      "caption": "Roles list",
+      "name": "Role Name",
+      "users": "Users",
+      "actions": "Actions"
+    },
+    "create": {
+      "button": "New Role",
+      "placeholder": "Enter role name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "success": "Role created successfully",
+      "error": "Failed to create role"
+    },
+    "cannotDeleteSelf": "Cannot delete a role assigned to your account",
+    "delete": {
+      "label": "Delete {{role}}",
+      "title": "Delete role?",
+      "description": "Are you sure you want to delete the role \"{{role}}\"? This action cannot be undone.",
+      "confirm": "Delete permanently",
+      "cancel": "Cancel",
+      "deleting": "Deleting…",
+      "success": "Role deleted successfully",
+      "error": "Failed to delete role"
+    },
+    "empty": {
+      "title": "No roles found",
+      "description": "Roles define what permissions users have. Create your first role to get started."
+    },
+    "error": {
+      "title": "Failed to load roles",
+      "message": "An error occurred while loading roles. Please try again."
+    },
+    "pagination": {
+      "info": "{{total}} total"
+    }
+  },
+  "users": {
+    "searchPlaceholder": "Search by email or username…",
+    "noUsers": "No users found",
+    "noUsersDesc": "Users will appear here after they register.",
+    "displayName": "Name",
+    "username": "Username",
+    "email": "Email",
+    "roles": "Roles",
+    "verified": "Verified",
+    "verifiedYes": "Verified",
+    "verifiedNo": "Pending",
+    "createdAt": "Created",
+    "detailTitle": "User Detail",
+    "detailError": "Failed to load user details.",
+    "noRoles": "No roles assigned",
+    "assignRole": "Assign Role",
+    "selectRole": "Select a role…",
+    "addRole": "Add",
+    "removeRole": "Remove {{role}}",
+    "deleteUser": "Delete User",
+    "deleteTitle": "Delete User?",
+    "deleteDescription": "This will permanently delete the user and all their data. This action cannot be undone.",
+    "permanentlyDelete": "Permanently Delete",
+    "cancelDelete": "Cancel",
+    "total": "total",
+    "pageOf": "Page {{page}} of {{total}}",
+    "cannotDeleteSelf": "Cannot delete your own account",
+    "drawerClose": "Close drawer",
+    "deleteSuccess": "User permanently deleted",
+    "deleteError": "Failed to delete user",
+    "assignRoleSuccess": "Role assigned successfully",
+    "assignRoleError": "Failed to assign role",
+    "removeRoleSuccess": "Role removed successfully",
+    "removeRoleError": "Failed to remove role"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -18,7 +18,7 @@ export interface AccountListResponse {
 }
 
 export const accountsService = {
-  list(params: { skip: number; limit: number; signal?: AbortSignal }) {
+  list(params: { skip: number; limit: number; search?: string; signal?: AbortSignal }) {
     return apiClient.get<AccountListResponse>('/admin/accounts', { params });
   },
   getById(id: string) {

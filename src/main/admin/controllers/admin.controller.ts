@@ -28,6 +28,17 @@ export class AdminController {
   }
 
   /**
+   * Gets a single user by ID.
+   * @param req - Express request with user id in params.
+   * @param res - Express response.
+   */
+  @httpGet('/:id', AuthMiddleware.forRoles('SUPER_ADMIN'))
+  public async getById(@request() req: Request, @response() res: Response): Promise<void> {
+    const user = await this._userService.getById(req.params.id);
+    ResponseHandler.wrapOrNotFound(res, user);
+  }
+
+  /**
    * Deletes a user by ID.
    * @param req - Express request with user id in params.
    * @param res - Express response.

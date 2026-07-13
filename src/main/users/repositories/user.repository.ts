@@ -31,7 +31,7 @@ export class UserRepository {
   }
 
   public findById(id: string): Promise<UserWithRoles | null> {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id },
       include: { roles: true },
     });
@@ -58,7 +58,7 @@ export class UserRepository {
   }
 
   public async findByIdWithRoles(id: string): Promise<UserWithRoles | null> {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id },
       include: { roles: true },
     });

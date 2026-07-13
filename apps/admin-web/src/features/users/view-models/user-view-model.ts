@@ -7,3 +7,9 @@ export interface UserViewModel {
   emailVerified: boolean;
   createdAt: Date;
 }
+
+export interface RoleViewModel {
+  id: string;
+  name: string;
+  userCount: number;
+}
