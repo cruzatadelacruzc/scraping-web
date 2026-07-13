@@ -1,3 +1,5 @@
+import type { JSX } from 'react';
+
 export function App(): JSX.Element {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface">
