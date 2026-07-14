@@ -15,6 +15,16 @@ export function registerAdminPaths(registry: OpenAPIRegistry): void {
     .errors(401, 403)
     .register(registry);
 
+  endpoint('get', '/api/admin/users/{id}')
+    .tag(TAG.ADMIN)
+    .summary('Get a single user (admin)')
+    .operationId('adminGetUser')
+    .security('bearerAuth')
+    .pathParam('id', 'User ID')
+    .response(200, 'User detail', Schemas.UserDTO)
+    .errors(401, 403, 404)
+    .register(registry);
+
   endpoint('delete', '/api/admin/users/{id}')
     .tag(TAG.ADMIN)
     .summary('Delete a user (admin)')

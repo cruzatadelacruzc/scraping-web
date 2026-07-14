@@ -1,6 +1,8 @@
 {
   "name": "bazaarsentinel",
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "version": "1.0.0",
   "description": "Multi-tenant SaaS for marketplace listing monitoring — watch prices, views, sellers, and outstanding status across online bazaars like Revolico.",
   "main": "dist/main/bootstrap.js",
@@ -117,6 +119,11 @@
     "apps/admin-web/src/**/*.{ts,tsx}": [
       "eslint --fix --config apps/admin-web/eslint.config.js",
       "prettier --write"
+    ]
+  },
+  "msw": {
+    "workerDirectory": [
+      "apps/admin-web/public"
     ]
   }
 }

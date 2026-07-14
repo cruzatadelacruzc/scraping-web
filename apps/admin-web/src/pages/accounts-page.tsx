@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
+import { AccountsTable } from '@features/accounts/components/accounts-table';
 
 export function AccountsPage(): JSX.Element {
   const { t } = useTranslation();
 
   return (
     <div>
-      <h1 className="text-headline-lg text-on-surface">{t('nav.accounts')}</h1>
-      <p className="mt-md text-body-md text-on-surface-variant">Account management will appear here.</p>
+      <h1 className="mb-lg text-headline-lg text-on-surface">{t('nav.accounts')}</h1>
+      <AccountsTable />
     </div>
   );
 }

@@ -11,7 +11,7 @@ export const handlers = [
   // Auth — POST /api/auth/login
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     const body = (await request.json()) as { username: string; password: string };
-    if (body.username === 'admin' && body.password === 'password') {
+    if (body.username === 'admin' && (body.password === 'password' || body.password === 'ChangeMe123')) {
       return HttpResponse.json(envelope({
         token: 'mock-jwt-token',
         refreshToken: 'mock-refresh-token',
@@ -102,12 +102,14 @@ export const handlers = [
   // Admin — GET /api/admin/accounts
   http.get(`${API_BASE}/admin/accounts`, () => {
     return HttpResponse.json(envelope({
-      items: [
-        { id: '1', name: 'Acme Corp', status: 'active', ownerEmail: 'admin@acme.dev', userCount: 12, planName: 'Pro', createdAt: '2024-01-15T10:30:00Z', updatedAt: '2024-06-01T10:30:00Z' },
-        { id: '2', name: 'Globex Inc', status: 'suspended', ownerEmail: 'ceo@globex.dev', userCount: 3, planName: 'Basic', createdAt: '2024-03-20T10:30:00Z', updatedAt: '2024-05-10T10:30:00Z' },
-        { id: '3', name: 'Initech', status: 'deleted', ownerEmail: 'admin@initech.dev', userCount: 0, planName: 'Starter', createdAt: '2023-11-01T10:30:00Z', updatedAt: '2024-07-01T10:30:00Z' },
+      accounts: [
+        { id: '1', name: 'Acme Corp', userCount: 12, subscriptionCount: 2, alarmCount: 5, createdAt: '2024-01-15T10:30:00Z', updatedAt: '2024-06-01T10:30:00Z' },
+        { id: '2', name: 'Globex Inc', userCount: 3, subscriptionCount: 1, alarmCount: 0, createdAt: '2024-03-20T10:30:00Z', updatedAt: '2024-05-10T10:30:00Z' },
+        { id: '3', name: 'Initech', userCount: 0, subscriptionCount: 0, alarmCount: 0, createdAt: '2023-11-01T10:30:00Z', updatedAt: '2024-07-01T10:30:00Z' },
       ],
       total: 3,
+      skip: 0,
+      limit: 20,
     }));
   }),
 ];

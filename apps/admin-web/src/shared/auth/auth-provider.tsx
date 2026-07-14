@@ -38,10 +38,11 @@ export function AuthProvider({ authService, sessionManager, storage, children }:
       setSession(null);
     });
 
-    // Try restore from existing access token
-    const hasToken = storage.getAccessToken() !== null;
-    if (hasToken) {
-      // If we have a token but no session, try to refresh to validate it
+    // Access token is in-memory and is ALWAYS null after page refresh.
+    // Check for a persisted refresh token instead. If present, silently
+    // re-authenticate via the refresh endpoint to get a new access token.
+    const hasRefreshToken = storage.getRefreshToken() !== null;
+    if (hasRefreshToken) {
       sessionManager
         .refresh()
         .then(() => {
