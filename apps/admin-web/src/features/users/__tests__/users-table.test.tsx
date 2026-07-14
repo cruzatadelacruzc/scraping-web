@@ -35,6 +35,14 @@ const { mockList, mockGetById, mockDelete, mockRolesList } = vi.hoisted(() => ({
 }));
 
 // Mock the service layer
+vi.mock('@shared/auth', () => ({
+  useCurrentUser: () => ({ userId: 'user-1', accountId: 'acc-1', roles: ['SUPER_ADMIN'], username: 'admin', email: 'admin@test.dev', expiresAt: Date.now() + 86400000 }),
+  useIsAuthenticated: () => true,
+  useLogin: () => vi.fn(),
+  useLogout: () => vi.fn(),
+  useAuthLoading: () => false,
+}));
+
 vi.mock('../services/users-service', () => ({
   usersService: {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

@@ -35,6 +35,15 @@ vi.mock('sonner', () => ({
   },
 }));
 
+// Mock auth hooks
+vi.mock('@shared/auth', () => ({
+  useCurrentUser: () => ({ userId: 'user-1', accountId: 'acc-1', roles: ['SUPER_ADMIN'], username: 'admin', email: 'admin@test.dev', expiresAt: Date.now() + 86400000 }),
+  useIsAuthenticated: () => true,
+  useLogin: () => vi.fn(),
+  useLogout: () => vi.fn(),
+  useAuthLoading: () => false,
+}));
+
 // Mock the accounts service
 vi.mock('../services/accounts-service', () => ({
   accountsService: {
