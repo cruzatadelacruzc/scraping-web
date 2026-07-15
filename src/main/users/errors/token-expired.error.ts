@@ -1,7 +1,7 @@
-export class TokenExpiredError extends Error {
-  public readonly statusCode = 410;
+import { AppError } from '@shared/errors/app.error';
+
+export class TokenExpiredError extends AppError {
   public constructor(message = 'Token has expired') {
-    super(message);
-    this.name = 'TokenExpiredError';
+    super(message, 410, 'TOKEN_EXPIRED');
   }
 }

@@ -1,7 +1,7 @@
-export class ConflictError extends Error {
-  public status = 409;
+import { AppError } from '@shared/errors/app.error';
+
+export class ConflictError extends AppError {
   public constructor(message = 'Conflict') {
-    super(message);
-    this.name = 'ConflictError';
+    super(message, 409, 'CONFLICT');
   }
 }
