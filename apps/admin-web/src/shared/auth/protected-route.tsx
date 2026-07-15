@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuthLoading, useIsAuthenticated } from './hooks';
@@ -19,14 +19,17 @@ export function ProtectedRoute({ children, fallbackPath = '/login' }: Props): JS
   const isLoading = useAuthLoading();
   const location = useLocation();
 
+  const navigateState = useMemo(
+    () => ({ from: location.pathname + location.search }),
+    [location.pathname, location.search],
+  );
+
   if (isLoading) {
     return <></>;
   }
 
   if (!isAuthenticated) {
-    return (
-      <Navigate to={fallbackPath} state={{ from: location.pathname + location.search }} replace />
-    );
+    return <Navigate to={fallbackPath} state={navigateState} replace />;
   }
 
   return <>{children}</>;

@@ -16,7 +16,7 @@ export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as LocationState | null)?.from || ROUTES.DASHBOARD;
+  const from = (location.state as LocationState | null)?.from ?? ROUTES.DASHBOARD;
 
   useEffect(() => {
     if (isAuthenticated) navigate(from, { replace: true });
