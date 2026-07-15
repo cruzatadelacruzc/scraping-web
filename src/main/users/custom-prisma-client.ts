@@ -31,6 +31,10 @@ const tenantExtension = Prisma.defineExtension(prisma =>
             return { AND: [{ accountId: tenantId }, where] };
           };
 
+          // WhereUniqueInput does not accept a top-level AND — merge accountId
+          // alongside the unique field instead (extended where unique, Prisma >= 5).
+          const addAccountToUniqueWhere = (where: any): any => ({ ...where, accountId: tenantId });
+
           const addAccountToData = (data: any): any => {
             if (!data) return { accountId: tenantId };
             if (data.accountId && data.accountId !== tenantId) {
@@ -42,10 +46,7 @@ const tenantExtension = Prisma.defineExtension(prisma =>
           // Operation handling (conservative)
           switch (operation) {
             case 'findUnique': {
-              // Convert where clause to ensure accountId
-              // Note: in some cases you'll need to use findFirst instead of findUnique
-              // if semantics/typing fails; test your specific case.
-              const newArgs = { ...args, where: addAccountToWhere(args?.where) };
+              const newArgs = { ...args, where: addAccountToUniqueWhere(args?.where) };
               return query(newArgs);
             }
 
@@ -60,7 +61,7 @@ const tenantExtension = Prisma.defineExtension(prisma =>
             case 'update':
             case 'delete': {
               if (!args?.where) throw new Error(`${operation} requires a where clause`);
-              const newArgs = { ...args, where: addAccountToWhere(args.where) };
+              const newArgs = { ...args, where: addAccountToUniqueWhere(args.where) };
               return query(newArgs);
             }
 
