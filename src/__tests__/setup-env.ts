@@ -13,6 +13,8 @@
  * `QUEUE_BACKEND=bullmq` (and `REDIS_URL`) in a dedicated test file or
  * via the environment when invoking jest.
  */
+import 'dotenv/config';
+
 process.env.QUEUE_BACKEND = 'mock';
 
 /**
