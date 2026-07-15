@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { DBContext } from '@config/db-config';
 import { container } from '@shared/container';
@@ -6,6 +6,8 @@ import { TYPES } from '@shared/types.container';
 import cors from 'cors';
 import { QueueDashboardAuthMiddleware } from '@scrapers/revolico/controllers/middleware/queue-dashboard-auth.middleware';
 import { ResponseHandler } from '@shared/response-handler';
+import { createErrorHandler } from '@shared/errors/error-handler.middleware';
+import { ILogger } from '@shared/logger.interface';
 import { CONFIG } from '@config/constants';
 import { initializeQueues } from '@shared/main-queues';
 import { QueueDashboardService } from '@shared/queue-dashboard';
@@ -15,11 +17,6 @@ import * as swaggerDocument from '../../swagger.json';
 import { tenantInitMiddleware } from '@shared/middleware/tenant-init.middleware';
 import { QueueContext } from '@shared/queue/queue-context';
 import prisma from '@users/custom-prisma-client';
-import { BotService } from '@bots/services/bot.service';
-import { LinkCodeService } from '@bots/services/link-code.service';
-import { BotRateLimitService } from '@bots/services/rate-limit.service';
-import { CronSchedulerService } from '@cron/services/scheduler.service';
-import { registerRevolicoStore } from '@scrapers/revolico/index';
 
 const PORT = process.env.PORT || 3000;
 
@@ -36,15 +33,6 @@ export class App {
     await _db.dbConnect();
     await _tenantDb.dbConnect();
 
-    // Register stores for cron scheduler + start automated scraping
-    registerRevolicoStore(container);
-    const scheduler = container.get<CronSchedulerService>(TYPES.CronSchedulerService);
-    await scheduler.initialize();
-
-    // Start bot providers if enabled
-    const botService = container.get<BotService>(TYPES.BotService);
-    await botService.start();
-
     appInstance = express();
 
     // Make tenant DB available to middleware
@@ -52,16 +40,12 @@ export class App {
 
     const server = new InversifyExpressServer(container);
 
+    const logger = container.get<ILogger>(TYPES.Logger);
+
     server.setErrorConfig(app => {
-      app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-        if (error instanceof Error) {
-          console.error('[GlobalErrorHandler]', error.message, error.stack?.split('\n').slice(0, 5).join('\n'));
-          return ResponseHandler.error(res, 'Sorry, we have presented internal problems');
-        }
-        next();
-      });
-      app.use((req: Request, res: Response) => {
-        void req;
+      app.use(createErrorHandler(logger));
+      app.use((_req: Request, res: Response) => {
+        void _req;
         ResponseHandler.notFound(res);
       });
     });
@@ -93,26 +77,9 @@ export class App {
    * SIGTERM handler in production.
    */
   public async close(): Promise<void> {
-    await container.get<BotService>(TYPES.BotService).stop();
-    await container.get<CronSchedulerService>(TYPES.CronSchedulerService).shutdown();
     await container.get<QueueContext>(QueueContext).shutdown();
     await container.get<PgDBContext>(TYPES.TenantDB).end();
     await prisma.$disconnect();
-
-    // Close Redis connections opened by bot services so Jest can exit cleanly.
-    // `destroy()` is best-effort — failures are logged but never re-thrown.
-    container
-      .get<LinkCodeService>(TYPES.LinkCodeService)
-      .destroy()
-      .catch(() => {});
-    container
-      .get<BotRateLimitService>(TYPES.BotRateLimitService)
-      .destroy()
-      .catch(() => {});
-    container
-      .get<import('@users/services/login-rate-limit.service').LoginRateLimitService>(TYPES.LoginRateLimitService)
-      .destroy()
-      .catch(() => {});
   }
 }
 
