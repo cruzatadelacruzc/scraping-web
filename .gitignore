@@ -24,6 +24,8 @@ tmp/
 .plans
 .firecrawl/
 .playwright-cli/
+.playwright-mcp/
+docs/superpowers/
 
 ######################
 # Bot runtime logs
