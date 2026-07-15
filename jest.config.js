@@ -9,7 +9,7 @@ module.exports = {
   testPathIgnorePatterns: ['<rootDir>/apps/'],
   // Ignore compiled output and the build cache so Jest's haste-map doesn't
   // pick up duplicate __mocks__ folders from `dist/`.
-  modulePathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/', '<rootDir>/apps/'],
+  modulePathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/', '<rootDir>/apps/', '<rootDir>/.claude/'],
   moduleDirectories: ['node_modules', 'src/main'],
   testEnvironment: 'node',
   maxWorkers: 1,
