@@ -13,6 +13,9 @@ import { UserMapper } from '@users/mappers';
 import { LoginRateLimitService } from './login-rate-limit.service';
 import { TokenManagementService } from './token-management.service';
 import { LoginAttemptRepository } from '@users/repositories/login-attempt.repository';
+import { InvalidCredentialsError } from '@users/errors/invalid-credentials.error';
+import { RateLimitError } from '@users/errors/rate-limit.error';
+import { AccountDeactivatedError } from '@users/errors/account-deactivated.error';
 
 @injectable()
 export class AuthService {
@@ -40,7 +43,9 @@ export class AuthService {
    * @param ip     - The request IP for rate limiting.
    * @param userAgent - The request user agent for audit logging.
    * @returns Token response with user data.
-   * @throws {Error} If credentials are invalid, account deactivated, or rate-limited.
+   * @throws {InvalidCredentialsError} If the username does not exist, no password is set, or the password is wrong.
+   * @throws {AccountDeactivatedError} If the account has been soft-deleted.
+   * @throws {RateLimitError} If the IP or username has exceeded the rate limit.
    */
   public async login(data: UserLoginDTO, ip?: string, userAgent?: string): Promise<AuthResponseDTO> {
     this._log.debug('Login attempt for user:', data.username);
@@ -50,40 +55,40 @@ export class AuthService {
       const ipLimit = await this._rateLimiter.checkByIp(ip);
       if (!ipLimit.allowed) {
         this._log.warn('Login blocked by IP rate limit', { ip, username: data.username });
-        throw new Error('Too many login attempts. Please try again later.');
+        throw new RateLimitError(ipLimit.retryAfterMs);
       }
     }
 
     const userLimit = await this._rateLimiter.checkByUsername(data.username);
     if (!userLimit.allowed) {
       this._log.warn('Login blocked by username rate limit', { username: data.username });
-      throw new Error('Too many login attempts. Please try again later.');
+      throw new RateLimitError(userLimit.retryAfterMs);
     }
 
     const user = await this.findUserByCredentials(data.username);
     if (!user) {
       await this._loginAttemptRepo.create({ ipAddress: ip, userAgent, success: false });
       this._log.warn('Login failed: User not found');
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     // Reject deactivated accounts
     if (user.deletedAt) {
       this._log.warn('Login rejected: account deactivated', { userId: user.id });
-      throw new Error('This account has been deactivated. Contact support to reactivate.');
+      throw new AccountDeactivatedError();
     }
 
     if (!user.passwordHash) {
       await this._loginAttemptRepo.create({ userId: user.id, ipAddress: ip, userAgent, success: false });
       this._log.warn('Login failed: no password set for user');
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     const isValidPassword = await this._hasher.compare(data.password, user.passwordHash);
     if (!isValidPassword) {
       await this._loginAttemptRepo.create({ userId: user.id, ipAddress: ip, userAgent, success: false });
       this._log.warn('Login failed: Invalid password');
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
 
     // Successful login — reset rate limit counters
