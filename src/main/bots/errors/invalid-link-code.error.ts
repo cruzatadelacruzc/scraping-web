@@ -1,6 +1,7 @@
-export class InvalidLinkCodeError extends Error {
+import { AppError } from '@shared/errors/app.error';
+
+export class InvalidLinkCodeError extends AppError {
   public constructor(public readonly code: string) {
-    super(`Invalid or expired link code: ${code}`);
-    this.name = 'InvalidLinkCodeError';
+    super(`Invalid or expired link code: ${code}`, 400, 'INVALID_LINK_CODE');
   }
 }

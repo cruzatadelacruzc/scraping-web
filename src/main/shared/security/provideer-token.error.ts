@@ -1,7 +1,7 @@
-export class ProviderTokenError extends Error {
-  public status = 401;
+import { AppError } from '@shared/errors/app.error';
+
+export class ProviderTokenError extends AppError {
   public constructor(message = 'Invalid provider token') {
-    super(message);
-    Object.setPrototypeOf(this, ProviderTokenError.prototype);
+    super(message, 401, 'PROVIDER_TOKEN_ERROR');
   }
 }

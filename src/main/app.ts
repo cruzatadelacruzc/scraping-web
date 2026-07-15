@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { DBContext } from '@config/db-config';
 import { container } from '@shared/container';
@@ -6,6 +6,8 @@ import { TYPES } from '@shared/types.container';
 import cors from 'cors';
 import { QueueDashboardAuthMiddleware } from '@scrapers/revolico/controllers/middleware/queue-dashboard-auth.middleware';
 import { ResponseHandler } from '@shared/response-handler';
+import { createErrorHandler } from '@shared/errors/error-handler.middleware';
+import { ILogger } from '@shared/logger.interface';
 import { CONFIG } from '@config/constants';
 import { initializeQueues } from '@shared/main-queues';
 import { QueueDashboardService } from '@shared/queue-dashboard';
@@ -52,16 +54,12 @@ export class App {
 
     const server = new InversifyExpressServer(container);
 
+    const logger = container.get<ILogger>(TYPES.Logger);
+
     server.setErrorConfig(app => {
-      app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-        if (error instanceof Error) {
-          console.error('[GlobalErrorHandler]', error.message, error.stack?.split('\n').slice(0, 5).join('\n'));
-          return ResponseHandler.error(res, 'Sorry, we have presented internal problems');
-        }
-        next();
-      });
-      app.use((req: Request, res: Response) => {
-        void req;
+      app.use(createErrorHandler(logger));
+      app.use((_req: Request, res: Response) => {
+        void _req;
         ResponseHandler.notFound(res);
       });
     });

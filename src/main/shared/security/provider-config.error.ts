@@ -1,7 +1,7 @@
-export class ProviderConfigError extends Error {
-  public status = 500;
+import { AppError } from '@shared/errors/app.error';
+
+export class ProviderConfigError extends AppError {
   public constructor(message = 'Provider configuration error') {
-    super(message);
-    Object.setPrototypeOf(this, ProviderConfigError.prototype);
+    super(message, 500, 'PROVIDER_CONFIG_ERROR');
   }
 }
