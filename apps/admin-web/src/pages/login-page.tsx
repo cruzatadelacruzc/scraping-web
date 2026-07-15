@@ -1,26 +1,33 @@
 import { useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { LoginForm } from '@features/auth/components/login-form';
 import type { LoginFormValues } from '@features/auth/schemas/login.schema';
 import { useIsAuthenticated, useLogin } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
 import { Shield } from 'lucide-react';
 
+interface LocationState {
+  from?: string;
+}
+
 export function LoginPage(): JSX.Element {
   const login = useLogin();
   const isAuthenticated = useIsAuthenticated();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = (location.state as LocationState | null)?.from || ROUTES.DASHBOARD;
 
   useEffect(() => {
-    if (isAuthenticated) navigate(ROUTES.DASHBOARD, { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated) navigate(from, { replace: true });
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = useCallback(
     async (values: LoginFormValues): Promise<void> => {
       await login(values);
-      navigate(ROUTES.DASHBOARD, { replace: true });
+      navigate(from, { replace: true });
     },
-    [login, navigate],
+    [login, navigate, from],
   );
 
   return (
