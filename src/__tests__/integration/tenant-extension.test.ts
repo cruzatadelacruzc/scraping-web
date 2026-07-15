@@ -22,23 +22,23 @@ let userA2Id: string; // second user in A, used for the delete test
 let userBId: string;
 
 beforeAll(async () => {
-  // Clean slate: ensures no leftover data from previous runs
-  await pool.query('DELETE FROM public."UserIdentity"');
-  await pool.query('DELETE FROM public."User"');
-  await pool.query('DELETE FROM public."Account"');
+  // Targeted cleanup of leftovers from a previous crashed run, keyed by stable
+  // natural keys so we never wipe unrelated dev data.
+  await pool.query(`DELETE FROM public."User" WHERE "username" = ANY($1::text[])`, [['tenext-a', 'tenext-a2', 'tenext-b']]);
+  await pool.query(`DELETE FROM public."Account" WHERE "name" = ANY($1::text[])`, [['tenext Account A', 'tenext Account B']]);
 
   // Account A
   await pool.query(
     `INSERT INTO public."Account" ("id", "name", "createdAt", "updatedAt")
      VALUES ($1, $2, NOW(), NOW())`,
-    [accountAId, 'Account A'],
+    [accountAId, 'tenext Account A'],
   );
 
   // Account B
   await pool.query(
     `INSERT INTO public."Account" ("id", "name", "createdAt", "updatedAt")
      VALUES ($1, $2, NOW(), NOW())`,
-    [accountBId, 'Account B'],
+    [accountBId, 'tenext Account B'],
   );
 
   // User 1 in Account A
@@ -67,8 +67,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Clean up seeded data (child tables first, parent tables last)
-  await pool.query('DELETE FROM public."UserIdentity"');
+  // Clean up seeded data (child tables first, parent tables last).
+  // userA2 may already be deleted by the delete test — the no-op is harmless.
   await pool.query('DELETE FROM public."User" WHERE "id" = ANY($1::text[])', [[userAId, userA2Id, userBId]]);
   await pool.query('DELETE FROM public."Account" WHERE "id" = ANY($1::text[])', [[accountAId, accountBId]]);
   await pool.end();
