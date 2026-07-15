@@ -1,3 +1,5 @@
+import { AppError } from '@shared/errors/app.error';
+
 /**
  * Error codes for JSONata extraction failures. Used to build the BullMQ
  * `failedReason` string visible in Bull-Board, and to discriminate error
@@ -20,20 +22,18 @@ export type JsonataErrorCode =
  * preserved on the instance for tests and for `ctx.log()` diagnostics.
  *
  * @class JsonataExtractionError
- * @extends {Error}
+ * @extends {AppError}
  */
-export class JsonataExtractionError extends Error {
+export class JsonataExtractionError extends AppError {
   public readonly code: JsonataErrorCode;
   public readonly expression?: string;
   public readonly inputJson?: unknown;
 
   public constructor(init: { code: JsonataErrorCode; message: string; expression?: string; inputJson?: unknown }) {
-    super(init.message);
-    this.name = 'JsonataExtractionError';
+    super(init.message, 500);
     this.code = init.code;
     this.expression = init.expression;
     this.inputJson = init.inputJson;
-    Object.setPrototypeOf(this, JsonataExtractionError.prototype);
   }
 }
 
