@@ -49,18 +49,54 @@ The skill lives in user-global scope (`~/.claude/skills/git-commit/`) and Claude
 Integration tests require real services running locally. **Before `npm run test`:**
 
 ```bash
-docker-compose up -d          # at minimum Postgres; full stack is fine
-pg_isready                    # or: psql "${TENANT_DB_URL}" -c 'select 1'
+docker compose up -d          # at minimum Postgres; full stack is fine
 ```
 
 MongoDB and BullMQ/Redis are mocked in tests (MongoMemoryServer + `QUEUE_BACKEND=mock`), so the only docker-compose dependency is Postgres. **After the test run:**
 
 ```bash
-docker-compose down           # optional — keeps volumes
-# docker-compose down -v      # FULL reset (irreversible)
+docker compose down           # optional — keeps volumes
+# docker compose down -v      # FULL reset (irreversible)
 ```
 
 A test run is considered clean only when the final lines show `Ran all test suites.` with **no** `Jest did not exit one second after the test run has completed.` warning. If you see that warning, see `.claude/skills/testing/SKILL.md` (open handles + `openHandlesTimeout`) and `.claude/skills/docker-dev/SKILL.md` (integration test environment).
+
+### MongoDB binary for `mongodb-memory-server`
+
+`mongodb-memory-server` downloads a `mongod` binary on first run and caches it at `~/.cache/mongodb-binaries/`. In restricted networks (proxy / 403 from fastdl.mongodb.org), the download fails.
+
+**Rule — try the normal path first, then fall back:**
+
+1. **Try running tests normally** — assume the binary is cached from a previous run, or that the network allows the download. Use `npm run test` without any extra env vars.
+
+2. **If `mongodb-memory-server` fails to download** (`MongoBinaryDownloadError` or 403), check whether the binary already exists from a prior extraction at `$HOME/.mongodb-binaries/mongod`. If it does, set the env var and re-run:
+   ```bash
+   MONGOMS_SYSTEM_BINARY="$HOME/.mongodb-binaries/mongod" npm run test
+   ```
+
+3. **If the extracted binary does NOT exist**, extract it from the Docker `mongo` container (the `mongo:4.4.5` image ships a compatible `mongod`). This is a ONE-TIME setup — once done, the binary stays on disk. Do NOT repeat extraction on every test run:
+   ```bash
+   # Copy mongod binary
+   docker compose cp mongo:/usr/bin/mongod /tmp/mongod
+   mkdir -p ~/.mongodb-binaries/lib
+
+   # Copy its non-glibc shared libraries
+   docker compose exec -T mongo bash -c \
+     "cd /usr/lib/x86_64-linux-gnu && tar -ch libasn1.so.8 libcrypto.so.1.1 libcurl.so.4 libffi.so.6 libgmp.so.10 libgnutls.so.30 libgssapi.so.3 libgssapi_krb5.so.2 libhcrypto.so.4 libheimbase.so.1 libheimntlm.so.0 libhogweed.so.4 libhx509.so.5 libidn2.so.0 libk5crypto.so.3 libkrb5.so.26 libkrb5.so.3 libkrb5support.so.0 liblber-2.4.so.2 libldap_r-2.4.so.2 libnettle.so.6 libnghttp2.so.14 libp11-kit.so.0 libpsl.so.5 libroken.so.18 librtmp.so.1 libsasl2.so.2 libsqlite3.so.0 libssl.so.1.1 libtasn1.so.6 libunistring.so.2 libwind.so.0" \
+     | tar -x -C ~/.mongodb-binaries/lib
+
+   # Create wrapper that points LD_LIBRARY_PATH at the extracted libs
+   mv /tmp/mongod ~/.mongodb-binaries/mongod.bin
+   printf '#!/bin/bash\nexport LD_LIBRARY_PATH="$HOME/.mongodb-binaries/lib:$LD_LIBRARY_PATH"\nexec "$HOME/.mongodb-binaries/mongod.bin" "$@"\n' > ~/.mongodb-binaries/mongod
+   chmod +x ~/.mongodb-binaries/mongod
+
+   # Verify
+   ~/.mongodb-binaries/mongod --version
+   ```
+
+   Then run tests with `MONGOMS_SYSTEM_BINARY` as in step 2.
+
+4. **Always** prefix Jest commands with `MONGOMS_SYSTEM_BINARY="$HOME/.mongodb-binaries/mongod"` when the host has no cached binary and no network access to MongoDB's download server. The "Using SystemBinary!" and "Requested version X ... Using SystemBinary!" messages are expected and harmless.
 
 ## Where to find project-specific guidance
 
