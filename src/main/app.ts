@@ -17,6 +17,11 @@ import * as swaggerDocument from '../../swagger.json';
 import { tenantInitMiddleware } from '@shared/middleware/tenant-init.middleware';
 import { QueueContext } from '@shared/queue/queue-context';
 import prisma from '@users/custom-prisma-client';
+import { BotService } from '@bots/services/bot.service';
+import { LinkCodeService } from '@bots/services/link-code.service';
+import { BotRateLimitService } from '@bots/services/rate-limit.service';
+import { CronSchedulerService } from '@cron/services/scheduler.service';
+import { registerRevolicoStore } from '@scrapers/revolico/index';
 
 const PORT = process.env.PORT || 3000;
 
@@ -32,6 +37,15 @@ export class App {
     _dashboard.setup();
     await _db.dbConnect();
     await _tenantDb.dbConnect();
+
+    // Register stores for cron scheduler + start automated scraping
+    registerRevolicoStore(container);
+    const scheduler = container.get<CronSchedulerService>(TYPES.CronSchedulerService);
+    await scheduler.initialize();
+
+    // Start bot providers if enabled
+    const botService = container.get<BotService>(TYPES.BotService);
+    await botService.start();
 
     appInstance = express();
 
@@ -77,9 +91,26 @@ export class App {
    * SIGTERM handler in production.
    */
   public async close(): Promise<void> {
+    await container.get<BotService>(TYPES.BotService).stop();
+    await container.get<CronSchedulerService>(TYPES.CronSchedulerService).shutdown();
     await container.get<QueueContext>(QueueContext).shutdown();
     await container.get<PgDBContext>(TYPES.TenantDB).end();
     await prisma.$disconnect();
+
+    // Close Redis connections opened by bot services so Jest can exit cleanly.
+    // `destroy()` is best-effort — failures are logged but never re-thrown.
+    container
+      .get<LinkCodeService>(TYPES.LinkCodeService)
+      .destroy()
+      .catch(() => {});
+    container
+      .get<BotRateLimitService>(TYPES.BotRateLimitService)
+      .destroy()
+      .catch(() => {});
+    container
+      .get<import('@users/services/login-rate-limit.service').LoginRateLimitService>(TYPES.LoginRateLimitService)
+      .destroy()
+      .catch(() => {});
   }
 }
 
