@@ -38,6 +38,8 @@ beforeAll(async () => {
 
   const rolesResult = await pgDb.query(`SELECT "id", "name" FROM public."Role" WHERE "accountId" IS NULL`);
   superAdminRoleId = rolesResult.rows.find((r: any) => r.name === 'SUPER_ADMIN')?.id;
+  // eslint-disable-next-line jest/no-standalone-expect
+  expect(superAdminRoleId).toBeDefined();
 
   const superAdminRes = await request(app)
     .post('/api/accounts/register/local')
@@ -49,6 +51,10 @@ beforeAll(async () => {
       roleIds: superAdminRoleId ? [superAdminRoleId] : [],
     });
   superAdminToken = superAdminRes.body.data?.token;
+  // eslint-disable-next-line jest/no-standalone-expect
+  expect(superAdminRes.status).toBe(201);
+  // eslint-disable-next-line jest/no-standalone-expect
+  expect(superAdminToken).toBeDefined();
 });
 
 afterAll(async () => {
