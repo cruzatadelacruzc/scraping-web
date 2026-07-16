@@ -156,6 +156,22 @@ describe('AuthMiddleware', () => {
       expect(next).toHaveBeenCalled();
     });
 
+    it('should query user with roles filtered to active only (deletedAt: null)', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(dbUser);
+      req.headers = { authorization: `Bearer ${validToken}` };
+
+      await authMiddleware.handler(req as Request, res as Response, next);
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: {
+            userIdentity: true,
+            roles: { where: { deletedAt: null } },
+          },
+        }),
+      );
+    });
+
     it('should return 401 when no authorization header', async () => {
       req.headers = {};
 
