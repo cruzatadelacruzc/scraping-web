@@ -1,4 +1,7 @@
 import { RoleService } from '@admin/services/role.service';
+import { RoleNotFoundError } from '@admin/errors/role-not-found.error';
+import { SystemRoleProtectedError } from '@admin/errors/system-role-protected.error';
+import { RoleInactiveError } from '@admin/errors/role-inactive.error';
 import { ILogger } from '@shared/logger.interface';
 
 describe('RoleService', () => {
@@ -10,8 +13,9 @@ describe('RoleService', () => {
     prismaMock = {
       role: {
         findMany: jest.fn(),
+        findUnique: jest.fn(),
         create: jest.fn(),
-        delete: jest.fn(),
+        update: jest.fn(),
       },
       user: {
         update: jest.fn(),
@@ -36,8 +40,8 @@ describe('RoleService', () => {
   describe('getAll', () => {
     it('should return all roles with user count', async () => {
       const roles = [
-        { id: 'role-1', name: 'SUPER_ADMIN', accountId: null, _count: { users: 1 } },
-        { id: 'role-2', name: 'ACCOUNT_OWNER', accountId: null, _count: { users: 5 } },
+        { id: 'role-1', name: 'SUPER_ADMIN', accountId: null, deletedAt: null, _count: { users: 1 } },
+        { id: 'role-2', name: 'ACCOUNT_OWNER', accountId: null, deletedAt: null, _count: { users: 5 } },
       ];
       prismaMock.role.findMany.mockResolvedValue(roles);
 
@@ -45,6 +49,29 @@ describe('RoleService', () => {
 
       expect(result).toEqual(roles);
       expect(prismaMock.role.findMany).toHaveBeenCalledWith({
+        where: {},
+        include: { _count: { select: { users: true } } },
+      });
+    });
+
+    it('should filter only active roles when status=active', async () => {
+      prismaMock.role.findMany.mockResolvedValue([]);
+
+      await service.getAll('active');
+
+      expect(prismaMock.role.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null },
+        include: { _count: { select: { users: true } } },
+      });
+    });
+
+    it('should filter only deactivated roles when status=inactive', async () => {
+      prismaMock.role.findMany.mockResolvedValue([]);
+
+      await service.getAll('inactive');
+
+      expect(prismaMock.role.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: { not: null } },
         include: { _count: { select: { users: true } } },
       });
     });
@@ -102,22 +129,60 @@ describe('RoleService', () => {
   });
 
   // =========================================================================
-  // delete
+  // toggleActive
   // =========================================================================
-  describe('delete', () => {
-    it('should delete a role by id', async () => {
-      prismaMock.role.delete.mockResolvedValue({ id: 'role-1', name: 'TEST', accountId: null });
+  describe('toggleActive', () => {
+    it('should deactivate an active role', async () => {
+      prismaMock.role.findUnique.mockResolvedValue({ id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: null });
+      const updated = { id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: new Date() };
+      prismaMock.role.update.mockResolvedValue(updated);
 
-      await service.delete('role-1');
+      const result = await service.toggleActive('role-1');
 
-      expect(prismaMock.role.delete).toHaveBeenCalledWith({ where: { id: 'role-1' } });
+      expect(result).toEqual(updated);
+      expect(prismaMock.role.update).toHaveBeenCalledWith({
+        where: { id: 'role-1' },
+        data: { deletedAt: expect.any(Date) },
+      });
+    });
+
+    it('should reactivate a deactivated role', async () => {
+      prismaMock.role.findUnique.mockResolvedValue({
+        id: 'role-1',
+        name: 'MODERATOR',
+        accountId: null,
+        deletedAt: new Date('2026-07-01T00:00:00Z'),
+      });
+      const updated = { id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: null };
+      prismaMock.role.update.mockResolvedValue(updated);
+
+      const result = await service.toggleActive('role-1');
+
+      expect(result).toEqual(updated);
+      expect(prismaMock.role.update).toHaveBeenCalledWith({
+        where: { id: 'role-1' },
+        data: { deletedAt: null },
+      });
+    });
+
+    it('should throw RoleNotFoundError for unknown id', async () => {
+      prismaMock.role.findUnique.mockResolvedValue(null);
+
+      await expect(service.toggleActive('bad-id')).rejects.toThrow(RoleNotFoundError);
+      expect(prismaMock.role.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw SystemRoleProtectedError for SUPER_ADMIN', async () => {
+      prismaMock.role.findUnique.mockResolvedValue({ id: 'role-sa', name: 'SUPER_ADMIN', accountId: null, deletedAt: null });
+
+      await expect(service.toggleActive('role-sa')).rejects.toThrow(SystemRoleProtectedError);
+      expect(prismaMock.role.update).not.toHaveBeenCalled();
     });
 
     it('should propagate prisma errors', async () => {
-      const error = new Error('Record not found');
-      prismaMock.role.delete.mockRejectedValue(error);
+      prismaMock.role.findUnique.mockRejectedValue(new Error('DB error'));
 
-      await expect(service.delete('bad-id')).rejects.toThrow('Record not found');
+      await expect(service.toggleActive('role-1')).rejects.toThrow('DB error');
     });
   });
 
@@ -125,7 +190,8 @@ describe('RoleService', () => {
   // assignRole
   // =========================================================================
   describe('assignRole', () => {
-    it('should connect role to user', async () => {
+    it('should connect an active role to a user', async () => {
+      prismaMock.role.findUnique.mockResolvedValue({ id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: null });
       prismaMock.user.update.mockResolvedValue({ id: 'user-1' });
 
       await service.assignRole('user-1', 'role-1');
@@ -136,9 +202,23 @@ describe('RoleService', () => {
       });
     });
 
+    it('should throw RoleNotFoundError when the role does not exist', async () => {
+      prismaMock.role.findUnique.mockResolvedValue(null);
+
+      await expect(service.assignRole('user-1', 'bad-role')).rejects.toThrow(RoleNotFoundError);
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw RoleInactiveError when the role is deactivated', async () => {
+      prismaMock.role.findUnique.mockResolvedValue({ id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: new Date() });
+
+      await expect(service.assignRole('user-1', 'role-1')).rejects.toThrow(RoleInactiveError);
+      expect(prismaMock.user.update).not.toHaveBeenCalled();
+    });
+
     it('should propagate prisma errors', async () => {
-      const error = new Error('User not found');
-      prismaMock.user.update.mockRejectedValue(error);
+      prismaMock.role.findUnique.mockResolvedValue({ id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: null });
+      prismaMock.user.update.mockRejectedValue(new Error('User not found'));
 
       await expect(service.assignRole('bad-user', 'role-1')).rejects.toThrow('User not found');
     });
