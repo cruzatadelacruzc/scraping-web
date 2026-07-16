@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AccountsPage } from '@pages/accounts-page';
 import { DashboardPage } from '@pages/dashboard-page';
 import { LoginPage } from '@pages/login-page';
+import { ProductDetailPage } from '@pages/product-detail-page';
 import { ProductsPage } from '@pages/products-page';
 import { ProductsStatsPage } from '@pages/products-stats-page';
 import { QueuesPage } from '@pages/queues-page';
@@ -131,6 +132,14 @@ export function App(): JSX.Element {
               element={
                 <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
                   <ProductsStatsPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path={ROUTES.PRODUCT_DETAIL}
+              element={
+                <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
+                  <ProductDetailPage />
                 </RequirePermission>
               }
             />

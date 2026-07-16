@@ -212,6 +212,55 @@
         "byState": "Bar chart showing product count by state"
       },
       "chartEmpty": "No data"
+    },
+    "detail": {
+      "backToCatalog": "← Back to catalog",
+      "notFound": "Product not found",
+      "notFoundDesc": "The product you're looking for doesn't exist or has been removed.",
+      "goToCatalog": "Go to catalog",
+      "tabsLabel": "Product history sections",
+      "tabs": {
+        "overview": "Overview",
+        "price": "Price",
+        "views": "Views",
+        "location": "Location",
+        "outstanding": "Outstanding",
+        "promoted": "Promoted"
+      },
+      "currentStatus": "Current Status",
+      "standard": "Standard",
+      "notPromoted": "Not promoted",
+      "price": "Price",
+      "views": "Views",
+      "created": "Created",
+      "sellerInfo": "Seller Info",
+      "name": "Name",
+      "location": "Location",
+      "category": "Category",
+      "phone": "Phone",
+      "email": "Email"
+    },
+    "history": {
+      "error": "Failed to load history",
+      "empty": "No history data",
+      "emptyDesc": "No data available in this range.",
+      "emptyLocation": "No location changes",
+      "locationTimeline": "Location change timeline",
+      "selectTimeRange": "Select time range",
+      "chartDesc": {
+        "price": "Line chart showing product price over time",
+        "views": "Area chart showing product views over time",
+        "outstanding": "Step chart showing outstanding status changes over time",
+        "promoted": "Step chart showing promoted status changes over time"
+      },
+      "range": {
+        "1w": "1W",
+        "1m": "1M",
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1Y",
+        "all": "All"
+      }
     }
   },
   "forbidden": {

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { productDetailRoute } from '@shared/config/routes';
 import { PackageSearch, Search } from 'lucide-react';
 
 import { useGetProducts } from '../hooks/useGetProducts';
@@ -237,11 +239,13 @@ export function ProductsTable(): JSX.Element {
                   key={product.id}
                   className="h-9 border-b border-outline-variant transition-colors hover:bg-surface-container-high"
                 >
-                  <td
-                    className="max-w-xs truncate p-2 font-medium text-on-surface"
-                    title={product.title}
-                  >
-                    {product.title}
+                  <td className="max-w-xs truncate p-2 font-medium">
+                    <Link
+                      to={productDetailRoute(product.id)}
+                      className="text-on-surface transition-colors hover:text-primary"
+                    >
+                      {product.title}
+                    </Link>
                   </td>
                   <td className="p-2 font-mono text-on-surface-variant">
                     {product.currency} {product.price.toFixed(2)}

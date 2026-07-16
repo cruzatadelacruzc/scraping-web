@@ -7,6 +7,7 @@ export const ROUTES = {
   ROLES: '/roles',
   PRODUCTS: '/products',
   PRODUCTS_STATS: '/products/stats',
+  PRODUCT_DETAIL: '/products/:id',
   SCRAPERS: '/scrapers',
   RULES: '/rules',
   QUEUES: '/queues',
@@ -14,3 +15,8 @@ export const ROUTES = {
 } as const;
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
+
+/** Build a product detail path with the given id */
+export function productDetailRoute(id: string): string {
+  return `/products/${encodeURIComponent(id)}`;
+}
