@@ -34,6 +34,21 @@
     "prev": "Prev",
     "next": "Next"
   },
+  "scrapers": {
+    "stores": {
+      "empty": {
+        "title": "No stores registered",
+        "description": "Stores will appear here once scraper modules are registered at bootstrap."
+      },
+      "error": {
+        "message": "Failed to load stores."
+      },
+      "card": {
+        "schemaFields": "Job Schema Fields",
+        "required": "Required"
+      }
+    }
+  },
   "accounts": {
     "searchPlaceholder": "Search accounts…",
     "table": {

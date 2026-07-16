@@ -34,6 +34,21 @@
     "prev": "Anterior",
     "next": "Siguiente"
   },
+  "scrapers": {
+    "stores": {
+      "empty": {
+        "title": "No hay tiendas registradas",
+        "description": "Las tiendas aparecerán aquí cuando los módulos de scraping se registren durante el inicio."
+      },
+      "error": {
+        "message": "Error al cargar las tiendas."
+      },
+      "card": {
+        "schemaFields": "Campos del Schema",
+        "required": "Requerido"
+      }
+    }
+  },
   "accounts": {
     "searchPlaceholder": "Buscar cuentas…",
     "table": {
