@@ -51,6 +51,8 @@ model Role {
   id   String @id @default(uuid())
   name String
 
+  deletedAt DateTime? // null = active; set = deactivated (soft-delete, reversible)
+
   accountId String? // null = global role
   account   Account? @relation(fields: [accountId], references: [id])
   users     User[]   @relation("UserRoles")
