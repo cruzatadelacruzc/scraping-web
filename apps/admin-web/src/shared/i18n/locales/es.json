@@ -188,6 +188,28 @@
       "info": "Página {{page}} de {{totalPages}} · {{total}} total",
       "prev": "‹ Anterior",
       "next": "Siguiente ›"
+    },
+    "stats": {
+      "title": "Estadísticas de Productos",
+      "viewStats": "Ver estadísticas",
+      "totalProducts": "Total de Productos",
+      "outstanding": "Destacados",
+      "promoted": "Promocionados",
+      "enrichedCount": "Enriquecidos",
+      "byCategory": "Por Categoría",
+      "byState": "Por Estado",
+      "priceRange": "Rango de Precios",
+      "empty": {
+        "title": "Sin estadísticas disponibles",
+        "description": "Las estadísticas aparecerán una vez que se hayan extraído productos."
+      },
+      "error": {
+        "message": "Error al cargar las estadísticas de productos."
+      },
+      "chartDesc": {
+        "byCategory": "Gráfico de barras que muestra el conteo de productos por categoría",
+        "byState": "Gráfico de barras que muestra el conteo de productos por estado"
+      }
     }
   },
   "forbidden": {

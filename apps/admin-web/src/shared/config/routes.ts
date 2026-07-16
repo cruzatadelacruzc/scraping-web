@@ -6,6 +6,7 @@ export const ROUTES = {
   USERS: '/users',
   ROLES: '/roles',
   PRODUCTS: '/products',
+  PRODUCTS_STATS: '/products/stats',
   SCRAPERS: '/scrapers',
   RULES: '/rules',
   QUEUES: '/queues',

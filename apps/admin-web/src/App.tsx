@@ -3,6 +3,7 @@ import { AccountsPage } from '@pages/accounts-page';
 import { DashboardPage } from '@pages/dashboard-page';
 import { LoginPage } from '@pages/login-page';
 import { ProductsPage } from '@pages/products-page';
+import { ProductsStatsPage } from '@pages/products-stats-page';
 import { QueuesPage } from '@pages/queues-page';
 import { RolesPage } from '@pages/roles-page';
 import { RulesPage } from '@pages/rules-page';
@@ -122,6 +123,14 @@ export function App(): JSX.Element {
               element={
                 <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
                   <ProductsPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path={ROUTES.PRODUCTS_STATS}
+              element={
+                <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
+                  <ProductsStatsPage />
                 </RequirePermission>
               }
             />

@@ -188,6 +188,29 @@
       "info": "Page {{page}} of {{totalPages}} · {{total}} total",
       "prev": "‹ Prev",
       "next": "Next ›"
+    },
+    "stats": {
+      "title": "Products Stats",
+      "viewStats": "View stats",
+      "lastScraped": "Last scraped",
+      "totalProducts": "Total Products",
+      "outstanding": "Outstanding",
+      "promoted": "Promoted",
+      "enrichedCount": "Enriched",
+      "byCategory": "By Category",
+      "byState": "By State",
+      "priceRange": "Price Range",
+      "empty": {
+        "title": "No stats available",
+        "description": "Statistics will appear once products have been scraped."
+      },
+      "error": {
+        "message": "Failed to load products stats."
+      },
+      "chartDesc": {
+        "byCategory": "Bar chart showing product count by category",
+        "byState": "Bar chart showing product count by state"
+      }
     }
   },
   "forbidden": {
