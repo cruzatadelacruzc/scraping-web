@@ -8,6 +8,8 @@ const { mockUseCurrentUser } = vi.hoisted(() => ({
   mockUseCurrentUser: vi.fn(),
 }));
 
+import type { RoleType } from '@shared/auth';
+
 vi.mock('@shared/auth', () => ({
   useCurrentUser: mockUseCurrentUser,
   RoleType: {
@@ -56,6 +58,23 @@ describe('useHasPermission', () => {
     expect(hasPermission(Permission.VIEW_DASHBOARD)).toBe(true);
     expect(hasPermission(Permission.VIEW_ACCOUNTS)).toBe(true);
     expect(hasPermission(Permission.MANAGE_SCRAPERS)).toBe(false);
+  });
+
+  it('does not throw when session has an unknown role and returns false', () => {
+    mockUseCurrentUser.mockReturnValue({
+      userId: 'u3',
+      accountId: 'a1',
+      roles: ['GHOST_ROLE' as RoleType],
+      username: 'ghost',
+      email: 'ghost@test.dev',
+      expiresAt: Date.now() + 86400000,
+    });
+
+    const { result } = renderHook(() => useHasPermission());
+    const hasPermission = result.current;
+
+    expect(() => hasPermission(Permission.VIEW_DASHBOARD)).not.toThrow();
+    expect(hasPermission(Permission.VIEW_DASHBOARD)).toBe(false);
   });
 
   it('returns false for all permissions when no session', () => {

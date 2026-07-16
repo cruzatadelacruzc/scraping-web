@@ -21,7 +21,10 @@ export function useHasPermission(): (p: Permission) => boolean {
     (permission: Permission): boolean => {
       if (!session) return false;
       return session.roles.some((role) => {
-        return ROLE_PERMISSIONS[role].includes(permission);
+        // ROLE_PERMISSIONS is typed Record<RoleType, ...> but runtime roles
+        // may include unknown strings from the backend — guard with ?.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
       });
     },
     [session],
