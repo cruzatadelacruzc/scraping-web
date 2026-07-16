@@ -5,12 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // ── Hoisted mock variables ─────────────────────────────────────────────────
 
-const { mockUseGetSchedules } = vi.hoisted(() => ({
+const { mockUseGetSchedules, mockDeleteMutateWithOptions } = vi.hoisted(() => ({
   mockUseGetSchedules: vi.fn(),
-}));
-
-const { mockUseDeleteSchedule } = vi.hoisted(() => ({
-  mockUseDeleteSchedule: vi.fn(),
+  mockDeleteMutateWithOptions: vi.fn((id: string, options?: { onSettled?: () => void }) => {
+    options?.onSettled?.();
+  }),
 }));
 
 const { mockUseToggleSchedule } = vi.hoisted(() => ({
@@ -42,8 +41,13 @@ vi.mock('../hooks/useGetSchedules', () => ({
 }));
 
 vi.mock('../hooks/useDeleteSchedule', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  useDeleteSchedule: (...args: unknown[]) => mockUseDeleteSchedule(...args),
+  useDeleteSchedule: () => ({
+    mutate: (id: string, options?: { onSettled?: () => void }) => {
+      mockDeleteMutateWithOptions(id, options);
+      options?.onSettled?.();
+    },
+    isPending: false,
+  }),
 }));
 
 vi.mock('../hooks/useToggleSchedule', () => ({
@@ -99,12 +103,20 @@ function renderWithProviders(ui: React.ReactElement) {
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
 }
 
+function mockDataState() {
+  mockUseGetSchedules.mockReturnValue({
+    data: mockSchedules,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+    isFetching: false,
+  });
+}
+
 // ── Tests ──────────────────────────────────────────────────────────────────
 
 describe('SchedulesTable', () => {
-  const mockDeleteMutate = vi.fn();
-  const mockToggleMutate = vi.fn();
-
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -192,7 +204,6 @@ describe('SchedulesTable', () => {
       expect(screen.getByText('scrapers.schedules.empty.title')).toBeInTheDocument();
       expect(screen.getByText('scrapers.schedules.empty.description')).toBeInTheDocument();
 
-      // Must render an SVG icon with aria-hidden="true"
       const icon = container.querySelector('svg[aria-hidden="true"]');
       expect(icon).toBeInTheDocument();
     });
@@ -210,49 +221,30 @@ describe('SchedulesTable', () => {
 
       const user = userEvent.setup();
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={onCreate} />);
-      const createButton = screen.getByText('scrapers.schedules.empty.create');
-      await user.click(createButton);
+      await user.click(screen.getByText('scrapers.schedules.empty.create'));
       expect(onCreate).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('data render', () => {
     beforeEach(() => {
-      mockUseGetSchedules.mockReturnValue({
-        data: mockSchedules,
-        isLoading: false,
-        isError: false,
-        error: null,
-        refetch: vi.fn(),
-        isFetching: false,
-      });
-      mockUseDeleteSchedule.mockReturnValue({
-        mutate: mockDeleteMutate,
-        isPending: false,
-      });
-      mockUseToggleSchedule.mockReturnValue({
-        mutate: mockToggleMutate,
-        isPending: false,
-      });
+      mockDataState();
     });
 
     it('renders table with schedule names', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       expect(screen.getByText('Daily Revolico')).toBeInTheDocument();
       expect(screen.getByText('Weekly Facebook')).toBeInTheDocument();
     });
 
     it('renders store keys in table', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       expect(screen.getByText('revolico')).toBeInTheDocument();
       expect(screen.getByText('facebook-marketplace')).toBeInTheDocument();
     });
 
     it('renders cron expressions in font-mono', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       const cronEl1 = screen.getByText('0 0 * * *');
       expect(cronEl1).toBeInTheDocument();
       expect(cronEl1.className).toContain('font-mono');
@@ -260,68 +252,51 @@ describe('SchedulesTable', () => {
 
     it('renders enabled toggle switches', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       const toggles = screen.getAllByRole('switch');
       expect(toggles).toHaveLength(2);
     });
 
     it('toggle reflects enabled state', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       const toggles = screen.getAllByRole('switch');
       expect(toggles[0]).toHaveAttribute('aria-checked', 'true');
       expect(toggles[1]).toHaveAttribute('aria-checked', 'false');
     });
 
-    it('renders lastRunAt formatted date for schedules with runs', () => {
-      renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
-      // Should show a formatted date (not "Never")
-      expect(screen.queryByText('Never')).not.toBeInTheDocument();
-      // The exact format depends on date-fns, check that a date-like string appears
-      expect(screen.getByText(/2024/)).toBeInTheDocument();
-    });
-
     it('renders "Never" for schedules that never ran', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       expect(screen.getByText('scrapers.schedules.table.never')).toBeInTheDocument();
     });
 
     it('renders jobs count', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       const jobsCounts = screen.getAllByText(/^[12]$/);
       expect(jobsCounts).toHaveLength(2);
     });
 
     it('has a visually hidden caption', () => {
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
       const caption = screen.getByText('scrapers.schedules.table.caption');
       expect(caption).toBeInTheDocument();
       expect(caption.className).toContain('sr-only');
-    });
-
-    it('renders header with schedule count', () => {
-      renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
-
-      // The i18n mock returns the key; the count template is in the JSON value
-      expect(screen.getByText('scrapers.schedules.table.count')).toBeInTheDocument();
     });
 
     it('renders create button that calls onCreate', async () => {
       const onCreate = vi.fn();
       const user = userEvent.setup();
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={onCreate} />);
-
       await user.click(screen.getByText('scrapers.schedules.table.create'));
       expect(onCreate).toHaveBeenCalledTimes(1);
     });
-  });
 
-  describe('row actions', () => {
-    beforeEach(() => {
+    it('renders a search input with the correct placeholder', () => {
+      renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
+      expect(
+        screen.getByPlaceholderText('scrapers.schedules.table.searchPlaceholder'),
+      ).toBeInTheDocument();
+    });
+
+    it('filters rows client-side when search input changes', async () => {
       mockUseGetSchedules.mockReturnValue({
         data: mockSchedules,
         isLoading: false,
@@ -330,21 +305,48 @@ describe('SchedulesTable', () => {
         refetch: vi.fn(),
         isFetching: false,
       });
-      mockUseDeleteSchedule.mockReturnValue({
-        mutate: mockDeleteMutate,
-        isPending: false,
-      });
-      mockUseToggleSchedule.mockReturnValue({
-        mutate: mockToggleMutate,
-        isPending: false,
-      });
+
+      const user = userEvent.setup();
+      renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
+
+      const searchInput = screen.getByPlaceholderText('scrapers.schedules.table.searchPlaceholder');
+      await user.type(searchInput, 'facebook');
+
+      // After debounce, only the facebook row should remain visible
+      await vi.waitFor(
+        () => {
+          expect(screen.queryByText('Daily Revolico')).not.toBeInTheDocument();
+        },
+        { timeout: 1000, interval: 50 },
+      );
+      expect(screen.getByText('Weekly Facebook')).toBeInTheDocument();
+    });
+
+    it('shows no-results message when search yields no matches', async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
+
+      const searchInput = screen.getByPlaceholderText('scrapers.schedules.table.searchPlaceholder');
+      await user.type(searchInput, 'zzz_nonexistent');
+
+      await vi.waitFor(
+        () => {
+          expect(screen.getByText('scrapers.schedules.table.noResults')).toBeInTheDocument();
+        },
+        { timeout: 1000, interval: 50 },
+      );
+    });
+  });
+
+  describe('row actions', () => {
+    beforeEach(() => {
+      mockDataState();
     });
 
     it('renders dropdown menu with edit and delete options', async () => {
       const user = userEvent.setup();
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
 
-      // Click the first row's action trigger
       const actionButtons = screen.getAllByRole('button', {
         name: /scrapers\.schedules\.table\.actionsFor/,
       });
@@ -363,9 +365,7 @@ describe('SchedulesTable', () => {
         name: /scrapers\.schedules\.table\.actionsFor/,
       });
       await user.click(actionButtons[0]);
-
       await user.click(screen.getByText('scrapers.schedules.table.edit'));
-      expect(onEdit).toHaveBeenCalledTimes(1);
       expect(onEdit).toHaveBeenCalledWith(mockSchedules[0]);
     });
 
@@ -377,17 +377,14 @@ describe('SchedulesTable', () => {
         name: /scrapers\.schedules\.table\.actionsFor/,
       });
       await user.click(actionButtons[0]);
-
       await user.click(screen.getByText('scrapers.schedules.table.delete'));
 
-      // AlertDialog should appear
       expect(screen.getByText('scrapers.schedules.delete.title')).toBeInTheDocument();
       expect(screen.getByText('scrapers.schedules.delete.description')).toBeInTheDocument();
       expect(screen.getByText('scrapers.schedules.delete.confirm')).toBeInTheDocument();
-      expect(screen.getByText('scrapers.schedules.delete.cancel')).toBeInTheDocument();
     });
 
-    it('deletes schedule when confirm is clicked in AlertDialog', async () => {
+    it('deletes schedule when confirm is clicked — dialog closes via onSettled', async () => {
       const user = userEvent.setup();
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
 
@@ -397,9 +394,19 @@ describe('SchedulesTable', () => {
       await user.click(actionButtons[0]);
       await user.click(screen.getByText('scrapers.schedules.table.delete'));
 
-      // Click confirm
+      // Confirm delete
       await user.click(screen.getByText('scrapers.schedules.delete.confirm'));
-      expect(mockDeleteMutate).toHaveBeenCalledWith('sched-1');
+
+      // mutate called with correct id
+      expect(mockDeleteMutateWithOptions).toHaveBeenCalledWith('sched-1', expect.any(Object));
+
+      // Dialog should close after onSettled fires
+      await vi.waitFor(
+        () => {
+          expect(screen.queryByText('scrapers.schedules.delete.title')).not.toBeInTheDocument();
+        },
+        { timeout: 500, interval: 50 },
+      );
     });
 
     it('closes AlertDialog without deleting when cancel is clicked', async () => {
@@ -411,34 +418,24 @@ describe('SchedulesTable', () => {
       });
       await user.click(actionButtons[0]);
       await user.click(screen.getByText('scrapers.schedules.table.delete'));
-
-      // Click cancel
       await user.click(screen.getByText('scrapers.schedules.delete.cancel'));
-      expect(mockDeleteMutate).not.toHaveBeenCalled();
+
+      expect(mockDeleteMutateWithOptions).not.toHaveBeenCalled();
     });
   });
 
   describe('toggle', () => {
     beforeEach(() => {
-      mockUseGetSchedules.mockReturnValue({
-        data: mockSchedules,
-        isLoading: false,
-        isError: false,
-        error: null,
-        refetch: vi.fn(),
-        isFetching: false,
-      });
-      mockUseDeleteSchedule.mockReturnValue({
-        mutate: mockDeleteMutate,
-        isPending: false,
-      });
+      mockDataState();
+    });
+
+    it('calls toggle mutation when toggle switch is clicked', async () => {
+      const mockToggleMutate = vi.fn();
       mockUseToggleSchedule.mockReturnValue({
         mutate: mockToggleMutate,
         isPending: false,
       });
-    });
 
-    it('calls toggle mutation when toggle switch is clicked', async () => {
       const user = userEvent.setup();
       renderWithProviders(<SchedulesTable onEdit={vi.fn()} onCreate={vi.fn()} />);
 

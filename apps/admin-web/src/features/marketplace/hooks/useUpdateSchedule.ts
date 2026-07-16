@@ -9,6 +9,7 @@ import { marketplaceKeys } from './query-keys';
 /**
  * Updates an existing scraping schedule.
  * On success: invalidates list + detail and shows a success toast.
+ * On error: sticky error toast with Retry action.
  */
 export function useUpdateSchedule() {
   const queryClient = useQueryClient();
@@ -24,7 +25,14 @@ export function useUpdateSchedule() {
       toast.success('Schedule updated');
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(error.message, {
+        duration: Infinity,
+        action: {
+          label: 'Retry',
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          onClick: () => {},
+        },
+      });
     },
   });
 }

@@ -10,6 +10,7 @@ import {
   useUpdateSchedule,
 } from '@features/marketplace';
 import type { ScheduleFormValues } from '@features/marketplace/schemas/schedule-schemas';
+import { Dialog } from '@shared/ui/dialog';
 
 export function ScrapersPage(): JSX.Element {
   const { t } = useTranslation();
@@ -63,6 +64,24 @@ export function ScrapersPage(): JSX.Element {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const resolvedStores = stores ?? [];
 
+  const defaultValues = editingSchedule
+    ? {
+        name: editingSchedule.name,
+        store: editingSchedule.store,
+        cron: editingSchedule.cron,
+        enabled: editingSchedule.enabled,
+        jobs: editingSchedule.jobs.map((j) => ({ ...j })),
+      }
+    : undefined;
+
+  const formTitle = editingSchedule
+    ? t('scrapers.schedules.form.editTitle')
+    : t('scrapers.schedules.form.createTitle');
+
+  const submitLabel = editingSchedule
+    ? t('scrapers.schedules.form.update')
+    : t('scrapers.schedules.form.create');
+
   return (
     <div>
       <h1 className="text-headline-lg text-on-surface">{t('nav.scrapers')}</h1>
@@ -86,101 +105,16 @@ export function ScrapersPage(): JSX.Element {
       </section>
 
       {/* Schedule form dialog */}
-      {showForm && (
-        <ScheduleFormDialog
+      <Dialog open={showForm} title={formTitle} onClose={handleFormCancel}>
+        <ScheduleForm
           stores={resolvedStores}
-          editingSchedule={editingSchedule}
-          isSubmitting={isSubmitting}
+          defaultValues={defaultValues}
           onSubmit={handleFormSubmit}
+          isSubmitting={isSubmitting}
           onCancel={handleFormCancel}
+          submitLabel={submitLabel}
         />
-      )}
+      </Dialog>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Schedule form dialog wrapper
-// ---------------------------------------------------------------------------
-
-interface ScheduleFormDialogProps {
-  stores: {
-    key: string;
-    displayName: string;
-    scrapingQueue: string;
-    jobSchema: {
-      fields: {
-        name: string;
-        type: 'string' | 'number' | 'boolean';
-        required: boolean;
-        label: string;
-        placeholder?: string;
-      }[];
-    };
-  }[];
-  editingSchedule: ScheduleListViewModel | null;
-  isSubmitting: boolean;
-  onSubmit: (data: ScheduleFormValues) => void;
-  onCancel: () => void;
-}
-
-function ScheduleFormDialog({
-  stores,
-  editingSchedule,
-  isSubmitting,
-  onSubmit,
-  onCancel,
-}: ScheduleFormDialogProps): JSX.Element {
-  const { t } = useTranslation();
-  const title = editingSchedule
-    ? t('scrapers.schedules.form.editTitle')
-    : t('scrapers.schedules.form.createTitle');
-
-  const defaultValues = editingSchedule
-    ? {
-        name: editingSchedule.name,
-        store: editingSchedule.store,
-        cron: editingSchedule.cron,
-        enabled: editingSchedule.enabled,
-        jobs: editingSchedule.jobs.map((j) => ({ ...j })),
-      }
-    : undefined;
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/30"
-        role="presentation"
-        onClick={onCancel}
-        onKeyDown={onCancel}
-      />
-
-      {/* Dialog */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="schedule-form-title"
-        className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md border border-outline-variant bg-surface p-lg shadow-lg"
-      >
-        <h2 id="schedule-form-title" className="text-lg font-semibold text-on-surface">
-          {title}
-        </h2>
-        <div className="mt-md">
-          <ScheduleForm
-            stores={stores}
-            defaultValues={defaultValues}
-            onSubmit={onSubmit}
-            isSubmitting={isSubmitting}
-            onCancel={onCancel}
-            submitLabel={
-              editingSchedule
-                ? t('scrapers.schedules.form.update')
-                : t('scrapers.schedules.form.create')
-            }
-          />
-        </div>
-      </div>
-    </>
   );
 }

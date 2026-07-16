@@ -65,7 +65,10 @@
         "toggleLabel": "Alternar {{name}}",
         "never": "Nunca",
         "count": "{{count}} programación(es)",
-        "create": "+ Nueva"
+        "create": "+ Nueva",
+        "searchPlaceholder": "Buscar por nombre o tienda…",
+        "search": "Buscar programaciones",
+        "noResults": "Ninguna programación coincide con tu búsqueda."
       },
       "empty": {
         "title": "Sin programaciones",

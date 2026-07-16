@@ -65,7 +65,10 @@
         "toggleLabel": "Toggle {{name}}",
         "never": "Never",
         "count": "{{count}} schedule(s)",
-        "create": "+ New"
+        "create": "+ New",
+        "searchPlaceholder": "Search by name or store…",
+        "search": "Search schedules",
+        "noResults": "No schedules match your search."
       },
       "empty": {
         "title": "No schedules yet",

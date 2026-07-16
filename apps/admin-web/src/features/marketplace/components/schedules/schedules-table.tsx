@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDialog } from '@shared/ui/alert-dialog';
 import type { DropdownMenuItem } from '@shared/ui/dropdown-menu';
@@ -19,13 +19,26 @@ interface SchedulesTableProps {
 
 /**
  * Displays scraping schedules in a compact table with inline toggle,
- * row actions (Edit, Delete), and full 4-state handling.
+ * row actions (Edit, Delete), client-side search, and full 4-state handling.
  */
 export function SchedulesTable({ onEdit, onCreate }: SchedulesTableProps): JSX.Element {
   const { t } = useTranslation();
   const { data, isLoading, isError, error, isFetching, refetch } = useGetSchedules();
   const deleteMutation = useDeleteSchedule();
   const toggleMutation = useToggleSchedule();
+
+  // Client-side search state (300ms debounce)
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
 
   // Format lastRunAt with fallback
   const formatLastRun = useCallback(
@@ -39,6 +52,16 @@ export function SchedulesTable({ onEdit, onCreate }: SchedulesTableProps): JSX.E
     },
     [t],
   );
+
+  // Client-side filtering
+  const filteredData = useMemo(() => {
+    if (!data) return data;
+    if (!search.trim()) return data;
+    const q = search.toLowerCase();
+    return data.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.store.toLowerCase().includes(q),
+    );
+  }, [data, search]);
 
   // 1. Loading
   if (isLoading) {
@@ -69,7 +92,7 @@ export function SchedulesTable({ onEdit, onCreate }: SchedulesTableProps): JSX.E
     );
   }
 
-  // 3. Empty
+  // 3. Empty (no data at all — not just filtered)
   if (!data || data.length === 0) {
     return (
       <div className="py-xl text-center">
@@ -105,11 +128,25 @@ export function SchedulesTable({ onEdit, onCreate }: SchedulesTableProps): JSX.E
   // 4. Data
   return (
     <div>
-      {/* Header + Create button */}
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-body-xs text-on-surface-variant">
-          {t('scrapers.schedules.table.count', { count: data.length })}
-        </p>
+      {/* Header + search + create */}
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <p className="text-body-xs text-on-surface-variant">
+            {t('scrapers.schedules.table.count', { count: data.length })}
+          </p>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+              }}
+              placeholder={t('scrapers.schedules.table.searchPlaceholder')}
+              className="h-7 w-48 rounded-sm border border-outline-variant bg-surface px-2 text-body-xs text-on-surface placeholder:text-on-surface-variant focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void-black"
+              aria-label={t('scrapers.schedules.table.search')}
+            />
+          </div>
+        </div>
         <button
           onClick={onCreate}
           className="rounded-sm bg-primary px-3 py-1 text-body-xs text-white transition-colors hover:bg-primary-hover"
@@ -121,47 +158,56 @@ export function SchedulesTable({ onEdit, onCreate }: SchedulesTableProps): JSX.E
       {/* Background refetch bar */}
       {isFetching && <div className="h-0.5 w-full animate-pulse bg-primary/20" />}
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-sm border border-outline-variant">
-        <table className="w-full border-collapse text-body-sm">
-          <caption className="sr-only">{t('scrapers.schedules.table.caption')}</caption>
-          <thead>
-            <tr className="border-b border-outline-variant bg-surface-container-low">
-              <th className="p-2 text-left font-medium text-on-surface-variant">
-                {t('scrapers.schedules.table.name')}
-              </th>
-              <th className="p-2 text-left font-medium text-on-surface-variant">
-                {t('scrapers.schedules.table.store')}
-              </th>
-              <th className="p-2 text-left font-medium text-on-surface-variant">
-                {t('scrapers.schedules.table.cron')}
-              </th>
-              <th className="p-2 text-left font-medium text-on-surface-variant">
-                {t('scrapers.schedules.table.enabled')}
-              </th>
-              <th className="p-2 text-left font-medium text-on-surface-variant">
-                {t('scrapers.schedules.table.lastRun')}
-              </th>
-              <th className="p-2 text-left font-medium text-on-surface-variant">
-                {t('scrapers.schedules.table.jobsCount')}
-              </th>
-              <th className="w-10 p-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((schedule) => (
-              <ScheduleRow
-                key={schedule.id}
-                schedule={schedule}
-                onEdit={onEdit}
-                deleteMutation={deleteMutation}
-                toggleMutation={toggleMutation}
-                formatLastRun={formatLastRun}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Filtered empty state */}
+      {filteredData?.length === 0 ? (
+        <div className="py-lg text-center">
+          <p className="text-body-sm text-on-surface-variant">
+            {t('scrapers.schedules.table.noResults')}
+          </p>
+        </div>
+      ) : (
+        /* Table */
+        <div className="overflow-x-auto rounded-sm border border-outline-variant">
+          <table className="w-full border-collapse text-body-sm">
+            <caption className="sr-only">{t('scrapers.schedules.table.caption')}</caption>
+            <thead>
+              <tr className="border-b border-outline-variant bg-surface-container-low">
+                <th className="p-2 text-left font-medium text-on-surface-variant">
+                  {t('scrapers.schedules.table.name')}
+                </th>
+                <th className="p-2 text-left font-medium text-on-surface-variant">
+                  {t('scrapers.schedules.table.store')}
+                </th>
+                <th className="p-2 text-left font-medium text-on-surface-variant">
+                  {t('scrapers.schedules.table.cron')}
+                </th>
+                <th className="p-2 text-left font-medium text-on-surface-variant">
+                  {t('scrapers.schedules.table.enabled')}
+                </th>
+                <th className="p-2 text-left font-medium text-on-surface-variant">
+                  {t('scrapers.schedules.table.lastRun')}
+                </th>
+                <th className="p-2 text-left font-medium text-on-surface-variant">
+                  {t('scrapers.schedules.table.jobsCount')}
+                </th>
+                <th className="w-10 p-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData?.map((schedule) => (
+                <ScheduleRow
+                  key={schedule.id}
+                  schedule={schedule}
+                  onEdit={onEdit}
+                  deleteMutation={deleteMutation}
+                  toggleMutation={toggleMutation}
+                  formatLastRun={formatLastRun}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -203,8 +249,13 @@ function ScheduleRow({
   }, []);
 
   const handleConfirmDelete = useCallback(() => {
-    deleteMutation.mutate(schedule.id);
-    setShowDeleteDialog(false);
+    // Call mutate — dialog stays open
+    deleteMutation.mutate(schedule.id, {
+      onSettled: () => {
+        // Close dialog after server responds (success or error)
+        setShowDeleteDialog(false);
+      },
+    });
   }, [deleteMutation, schedule.id]);
 
   const handleCancelDelete = useCallback(() => {

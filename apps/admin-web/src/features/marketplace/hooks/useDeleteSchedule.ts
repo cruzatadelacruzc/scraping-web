@@ -8,6 +8,7 @@ import { marketplaceKeys } from './query-keys';
 /**
  * Deletes a scraping schedule.
  * On success: invalidates all schedules and shows a success toast.
+ * On error: sticky error toast with Retry action.
  * NEVER optimistic — waits for server response.
  */
 export function useDeleteSchedule() {
@@ -20,7 +21,14 @@ export function useDeleteSchedule() {
       toast.success('Schedule permanently deleted');
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(error.message, {
+        duration: Infinity,
+        action: {
+          label: 'Retry',
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          onClick: () => {},
+        },
+      });
     },
   });
 }

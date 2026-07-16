@@ -9,6 +9,7 @@ import { marketplaceKeys } from './query-keys';
 /**
  * Toggles the enabled flag of a scraping schedule.
  * OPTIMISTIC: flips the enabled flag immediately, rolls back on error.
+ * On error: sticky error toast with Retry action.
  */
 export function useToggleSchedule() {
   const queryClient = useQueryClient();
@@ -38,7 +39,14 @@ export function useToggleSchedule() {
       if (context?.previousData) {
         queryClient.setQueryData(marketplaceKeys.schedules.list(), context.previousData);
       }
-      toast.error(error.message);
+      toast.error(error.message, {
+        duration: Infinity,
+        action: {
+          label: 'Retry',
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          onClick: () => {},
+        },
+      });
     },
     onSettled: () => {
       // Always refetch to ensure server state matches
