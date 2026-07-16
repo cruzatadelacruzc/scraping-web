@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface BarItem {
@@ -55,6 +56,7 @@ export function ProductsStatsBarChart({
   onRetry,
   chartDescription,
 }: ProductsStatsBarChartProps): JSX.Element {
+  const { t } = useTranslation();
   // 1. Loading: chart-shaped skeleton
   if (isLoading) {
     return (
@@ -113,7 +115,9 @@ export function ProductsStatsBarChart({
           >
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           </svg>
-          <p className="mt-sm text-body-sm text-on-surface-variant">No data</p>
+          <p className="mt-sm text-body-sm text-on-surface-variant">
+            {t('products.stats.chartEmpty')}
+          </p>
         </div>
       </div>
     );

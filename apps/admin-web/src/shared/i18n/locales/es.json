@@ -192,6 +192,7 @@
     "stats": {
       "title": "Estadísticas de Productos",
       "viewStats": "Ver estadísticas",
+      "lastScraped": "Última extracción",
       "totalProducts": "Total de Productos",
       "outstanding": "Destacados",
       "promoted": "Promocionados",
@@ -209,7 +210,8 @@
       "chartDesc": {
         "byCategory": "Gráfico de barras que muestra el conteo de productos por categoría",
         "byState": "Gráfico de barras que muestra el conteo de productos por estado"
-      }
+      },
+      "chartEmpty": "Sin datos"
     }
   },
   "forbidden": {

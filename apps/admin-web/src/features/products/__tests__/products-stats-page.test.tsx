@@ -227,6 +227,27 @@ describe('ProductsStatsPage', () => {
       expect(emptyTitle).toBeInTheDocument();
       expect(screen.getByText('products.stats.empty.description')).toBeInTheDocument();
     });
+
+    it('shows chart empty state key when bar chart has no data', async () => {
+      // Edge case: totalProducts > 0 but byCategory is empty
+      mockGetStats.mockResolvedValue({
+        data: {
+          ...mockStatsData,
+          totalProducts: 1,
+          byCategory: [],
+          byState: [{ state: 'Havana', count: 1 }],
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {},
+      });
+      renderWithProviders(<ProductsStatsPage />);
+
+      expect(
+        await screen.findByText('products.stats.chartEmpty', {}, { timeout: 2000 }),
+      ).toBeInTheDocument();
+    });
   });
 
   describe('data render', () => {

@@ -210,7 +210,8 @@
       "chartDesc": {
         "byCategory": "Bar chart showing product count by category",
         "byState": "Bar chart showing product count by state"
-      }
+      },
+      "chartEmpty": "No data"
     }
   },
   "forbidden": {

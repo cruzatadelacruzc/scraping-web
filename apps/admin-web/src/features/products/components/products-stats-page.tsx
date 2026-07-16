@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { KpiCard } from '@features/dashboard/components/kpi-card';
+import { KpiCard } from '@features/dashboard';
 import { PackageSearch } from 'lucide-react';
 
 import { useGetProductStats } from '../hooks/useGetProductStats';
