@@ -1,6 +1,6 @@
 # Super Admin SPA — `apps/admin-web/`
 
-React 18 + Vite 5 SPA that consumes the `bazaarsentinel` API (`src/main/`). Currently in **pre-implementation phase**: architecture and development plan approved, ready to begin Fase 0 (Developer Experience).
+React 18 + Vite 5 SPA that consumes the `bazaarsentinel` API (`src/main/`). This document describes the architecture, conventions, and patterns an agent follows when building features within this SPA.
 
 ## Governing Documents
 
@@ -12,43 +12,36 @@ Read these before any UI work — they form a hierarchy:
 4. `@../../.plans/super-admin-dashboard-plan.md` — mirror copy of the development plan
 5. This file — architectural constraints, patterns, and how the SPA is wired together
 
-## Status
-
-Architecture and design approved. No code scaffolded yet. The only deliverables so far are:
-- `DESIGN.md` — the complete design system (mandatory reading before any UI work).
-- `CLAUDE.md` — this file (auto-loaded when working in this directory).
-- Development plan with 7 phases (Fase 0–7).
-
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 18 + Vite 5 |
-| Language | TypeScript (strict mode, target ES2022) |
-| Routing | React Router v6 (lazy loading per feature) |
-| Server State | TanStack Query v5 |
-| Tables | TanStack Table v8 |
-| Forms | React Hook Form + Zod |
-| UI Primitives | shadcn/ui (Radix + Tailwind) |
-| Charts | Recharts (+ Tremor optional for KPI delta cards) |
-| Toasts | sonner |
-| Command Palette | cmdk |
-| Icons | lucide-react |
-| Testing | Vitest + React Testing Library |
-| Mock API | MSW (Mock Service Worker) |
-| Dev Docs | Storybook |
-| Dates | date-fns + date-fns-tz |
+| Layer           | Technology                                       |
+| --------------- | ------------------------------------------------ |
+| Framework       | React 18 + Vite 5                                |
+| Language        | TypeScript (strict mode, target ES2022)          |
+| Routing         | React Router v6 (lazy loading per feature)       |
+| Server State    | TanStack Query v5                                |
+| Tables          | TanStack Table v8                                |
+| Forms           | React Hook Form + Zod                            |
+| UI Primitives   | shadcn/ui (Radix + Tailwind)                     |
+| Charts          | Recharts (+ Tremor optional for KPI delta cards) |
+| Toasts          | sonner                                           |
+| Command Palette | cmdk                                             |
+| Icons           | lucide-react                                     |
+| Testing         | Vitest + React Testing Library                   |
+| Mock API        | MSW (Mock Service Worker)                        |
+| Dev Docs        | Storybook                                        |
+| Dates           | date-fns + date-fns-tz                           |
 
 ## Commands (from monorepo root)
 
-| Command | Purpose |
-|---|---|
-| `npm run dev -w apps/admin-web` | Start Vite dev server |
-| `npm run build -w apps/admin-web` | Production build |
-| `npm run test -w apps/admin-web` | Run Vitest tests |
-| `npm run lint -w apps/admin-web` | ESLint |
-| `npm run storybook -w apps/admin-web` | Start Storybook |
-| `npm run typecheck -w apps/admin-web` | tsc --noEmit |
+| Command                               | Purpose               |
+| ------------------------------------- | --------------------- |
+| `npm run dev -w apps/admin-web`       | Start Vite dev server |
+| `npm run build -w apps/admin-web`     | Production build      |
+| `npm run test -w apps/admin-web`      | Run Vitest tests      |
+| `npm run lint -w apps/admin-web`      | ESLint                |
+| `npm run storybook -w apps/admin-web` | Start Storybook       |
+| `npm run typecheck -w apps/admin-web` | tsc --noEmit          |
 
 ## Architecture
 
@@ -74,6 +67,8 @@ features/<module>/
 ```
 
 Do NOT create empty subfolders. Add `hooks/`, `services/`, `mappers/`, `schemas/`, or `view-models/` only when the first file of that type exists.
+
+Existing modules (`auth`, `dashboard`, `accounts`, `users`, `roles`, `products`, `marketplace`) follow this structure — use them as reference when creating new features.
 
 ### Adding a New Feature Module
 
@@ -108,9 +103,11 @@ Local State   → useState/useReducer (forms via React Hook Form, filters, dialo
 | `static` | 30 min | Roles, stores, feature flags |
 
 **Mutation patterns**:
+
 - Create (201) → invalidate list → refetch
 - Update (200) → invalidate list + detail. Toggle → optimistic update + rollback on error
 - Delete (204) → wait for 204 → invalidate. AlertDialog required. Never optimistic
+- Error toast on mutation failure → use `showRetryToast(error, onRetry)` (from `features/marketplace/hooks/mutation-toast.ts`) for a sticky toast with a Retry button that re-fires the mutation with the same variables — never a bare `toast.error()` that lacks a retry action
 - Background refetch → 2px progress bar, atomic replacement (never clear existing data)
 - Prefetch → detail on row hover (onMouseEnter)
 
@@ -130,6 +127,21 @@ Every feature has a `mappers/` layer. Components receive ViewModels, never raw A
 ### Async Cancelability
 
 All API calls support `AbortSignal`. TanStack Query's `signal` is passed through to the API Client. `queryClient.cancelQueries()` is used when filters change or the user navigates away, preventing race conditions.
+
+### Shared UI Primitives
+
+Reusable primitives live in `src/shared/ui/`. Do NOT duplicate these inside feature modules — import and compose them:
+
+| Location                       | Provides                                                               |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `layout/`                      | `AppLayout`, `SideNav`, `TopBar`, `ContentArea` — top-level page shell |
+| `alert-dialog.tsx`             | Confirmation dialogs for destructive actions                           |
+| `dialog.tsx`                   | Modal dialog wrapper (Radix-based)                                     |
+| `dropdown-menu.tsx`            | Row action menus and context menus                                     |
+| `tabs.tsx`                     | Tab navigation panels                                                  |
+| `skeletons/chart-skeleton.tsx` | Shape-matched skeleton for chart loading states                        |
+
+All standard shadcn/ui primitives (Button, Input, Select, Checkbox, Popover, etc.) are also available from `src/shared/ui/`. Use `cn()` from `@shared/utils` for conditional class composition.
 
 ## Authentication
 
@@ -155,8 +167,8 @@ ITokenStorage (interchangeable):  get/set/clear access & refresh tokens
 interface AuthSession {
   userId: string;
   accountId: string;
-  roles: RoleType[];          // Enum, not string[]
-  expiresAt: number;          // Unix timestamp ms
+  roles: RoleType[]; // Enum, not string[]
+  expiresAt: number; // Unix timestamp ms
 }
 // isExpiring is computed by SessionManager, not stored
 ```
@@ -170,7 +182,7 @@ interface AuthSession {
 
 ### Prerequisite
 
-`POST /api/auth/refresh` in the backend is currently broken (always returns 400). Extending `rotateRefreshToken()` to return user context is a **blocking prerequisite** for Fase 1.
+`POST /api/auth/refresh` in the backend currently returns 400 instead of a refreshed session. Until the backend endpoint is fixed to return user context alongside new tokens, the refresh-on-401 flow cannot complete.
 
 ## Permissions
 
@@ -202,10 +214,10 @@ Roles are resolved to permissions via `ROLE_PERMISSIONS` map. `useHasPermission(
 
 ### Double-Layer Protection
 
-| Layer | Mechanism |
-|---|---|
+| Layer          | Mechanism                                                                          |
+| -------------- | ---------------------------------------------------------------------------------- |
 | **Navigation** | `NavItem.permissions: Permission[]` — items not in the user's set are not rendered |
-| **Routes** | `ProtectedRoute` + `RequirePermission` — blocks direct URL access |
+| **Routes**     | `ProtectedRoute` + `RequirePermission` — blocks direct URL access                  |
 
 ## Layout
 
@@ -265,21 +277,6 @@ Components and hooks never import `axios` directly. Only `services/` files withi
 - **Order**: types → interfaces → implementations (alphabetical within each group)
 - **Path aliases**: `@/` maps to `src/`. Within a feature, relative imports are fine. Across features, use `@features/<module>/` barrel exports
 - **No circular dependencies**
-
-## Development Phases
-
-| Phase | Name | Key Deliverable |
-|---|---|---|
-| **Fase 0** | Developer Experience | Monorepo scaffold, Vite, TS, Tailwind, Vitest, Storybook, MSW, CI |
-| **Fase 1** | Auth + Layout | Login, AuthProvider, SessionManager, ITokenStorage, TopBar, SideNav |
-| **Fase 2** | Design System Validation | shadcn/ui components in Storybook, study referents, incremental DESIGN.md updates |
-| **Fase 3** | Dashboard Overview | KPIs, health, enrichment, rules summary. First Design System consumer |
-| **Fase 4** | Core CRUD | Accounts + Users + Roles with consolidated table/filter/bulk/drawer pattern |
-| **Fase 5** | Marketplace Management | Products catalog + history, multi-marketplace scrapers (stores, schedules, configs) |
-| **Fase 6** | Rules Engine | Professional multi-engine editor (Monaco/CodeMirror), real-time validation, test panel, version history |
-| **Fase 7** | Complementary Features | Queues, Logs, Settings, Notification Center, Global Right Drawer, ⌘K |
-
-See the development plan for detailed DoD per phase, prerequisite tasks, and API endpoint mapping.
 
 ## Pre-commit Checklist
 
