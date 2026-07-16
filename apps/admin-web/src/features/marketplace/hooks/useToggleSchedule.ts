@@ -1,9 +1,10 @@
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { schedulesService } from '../services/schedules-service';
 import type { ScheduleListViewModel } from '../view-models/schedule-view-model';
 
+import { showRetryToast } from './mutation-toast';
 import { marketplaceKeys } from './query-keys';
 
 /**
@@ -14,7 +15,7 @@ import { marketplaceKeys } from './query-keys';
 export function useToggleSchedule() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (id: string) => schedulesService.toggle(id),
     onMutate: async (id: string) => {
       // Cancel any in-flight list queries so they don't overwrite our optimistic update
@@ -39,13 +40,8 @@ export function useToggleSchedule() {
       if (context?.previousData) {
         queryClient.setQueryData(marketplaceKeys.schedules.list(), context.previousData);
       }
-      toast.error(error.message, {
-        duration: Infinity,
-        action: {
-          label: 'Retry',
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick: () => {},
-        },
+      showRetryToast(error, () => {
+        mutateRef.current(_id);
       });
     },
     onSettled: () => {
@@ -53,4 +49,9 @@ export function useToggleSchedule() {
       void queryClient.invalidateQueries({ queryKey: marketplaceKeys.schedules.list() });
     },
   });
+
+  const mutateRef = useRef(mutation.mutate);
+  mutateRef.current = mutation.mutate;
+
+  return mutation;
 }

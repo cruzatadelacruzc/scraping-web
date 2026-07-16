@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { schedulesService } from '../services/schedules-service';
 
+import { showRetryToast } from './mutation-toast';
 import { marketplaceKeys } from './query-keys';
 
 /**
@@ -14,21 +16,21 @@ import { marketplaceKeys } from './query-keys';
 export function useDeleteSchedule() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (id: string) => schedulesService.delete(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: marketplaceKeys.schedules.all });
       toast.success('Schedule permanently deleted');
     },
-    onError: (error: Error) => {
-      toast.error(error.message, {
-        duration: Infinity,
-        action: {
-          label: 'Retry',
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick: () => {},
-        },
+    onError: (error: Error, variables) => {
+      showRetryToast(error, () => {
+        mutateRef.current(variables);
       });
     },
   });
+
+  const mutateRef = useRef(mutation.mutate);
+  mutateRef.current = mutation.mutate;
+
+  return mutation;
 }

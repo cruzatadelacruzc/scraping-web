@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import type { CreateSchedulePayload } from '../services/schedules-service';
 import { schedulesService } from '../services/schedules-service';
 
+import { showRetryToast } from './mutation-toast';
 import { marketplaceKeys } from './query-keys';
 
 /**
@@ -14,21 +16,21 @@ import { marketplaceKeys } from './query-keys';
 export function useCreateSchedule() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (data: CreateSchedulePayload) => schedulesService.create(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: marketplaceKeys.schedules.all });
       toast.success('Schedule created');
     },
-    onError: (error: Error) => {
-      toast.error(error.message, {
-        duration: Infinity,
-        action: {
-          label: 'Retry',
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick: () => {},
-        },
+    onError: (error: Error, variables) => {
+      showRetryToast(error, () => {
+        mutateRef.current(variables);
       });
     },
   });
+
+  const mutateRef = useRef(mutation.mutate);
+  mutateRef.current = mutation.mutate;
+
+  return mutation;
 }

@@ -31,7 +31,13 @@ export function ScraperConfigEditor(): JSX.Element {
   const [selectedStoreKey, setSelectedStoreKey] = useState('');
 
   // --- Single config (enabled only when a storeKey is selected) ---
-  const { data: singleConfig, isLoading: isSingleLoading } = useGetScraperConfig(selectedStoreKey);
+  const {
+    data: singleConfig,
+    isLoading: isSingleLoading,
+    isError: isSingleError,
+    error: singleError,
+    refetch: singleRefetch,
+  } = useGetScraperConfig(selectedStoreKey);
 
   // --- Mutations ---
   const createMutation = useCreateScraperConfig();
@@ -172,6 +178,22 @@ export function ScraperConfigEditor(): JSX.Element {
         <>
           {isSingleLoading ? (
             <div className="h-32 animate-pulse rounded-sm bg-surface-container-high" />
+          ) : isSingleError ? (
+            <div className="rounded-md border border-danger bg-danger-muted p-md text-sm">
+              <p className="text-danger">
+                {singleError instanceof Error
+                  ? singleError.message
+                  : t('scrapers.revolico.error.loadConfig')}
+              </p>
+              <button
+                onClick={() => {
+                  void singleRefetch();
+                }}
+                className="mt-sm rounded-sm bg-danger px-3 py-1 text-sm text-white transition-colors hover:bg-danger/80"
+              >
+                {t('common.retry')}
+              </button>
+            </div>
           ) : (
             <div className="space-y-3">
               {/* Store key info */}

@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import type { UpdateScraperConfigPayload } from '../services/revolico-service';
 import { revolicoService } from '../services/revolico-service';
 
+import { showRetryToast } from './mutation-toast';
 import { marketplaceKeys } from './query-keys';
 
 /**
@@ -14,7 +16,7 @@ import { marketplaceKeys } from './query-keys';
 export function useUpdateScraperConfig() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ storeKey, data }: { storeKey: string; data: UpdateScraperConfigPayload }) =>
       revolicoService.updateConfig(storeKey, data),
     onSuccess: (_data, variables) => {
@@ -26,15 +28,15 @@ export function useUpdateScraperConfig() {
       });
       toast.success('Scraper config updated');
     },
-    onError: (error: Error) => {
-      toast.error(error.message, {
-        duration: Infinity,
-        action: {
-          label: 'Retry',
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick: () => {},
-        },
+    onError: (error: Error, variables) => {
+      showRetryToast(error, () => {
+        mutateRef.current(variables);
       });
     },
   });
+
+  const mutateRef = useRef(mutation.mutate);
+  mutateRef.current = mutation.mutate;
+
+  return mutation;
 }
