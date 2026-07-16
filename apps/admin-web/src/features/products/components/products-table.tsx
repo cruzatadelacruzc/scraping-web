@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
+import { PackageSearch, Search } from 'lucide-react';
 
 import { useGetProducts } from '../hooks/useGetProducts';
 
@@ -12,8 +12,11 @@ export function ProductsTable(): JSX.Element {
   const [pageSize, setPageSize] = useState(20);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [categoryInput, setCategoryInput] = useState('');
   const [category, setCategory] = useState('');
+  const [minPriceInput, setMinPriceInput] = useState('');
   const [minPrice, setMinPrice] = useState('');
+  const [maxPriceInput, setMaxPriceInput] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [isOutstanding, setIsOutstanding] = useState(false);
   const [isPromoted, setIsPromoted] = useState(false);
@@ -29,7 +32,40 @@ export function ProductsTable(): JSX.Element {
     };
   }, [searchInput]);
 
-  const { data, isLoading, isError, error, isFetching } = useGetProducts({
+  // Debounce category filter (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCategory(categoryInput);
+      setPage(1);
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [categoryInput]);
+
+  // Debounce minPrice filter (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinPrice(minPriceInput);
+      setPage(1);
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [minPriceInput]);
+
+  // Debounce maxPrice filter (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMaxPrice(maxPriceInput);
+      setPage(1);
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [maxPriceInput]);
+
+  const { data, isLoading, isError, error, isFetching, refetch } = useGetProducts({
     page,
     limit: pageSize,
     search: search || undefined,
@@ -41,10 +77,6 @@ export function ProductsTable(): JSX.Element {
   });
 
   const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
-
-  const handleFilterReset = useCallback(() => {
-    setPage(1);
-  }, []);
 
   // 1. Loading
   if (isLoading) {
@@ -61,8 +93,18 @@ export function ProductsTable(): JSX.Element {
   // 2. Error
   if (isError) {
     return (
-      <div className="rounded-md border border-danger bg-danger-muted p-md text-sm text-danger">
-        {error instanceof Error ? error.message : t('products.error.message')}
+      <div className="rounded-md border border-danger bg-danger-muted p-md text-sm">
+        <p className="text-danger">
+          {error instanceof Error ? error.message : t('products.error.message')}
+        </p>
+        <button
+          onClick={() => {
+            void refetch();
+          }}
+          className="mt-sm rounded-sm bg-danger px-3 py-1 text-sm text-white transition-colors hover:bg-danger/80"
+        >
+          {t('common.retry')}
+        </button>
       </div>
     );
   }
@@ -71,7 +113,8 @@ export function ProductsTable(): JSX.Element {
   if (!data || data.items.length === 0) {
     return (
       <div className="py-xl text-center">
-        <p className="text-lg font-semibold text-on-surface">{t('products.empty.title')}</p>
+        <PackageSearch size={48} className="mx-auto text-on-surface-variant" aria-hidden="true" />
+        <p className="mt-md text-lg font-semibold text-on-surface">{t('products.empty.title')}</p>
         <p className="mt-sm text-body-sm text-on-surface-variant">
           {t('products.empty.description')}
         </p>
@@ -106,10 +149,9 @@ export function ProductsTable(): JSX.Element {
         {/* Category filter */}
         <input
           type="text"
-          value={category}
+          value={categoryInput}
           onChange={(e) => {
-            setCategory(e.target.value);
-            handleFilterReset();
+            setCategoryInput(e.target.value);
           }}
           placeholder={t('products.filters.categoryPlaceholder')}
           aria-label={t('products.filters.categoryPlaceholder')}
@@ -119,10 +161,9 @@ export function ProductsTable(): JSX.Element {
         {/* Min price */}
         <input
           type="number"
-          value={minPrice}
+          value={minPriceInput}
           onChange={(e) => {
-            setMinPrice(e.target.value);
-            handleFilterReset();
+            setMinPriceInput(e.target.value);
           }}
           placeholder={t('products.filters.minPrice')}
           aria-label={t('products.filters.minPrice')}
@@ -133,10 +174,9 @@ export function ProductsTable(): JSX.Element {
         {/* Max price */}
         <input
           type="number"
-          value={maxPrice}
+          value={maxPriceInput}
           onChange={(e) => {
-            setMaxPrice(e.target.value);
-            handleFilterReset();
+            setMaxPriceInput(e.target.value);
           }}
           placeholder={t('products.filters.maxPrice')}
           aria-label={t('products.filters.maxPrice')}

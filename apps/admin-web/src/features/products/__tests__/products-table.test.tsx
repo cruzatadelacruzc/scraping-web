@@ -187,6 +187,36 @@ describe('ProductsTable', () => {
       const errorMessage = await screen.findByText('products.error.message', {}, { timeout: 2000 });
       expect(errorMessage).toBeInTheDocument();
     });
+
+    it('renders a retry button in error state', async () => {
+      mockList.mockRejectedValue(new Error('Network error'));
+      renderWithProviders(<ProductsTable />);
+
+      const retryButton = await screen.findByText('common.retry', {}, { timeout: 2000 });
+      expect(retryButton).toBeInTheDocument();
+    });
+
+    it('calls refetch when retry button is clicked', async () => {
+      mockList.mockRejectedValue(new Error('Network error'));
+      renderWithProviders(<ProductsTable />);
+      await screen.findByText('common.retry', {}, { timeout: 2000 });
+
+      mockList.mockClear();
+      mockList.mockResolvedValue({
+        data: { data: [], meta: { total: 0, skip: 0, limit: 20, hasMore: false } },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {},
+      });
+
+      const retryButton = screen.getByText('common.retry');
+      retryButton.click();
+
+      await vi.waitFor(() => {
+        expect(mockList).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('empty state', () => {
@@ -203,6 +233,23 @@ describe('ProductsTable', () => {
       const emptyTitle = await screen.findByText('products.empty.title', {}, { timeout: 2000 });
       expect(emptyTitle).toBeInTheDocument();
       expect(screen.getByText('products.empty.description')).toBeInTheDocument();
+    });
+
+    it('renders a centered icon in empty state', async () => {
+      mockList.mockResolvedValue({
+        data: { data: [], meta: { total: 0, skip: 0, limit: 20, hasMore: false } },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {},
+      });
+      renderWithProviders(<ProductsTable />);
+
+      await screen.findByText('products.empty.title', {}, { timeout: 2000 });
+
+      // There should be an SVG rendered with aria-hidden="true" inside the empty state
+      const hiddenIcons = document.querySelectorAll('svg[aria-hidden="true"]');
+      expect(hiddenIcons.length).toBeGreaterThan(0);
     });
   });
 
@@ -322,7 +369,7 @@ describe('ProductsTable', () => {
       expect(screen.getByPlaceholderText('products.filters.maxPrice')).toBeInTheDocument();
     });
 
-    it('includes filter params in query when filters are set', async () => {
+    it('includes filter params in query after category debounce', async () => {
       const user = userEvent.setup();
       renderWithProviders(<ProductsTable />);
       await waitForData();
@@ -342,7 +389,27 @@ describe('ProductsTable', () => {
       );
     });
 
-    it('resets to page 1 when filters change', async () => {
+    it('debounces minPrice filter before triggering query', async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ProductsTable />);
+      await waitForData();
+
+      mockList.mockClear();
+
+      const minPriceInput = screen.getByPlaceholderText('products.filters.minPrice');
+      await user.type(minPriceInput, '100');
+
+      await vi.waitFor(
+        () => {
+          expect(mockList).toHaveBeenCalledWith(
+            expect.objectContaining({ minPrice: 100, skip: 0, limit: 20 }),
+          );
+        },
+        { timeout: 1000, interval: 50 },
+      );
+    });
+
+    it('resets to page 1 when filter debounce fires', async () => {
       const user = userEvent.setup();
       renderWithProviders(<ProductsTable />);
       await waitForData();
