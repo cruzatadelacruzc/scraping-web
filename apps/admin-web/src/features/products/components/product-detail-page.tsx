@@ -144,6 +144,7 @@ interface StatusHistoryTabProps {
   inactiveLabel: string;
   activeColor: string;
   chartDescription: string;
+  timeRange: RangeState;
 }
 
 function StatusHistoryTab({
@@ -155,10 +156,16 @@ function StatusHistoryTab({
   inactiveLabel,
   activeColor,
   chartDescription,
+  timeRange,
 }: StatusHistoryTabProps): JSX.Element {
+  const filtered: StatusHistoryEntryViewModel[] = useMemo(() => {
+    if (isLoading || isError) return data;
+    return filterByTimeRange<StatusHistoryEntryViewModel>(data, timeRange.start, timeRange.end);
+  }, [data, isLoading, isError, timeRange]);
+
   return (
     <StepChart
-      data={data}
+      data={filtered}
       isLoading={isLoading}
       isError={isError}
       onRetry={refetch}
@@ -216,35 +223,60 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps): JSX.El
     );
   }
 
-  // 404 — not found
+  // Error handling — differentiate 404 from other failures
   if (productQuery.isError) {
+    const axiosError = productQuery.error as {
+      response?: { status?: number };
+    } | null;
+    const errorStatus = axiosError?.response?.status ?? null;
+
+    // 404 — not found
+    if (errorStatus === 404) {
+      return (
+        <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+          <svg
+            width={48}
+            height={48}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="text-on-surface-variant"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <h2 className="mt-lg text-headline-md font-semibold text-on-surface">
+            {t('products.detail.notFound')}
+          </h2>
+          <p className="mt-sm text-body-sm text-on-surface-variant">
+            {t('products.detail.notFoundDesc')}
+          </p>
+          <Link
+            to={ROUTES.PRODUCTS}
+            className="mt-md rounded-sm bg-primary px-4 py-2 text-body-sm font-medium text-white transition-colors hover:bg-primary/80"
+          >
+            {t('products.detail.goToCatalog')}
+          </Link>
+        </div>
+      );
+    }
+
+    // Non-404 error — show error state with Retry
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <svg
-          width={48}
-          height={48}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          className="text-on-surface-variant"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <h2 className="mt-lg text-headline-md font-semibold text-on-surface">
-          {t('products.detail.notFound')}
-        </h2>
-        <p className="mt-sm text-body-sm text-on-surface-variant">
-          {t('products.detail.notFoundDesc')}
+      <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-md border border-outline-variant bg-surface-container p-md text-center">
+        <p className="text-body-sm text-danger">
+          {productQuery.error instanceof Error
+            ? productQuery.error.message
+            : t('products.history.error')}
         </p>
-        <Link
-          to={ROUTES.PRODUCTS}
-          className="mt-md rounded-sm bg-primary px-4 py-2 text-body-sm font-medium text-white transition-colors hover:bg-primary/80"
+        <button
+          onClick={() => void productQuery.refetch()}
+          className="mt-sm rounded-sm bg-danger px-3 py-1 text-xs text-white transition-colors hover:bg-danger/80"
         >
-          {t('products.detail.goToCatalog')}
-        </Link>
+          {t('common.retry')}
+        </button>
       </div>
     );
   }
@@ -428,6 +460,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps): JSX.El
           inactiveLabel={t('products.detail.standard')}
           activeColor={OUTSTANDING_COLOR}
           chartDescription={t('products.history.chartDesc.outstanding')}
+          timeRange={timeRange}
         />
       ),
     },
@@ -444,6 +477,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps): JSX.El
           inactiveLabel={t('products.detail.notPromoted')}
           activeColor={PROMOTED_COLOR}
           chartDescription={t('products.history.chartDesc.promoted')}
+          timeRange={timeRange}
         />
       ),
     },
