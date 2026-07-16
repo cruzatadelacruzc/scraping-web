@@ -259,8 +259,9 @@ export function registerAdminPaths(registry: OpenAPIRegistry): void {
     .summary('List all roles with user counts')
     .operationId('adminListRoles')
     .security('bearerAuth')
+    .queryParam('status', z.enum(['active', 'inactive']).optional(), 'Filter by activation state (default: all)')
     .response(200, 'List of roles', z.object({ roles: z.array(Schemas.RoleResponseDTO) }))
-    .errors(401, 403)
+    .errors(400, 401, 403)
     .register(registry);
 
   endpoint('post', '/api/admin/roles')
@@ -273,14 +274,14 @@ export function registerAdminPaths(registry: OpenAPIRegistry): void {
     .errors(400, 401, 403)
     .register(registry);
 
-  endpoint('delete', '/api/admin/roles/{id}')
+  endpoint('patch', '/api/admin/roles/{id}/toggle')
     .tag(TAG.ADMIN_ROLES)
-    .summary('Delete a role by ID')
-    .operationId('adminDeleteRole')
+    .summary('Toggle a role between active and deactivated (soft-delete)')
+    .operationId('adminToggleRole')
     .security('bearerAuth')
     .pathParam('id', 'Role ID')
-    .response204('Role deleted')
-    .errors(401, 403, 404)
+    .response(200, 'Role toggled', z.object({ role: Schemas.RoleResponseDTO }))
+    .errors(401, 403, 404, 409)
     .register(registry);
 
   // ── Admin User-Role Management ────────────────────────────────────────
