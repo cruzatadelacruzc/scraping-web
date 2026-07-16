@@ -47,6 +47,61 @@
         "schemaFields": "Campos del Schema",
         "required": "Requerido"
       }
+    },
+    "schedules": {
+      "title": "Programaciones de Scraping",
+      "table": {
+        "caption": "Lista de programaciones de scraping",
+        "name": "Nombre",
+        "store": "Tienda",
+        "cron": "Cron",
+        "enabled": "Activo",
+        "lastRun": "Última ejecución",
+        "jobsCount": "Trabajos",
+        "actions": "Acciones",
+        "actionsFor": "Acciones para {{name}}",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "toggleLabel": "Alternar {{name}}",
+        "never": "Nunca",
+        "count": "{{count}} programación(es)",
+        "create": "+ Nueva"
+      },
+      "empty": {
+        "title": "Sin programaciones",
+        "description": "Crea tu primera programación de scraping para automatizar la recolección de productos.",
+        "create": "Crear Programación"
+      },
+      "error": {
+        "message": "Error al cargar las programaciones de scraping."
+      },
+      "delete": {
+        "title": "¿Eliminar programación?",
+        "description": "Esto eliminará permanentemente la programación de scraping. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar permanentemente",
+        "deleting": "Eliminando…",
+        "cancel": "Cancelar"
+      },
+      "form": {
+        "createTitle": "Crear Programación de Scraping",
+        "editTitle": "Editar Programación de Scraping",
+        "name": "Nombre de la Programación",
+        "namePlaceholder": "ej. Scraping Diario de Revolico",
+        "store": "Tienda",
+        "storePlaceholder": "Seleccionar una tienda…",
+        "cron": "Expresión Cron",
+        "cronHelp": "Formato: minuto hora día mes día_semana (ej. 0 0 * * * = diario a medianoche)",
+        "enabled": "Activo",
+        "jobs": "Trabajos de Scraping",
+        "addJob": "Agregar Trabajo",
+        "removeJob": "Eliminar trabajo",
+        "jobNumber": "Trabajo #{{number}}",
+        "selectStoreFirst": "Selecciona una tienda para configurar los campos del trabajo.",
+        "cancel": "Cancelar",
+        "create": "Crear",
+        "update": "Actualizar",
+        "submitting": "Guardando…"
+      }
     }
   },
   "accounts": {

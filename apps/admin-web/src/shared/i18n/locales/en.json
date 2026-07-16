@@ -47,6 +47,61 @@
         "schemaFields": "Job Schema Fields",
         "required": "Required"
       }
+    },
+    "schedules": {
+      "title": "Scraping Schedules",
+      "table": {
+        "caption": "Scraping schedules list",
+        "name": "Name",
+        "store": "Store",
+        "cron": "Cron",
+        "enabled": "Enabled",
+        "lastRun": "Last Run",
+        "jobsCount": "Jobs",
+        "actions": "Actions",
+        "actionsFor": "Actions for {{name}}",
+        "edit": "Edit",
+        "delete": "Delete",
+        "toggleLabel": "Toggle {{name}}",
+        "never": "Never",
+        "count": "{{count}} schedule(s)",
+        "create": "+ New"
+      },
+      "empty": {
+        "title": "No schedules yet",
+        "description": "Create your first scraping schedule to automate product collection.",
+        "create": "Create Schedule"
+      },
+      "error": {
+        "message": "Failed to load scraping schedules."
+      },
+      "delete": {
+        "title": "Delete schedule?",
+        "description": "This will permanently delete the scraping schedule. This action cannot be undone.",
+        "confirm": "Delete permanently",
+        "deleting": "Deleting…",
+        "cancel": "Cancel"
+      },
+      "form": {
+        "createTitle": "Create Scraping Schedule",
+        "editTitle": "Edit Scraping Schedule",
+        "name": "Schedule Name",
+        "namePlaceholder": "e.g. Daily Revolico Scrape",
+        "store": "Store",
+        "storePlaceholder": "Select a store…",
+        "cron": "Cron Expression",
+        "cronHelp": "Format: minute hour day month weekday (e.g. 0 0 * * * = daily at midnight)",
+        "enabled": "Enabled",
+        "jobs": "Scraping Jobs",
+        "addJob": "Add Job",
+        "removeJob": "Remove job",
+        "jobNumber": "Job #{{number}}",
+        "selectStoreFirst": "Select a store to configure job fields.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "update": "Update",
+        "submitting": "Saving…"
+      }
     }
   },
   "accounts": {
