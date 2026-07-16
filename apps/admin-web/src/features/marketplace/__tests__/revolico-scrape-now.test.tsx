@@ -171,7 +171,7 @@ describe('ScrapeNowForm', () => {
     }
   });
 
-  it('rejects non-numeric pageNumber at schema level', () => {
+  it('silently converts NaN pageNumber to undefined (not rejected)', () => {
     const result = scrapeJobSchema.safeParse({
       category: '/computadoras/',
       pageNumber: NaN,
@@ -179,7 +179,7 @@ describe('ScrapeNowForm', () => {
     expect(result.success).toBe(true); // NaN → preprocessor → undefined → optional → passes
   });
 
-  it('rejects non-numeric totalPages at schema level', () => {
+  it('silently converts NaN totalPages to undefined (not rejected)', () => {
     const result = scrapeJobSchema.safeParse({
       category: '/computadoras/',
       totalPages: NaN,

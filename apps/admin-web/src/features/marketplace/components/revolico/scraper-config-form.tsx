@@ -183,7 +183,7 @@ export function ScraperConfigEditor(): JSX.Element {
               <p className="text-danger">
                 {singleError instanceof Error
                   ? singleError.message
-                  : t('scrapers.revolico.error.loadConfig')}
+                  : t('scrapers.revolico.error.loadConfigs')}
               </p>
               <button
                 onClick={() => {
