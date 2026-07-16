@@ -168,7 +168,6 @@ describe('ProductDetailPage — error differentiation', () => {
     renderPage();
 
     // Should show error state with Retry (not the not-found view)
-    // Current code incorrectly shows not-found for all errors — this test will FAIL (RED)
     expect(screen.queryByText('products.detail.notFound')).not.toBeInTheDocument();
     expect(screen.queryByText('products.detail.goToCatalog')).not.toBeInTheDocument();
     // Should show a generic error message or retry

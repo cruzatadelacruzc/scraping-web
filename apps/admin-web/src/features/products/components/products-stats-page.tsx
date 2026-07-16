@@ -11,8 +11,8 @@ export function ProductsStatsPage(): JSX.Element {
   const { t } = useTranslation();
   const { data, isLoading, isError, error, refetch } = useGetProductStats();
 
-  // 1. Error — full-page error state
-  if (isError) {
+  // 1. Error (no prior data) — full-page error state
+  if (isError && !data) {
     return (
       <div className="space-y-xl">
         <h1 className="text-headline-lg text-on-surface">{t('products.stats.title')}</h1>
@@ -93,7 +93,7 @@ export function ProductsStatsPage(): JSX.Element {
     <div className="space-y-xl">
       <div className="flex items-center justify-between">
         <h1 className="text-headline-lg text-on-surface">{t('products.stats.title')}</h1>
-        {data.lastScrapedLabel !== 'Never' && (
+        {data.lastScrapedAt !== null && (
           <span className="text-label-xs font-mono text-on-surface-variant">
             {t('products.stats.lastScraped')}: {data.lastScrapedLabel}
           </span>

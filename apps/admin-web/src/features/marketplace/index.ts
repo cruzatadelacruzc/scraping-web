@@ -16,7 +16,6 @@ export { useUpdateSchedule } from './hooks/useUpdateSchedule';
 export { useUpdateScraperConfig } from './hooks/useUpdateScraperConfig';
 export { mapScheduleDTOToViewModel } from './mappers/schedule-mapper';
 export { mapStoreDTOToViewModel } from './mappers/store-mapper';
-export type { StoreDTO, StoreListResponse } from './services/stores-service';
 export { storesService } from './services/stores-service';
 export type { ScheduleListViewModel } from './view-models/schedule-view-model';
 export type { StoreViewModel } from './view-models/store-view-model';

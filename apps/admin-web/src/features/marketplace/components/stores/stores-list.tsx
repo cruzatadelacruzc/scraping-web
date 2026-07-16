@@ -154,7 +154,7 @@ export function StoresList(): JSX.Element {
           onClick={() => {
             refetch();
           }}
-          className="mt-sm rounded-sm bg-danger px-md py-xs text-body-sm font-medium text-on-surface transition-colors hover:bg-danger/80"
+          className="mt-sm rounded-sm bg-danger px-md py-xs text-body-sm font-medium text-white transition-colors hover:bg-danger/80"
         >
           {t('common.retry')}
         </button>

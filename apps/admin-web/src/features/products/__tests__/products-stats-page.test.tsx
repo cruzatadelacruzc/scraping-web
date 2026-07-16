@@ -182,6 +182,21 @@ describe('ProductsStatsPage', () => {
       expect(retryButton).toBeInTheDocument();
     });
 
+    it('keeps data rendered when refetch fails after prior success (isError && data)', async () => {
+      renderWithProviders(<ProductsStatsPage />);
+      // Wait for initial data
+      expect(await screen.findByText('12,840', {}, { timeout: 2000 })).toBeInTheDocument();
+      expect(screen.getByText(/products\.stats\.lastScraped/)).toBeInTheDocument();
+
+      // Now make the service fail — TanStack Query keeps stale data due to placeholderData
+      mockGetStats.mockRejectedValue(new Error('Background refresh failed'));
+      // The page should still show data, not the error state
+      expect(screen.getByText('12,840')).toBeInTheDocument();
+      expect(screen.getByText(/products\.stats\.lastScraped/)).toBeInTheDocument();
+      // The error message from the background failure should NOT appear
+      expect(screen.queryByText('Background refresh failed')).not.toBeInTheDocument();
+    });
+
     it('calls refetch when retry button is clicked', async () => {
       mockGetStats.mockRejectedValue(new Error('Network error'));
       renderWithProviders(<ProductsStatsPage />);

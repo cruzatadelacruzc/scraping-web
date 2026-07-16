@@ -36,7 +36,7 @@ export function ChartSkeleton({ height = 240, bars = 8 }: ChartSkeletonProps): J
             key={i}
             className="flex-1 rounded-t-sm bg-surface-container-high"
             style={{
-              height: `${String(30 + Math.random() * 60)}%`,
+              height: `${String(30 + ((i * 17) % 60))}%`,
               opacity: Math.max(0.3, 1 - i * 0.08),
             }}
           />
