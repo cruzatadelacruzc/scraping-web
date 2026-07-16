@@ -157,7 +157,7 @@ describe('StoresList', () => {
 
   // ---- Empty ----
 
-  it('shows empty state when no stores are registered', () => {
+  it('shows empty state with icon and message when no stores are registered', () => {
     mockUseGetStores.mockReturnValue({
       data: [],
       isLoading: false,
@@ -166,9 +166,13 @@ describe('StoresList', () => {
       refetch: vi.fn(),
     });
 
-    renderWithProviders(<StoresList />);
+    const { container } = renderWithProviders(<StoresList />);
     expect(screen.getByText('scrapers.stores.empty.title')).toBeInTheDocument();
     expect(screen.getByText('scrapers.stores.empty.description')).toBeInTheDocument();
+
+    // Must render a lucide icon with aria-hidden="true" (admin-web-ui.md §4.2)
+    const icon = container.querySelector('svg[aria-hidden="true"]');
+    expect(icon).toBeInTheDocument();
   });
 
   // ---- Data render ----

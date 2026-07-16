@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Store } from 'lucide-react';
 
 import { useGetStores } from '../../hooks/useGetStores';
 import type { FieldSchemaViewModel } from '../../view-models/store-view-model';
@@ -165,7 +166,10 @@ export function StoresList(): JSX.Element {
   if (!data || data.length === 0) {
     return (
       <div className="py-xl text-center">
-        <p className="text-lg font-semibold text-on-surface">{t('scrapers.stores.empty.title')}</p>
+        <Store size={48} className="mx-auto text-on-surface-variant" aria-hidden="true" />
+        <p className="mt-md text-lg font-semibold text-on-surface">
+          {t('scrapers.stores.empty.title')}
+        </p>
         <p className="mt-sm text-body-sm text-on-surface-variant">
           {t('scrapers.stores.empty.description')}
         </p>
