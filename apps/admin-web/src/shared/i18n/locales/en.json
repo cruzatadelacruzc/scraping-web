@@ -105,6 +105,42 @@
         "update": "Update",
         "submitting": "Saving…"
       }
+    },
+    "revolico": {
+      "title": "Revolico",
+      "error": {
+        "loadConfigs": "Failed to load scraper configs."
+      },
+      "config": {
+        "title": "Scraper Configs (JSONata Expressions)",
+        "noConfigs": "No scraper configs found.",
+        "selectStoreKey": "Select Config Key",
+        "storeKeyPlaceholder": "Select a config key…",
+        "storeKey": "Config Key",
+        "expression": "JSONata Expression",
+        "newConfig": "New config — will be created on save",
+        "editingConfig": "Editing existing config",
+        "confirmTitle": "Save scraper config?",
+        "confirmDescription": "This changes live scraping behavior and invalidates the backend cache. Make sure the JSONata expression is correct before proceeding.",
+        "confirmSave": "Save Config",
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create",
+        "saving": "Saving…"
+      },
+      "job": {
+        "title": "Manual Scraping Job",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "pageNumber": "Page Number",
+        "totalPages": "Total Pages",
+        "trigger": "Scrape Now",
+        "triggering": "Triggering…",
+        "confirmTitle": "Trigger scraping job?",
+        "confirmDescription": "This enqueues a real scraping job for \"{{category}}\". This action cannot be undone.",
+        "confirmTrigger": "Trigger Job",
+        "cancel": "Cancel"
+      }
     }
   },
   "accounts": {

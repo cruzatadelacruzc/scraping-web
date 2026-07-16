@@ -4,6 +4,8 @@ import type { ScheduleListViewModel } from '@features/marketplace';
 import {
   ScheduleForm,
   SchedulesTable,
+  ScrapeNowForm,
+  ScraperConfigEditor,
   StoresList,
   useCreateSchedule,
   useGetStores,
@@ -115,6 +117,33 @@ export function ScrapersPage(): JSX.Element {
           submitLabel={submitLabel}
         />
       </Dialog>
+
+      {/* Revolico section */}
+      <section className="mt-lg" aria-labelledby="revolico-section-heading">
+        <h2 id="revolico-section-heading" className="text-title-md text-on-surface">
+          {t('scrapers.revolico.title')}
+        </h2>
+
+        {/* Config editor */}
+        <div className="mt-sm">
+          <h3 className="text-body-sm font-medium text-on-surface-variant">
+            {t('scrapers.revolico.config.title')}
+          </h3>
+          <div className="mt-1">
+            <ScraperConfigEditor />
+          </div>
+        </div>
+
+        {/* Manual scrape trigger */}
+        <div className="mt-md">
+          <h3 className="text-body-sm font-medium text-on-surface-variant">
+            {t('scrapers.revolico.job.title')}
+          </h3>
+          <div className="mt-1 max-w-md">
+            <ScrapeNowForm />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -105,6 +105,42 @@
         "update": "Actualizar",
         "submitting": "Guardando…"
       }
+    },
+    "revolico": {
+      "title": "Revolico",
+      "error": {
+        "loadConfigs": "Error al cargar las configuraciones de scraping."
+      },
+      "config": {
+        "title": "Configuraciones de Scraping (Expresiones JSONata)",
+        "noConfigs": "No se encontraron configuraciones de scraping.",
+        "selectStoreKey": "Seleccionar Clave de Config",
+        "storeKeyPlaceholder": "Seleccionar una clave…",
+        "storeKey": "Clave de Config",
+        "expression": "Expresión JSONata",
+        "newConfig": "Nueva configuración — se creará al guardar",
+        "editingConfig": "Editando configuración existente",
+        "confirmTitle": "¿Guardar configuración de scraping?",
+        "confirmDescription": "Esto cambia el comportamiento de scraping en vivo e invalida el caché del backend. Asegúrate de que la expresión JSONata sea correcta antes de continuar.",
+        "confirmSave": "Guardar Config",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "create": "Crear",
+        "saving": "Guardando…"
+      },
+      "job": {
+        "title": "Trabajo de Scraping Manual",
+        "category": "Categoría",
+        "subcategory": "Subcategoría",
+        "pageNumber": "Número de Página",
+        "totalPages": "Total de Páginas",
+        "trigger": "Scrapear Ahora",
+        "triggering": "Ejecutando…",
+        "confirmTitle": "¿Ejecutar trabajo de scraping?",
+        "confirmDescription": "Esto encola un trabajo de scraping real para \"{{category}}\". Esta acción no se puede deshacer.",
+        "confirmTrigger": "Ejecutar Trabajo",
+        "cancel": "Cancelar"
+      }
     }
   },
   "accounts": {

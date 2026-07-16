@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const { mockUseGetSchedules, mockDeleteMutateWithOptions } = vi.hoisted(() => ({
   mockUseGetSchedules: vi.fn(),
-  mockDeleteMutateWithOptions: vi.fn((id: string, options?: { onSettled?: () => void }) => {
+  mockDeleteMutateWithOptions: vi.fn((_id: string, options?: { onSettled?: () => void }) => {
     options?.onSettled?.();
   }),
 }));
