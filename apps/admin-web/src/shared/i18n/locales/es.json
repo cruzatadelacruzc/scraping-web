@@ -155,6 +155,11 @@
     "removeRoleSuccess": "Rol removido exitosamente",
     "removeRoleError": "Error al remover el rol"
   },
+  "forbidden": {
+    "title": "Acceso Denegado",
+    "description": "No tienes permiso para acceder a esta página.",
+    "action": "Ir al Panel"
+  },
   "dashboard": {
     "title": "Panel",
     "totalAccounts": "Total de Cuentas",

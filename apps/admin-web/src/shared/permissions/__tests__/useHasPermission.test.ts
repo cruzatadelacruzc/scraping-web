@@ -1,0 +1,71 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook } from '@testing-library/react';
+
+import { Permission } from '../permission';
+import { useHasPermission } from '../useHasPermission';
+
+const { mockUseCurrentUser } = vi.hoisted(() => ({
+  mockUseCurrentUser: vi.fn(),
+}));
+
+vi.mock('@shared/auth', () => ({
+  useCurrentUser: mockUseCurrentUser,
+  RoleType: {
+    SUPER_ADMIN: 'SUPER_ADMIN',
+    ACCOUNT_OWNER: 'ACCOUNT_OWNER',
+    MEMBER: 'MEMBER',
+  },
+}));
+
+describe('useHasPermission', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns true for all permissions when user is SUPER_ADMIN', () => {
+    mockUseCurrentUser.mockReturnValue({
+      userId: 'u1',
+      accountId: 'a1',
+      roles: ['SUPER_ADMIN'],
+      username: 'admin',
+      email: 'admin@test.dev',
+      expiresAt: Date.now() + 86400000,
+    });
+
+    const { result } = renderHook(() => useHasPermission());
+    const hasPermission = result.current;
+
+    Object.values(Permission).forEach((p) => {
+      expect(hasPermission(p)).toBe(true);
+    });
+  });
+
+  it('ACCOUNT_OWNER lacks MANAGE_SCRAPERS', () => {
+    mockUseCurrentUser.mockReturnValue({
+      userId: 'u2',
+      accountId: 'a1',
+      roles: ['ACCOUNT_OWNER'],
+      username: 'owner',
+      email: 'owner@test.dev',
+      expiresAt: Date.now() + 86400000,
+    });
+
+    const { result } = renderHook(() => useHasPermission());
+    const hasPermission = result.current;
+
+    expect(hasPermission(Permission.VIEW_DASHBOARD)).toBe(true);
+    expect(hasPermission(Permission.VIEW_ACCOUNTS)).toBe(true);
+    expect(hasPermission(Permission.MANAGE_SCRAPERS)).toBe(false);
+  });
+
+  it('returns false for all permissions when no session', () => {
+    mockUseCurrentUser.mockReturnValue(null);
+
+    const { result } = renderHook(() => useHasPermission());
+    const hasPermission = result.current;
+
+    Object.values(Permission).forEach((p) => {
+      expect(hasPermission(p)).toBe(false);
+    });
+  });
+});

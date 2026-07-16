@@ -16,7 +16,7 @@ export default tseslint.config(
   // 2. Base JS recommended
   js.configs.recommended,
 
-  // 3. TypeScript type-aware rules (scoped to TS files)
+  // 3. TypeScript type-aware rules (scoped to src/ code)
   {
     files: ['src/**/*.{ts,tsx}'],
     extends: [...tseslint.configs.strictTypeChecked, ...tseslint.configs.stylisticTypeChecked],

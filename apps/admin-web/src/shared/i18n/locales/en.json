@@ -155,6 +155,11 @@
     "removeRoleSuccess": "Role removed successfully",
     "removeRoleError": "Failed to remove role"
   },
+  "forbidden": {
+    "title": "Access Denied",
+    "description": "You do not have permission to access this page.",
+    "action": "Go to Dashboard"
+  },
   "dashboard": {
     "title": "Dashboard",
     "totalAccounts": "Total Accounts",
