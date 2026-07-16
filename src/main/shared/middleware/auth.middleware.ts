@@ -107,7 +107,8 @@ export class AuthMiddleware extends BaseMiddleware {
           },
           include: {
             userIdentity: true,
-            roles: true,
+            // Deactivated roles must not grant permissions — filter them out
+            roles: { where: { deletedAt: null } },
           },
         });
 

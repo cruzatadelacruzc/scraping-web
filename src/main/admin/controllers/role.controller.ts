@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
-import { controller, httpGet, httpPost, httpDelete, request, response } from 'inversify-express-utils';
+import { controller, httpGet, httpPost, httpPatch, httpDelete, request, response } from 'inversify-express-utils';
 import { inject } from 'inversify';
+import { ZodError } from 'zod';
 import { TYPES } from '@shared/types.container';
 import { AuthMiddleware } from '@shared/middleware/auth.middleware';
 import { ResponseHandler } from '@shared/response-handler';
 import { ILogger } from '@shared/logger.interface';
+import { RoleInactiveError } from '@admin/errors/role-inactive.error';
+import { RoleNotFoundError } from '@admin/errors/role-not-found.error';
+import { SystemRoleProtectedError } from '@admin/errors/system-role-protected.error';
 import { RoleService } from '@admin/services/role.service';
-import { CreateRoleDTO } from '@admin/services/dto/role.dto';
+import { CreateRoleDTO, ListRolesQueryDTO } from '@admin/services/dto/role.dto';
 
 @controller('/api/admin')
 export class RoleController {
@@ -18,16 +22,21 @@ export class RoleController {
   }
 
   /**
-   * Lists all roles with user counts.
-   * @param req - Express request.
+   * Lists roles with user counts, optionally filtered by activation state.
+   * @param req - Express request; optional `status` query param ('active' | 'inactive').
    * @param res - Express response.
    */
   @httpGet('/roles', AuthMiddleware.forRoles('SUPER_ADMIN'))
   public async list(@request() req: Request, @response() res: Response): Promise<void> {
     try {
-      const roles = await this._service.getAll();
+      const query = ListRolesQueryDTO.from(req.query);
+      const roles = await this._service.getAll(query.status);
       ResponseHandler.ok(res, { roles });
     } catch (err) {
+      if (err instanceof ZodError) {
+        ResponseHandler.badRequest(res, 'Invalid status filter: must be "active" or "inactive"');
+        return;
+      }
       this._log.error('Failed to list roles', { error: err });
       ResponseHandler.error(res, 'Failed to list roles', 500);
     }
@@ -51,18 +60,27 @@ export class RoleController {
   }
 
   /**
-   * Deletes a role by ID.
+   * Toggles a role between active and deactivated (soft-delete).
+   * Replaces the former DELETE endpoint — roles are never physically deleted.
    * @param req - Express request with role id in params.
-   * @param res - Express response.
+   * @param res - Express response with the updated role.
    */
-  @httpDelete('/roles/:id', AuthMiddleware.forRoles('SUPER_ADMIN'))
-  public async delete(@request() req: Request, @response() res: Response): Promise<void> {
+  @httpPatch('/roles/:id/toggle', AuthMiddleware.forRoles('SUPER_ADMIN'))
+  public async toggleActive(@request() req: Request, @response() res: Response): Promise<void> {
     try {
-      await this._service.delete(req.params.id);
-      ResponseHandler.deleted(res);
+      const role = await this._service.toggleActive(req.params.id);
+      ResponseHandler.ok(res, { role });
     } catch (err) {
-      this._log.error('Failed to delete role', { error: err, roleId: req.params.id });
-      ResponseHandler.error(res, 'Failed to delete role', 500);
+      if (err instanceof RoleNotFoundError) {
+        ResponseHandler.notFound(res, err.message);
+        return;
+      }
+      if (err instanceof SystemRoleProtectedError) {
+        ResponseHandler.error(res, err.message, err.statusCode);
+        return;
+      }
+      this._log.error('Failed to toggle role', { error: err, roleId: req.params.id });
+      ResponseHandler.error(res, 'Failed to toggle role', 500);
     }
   }
 
@@ -77,6 +95,14 @@ export class RoleController {
       await this._service.assignRole(req.params.userId, req.params.roleId);
       ResponseHandler.ok(res, { message: 'Role assigned successfully' });
     } catch (err) {
+      if (err instanceof RoleNotFoundError) {
+        ResponseHandler.notFound(res, err.message);
+        return;
+      }
+      if (err instanceof RoleInactiveError) {
+        ResponseHandler.error(res, err.message, err.statusCode);
+        return;
+      }
       this._log.error('Failed to assign role', { error: err, userId: req.params.userId, roleId: req.params.roleId });
       ResponseHandler.error(res, 'Failed to assign role', 500);
     }

@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { RoleController } from '@admin/controllers/role.controller';
 import { RoleService } from '@admin/services/role.service';
 import { ILogger } from '@shared/logger.interface';
+import { RoleInactiveError } from '@admin/errors/role-inactive.error';
+import { RoleNotFoundError } from '@admin/errors/role-not-found.error';
+import { SystemRoleProtectedError } from '@admin/errors/system-role-protected.error';
 
 describe('RoleController', () => {
   let controller: RoleController;
@@ -14,7 +17,7 @@ describe('RoleController', () => {
     serviceMock = {
       getAll: jest.fn(),
       create: jest.fn(),
-      delete: jest.fn(),
+      toggleActive: jest.fn(),
       assignRole: jest.fn(),
       unassignRole: jest.fn(),
     };
@@ -42,12 +45,12 @@ describe('RoleController', () => {
   describe('list', () => {
     it('should return all roles', async () => {
       req = {};
-      const roles = [{ id: 'role-1', name: 'SUPER_ADMIN', accountId: null, _count: { users: 1 } }];
+      const roles = [{ id: 'role-1', name: 'SUPER_ADMIN', accountId: null, deletedAt: null, _count: { users: 1 } }];
       serviceMock.getAll.mockResolvedValue(roles);
 
       await controller.list(req as Request, res as Response);
 
-      expect(serviceMock.getAll).toHaveBeenCalled();
+      expect(serviceMock.getAll).toHaveBeenCalledWith(undefined);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -55,6 +58,25 @@ describe('RoleController', () => {
           data: { roles },
         }),
       );
+    });
+
+    it('should pass the status filter to the service', async () => {
+      req = { query: { status: 'inactive' } } as unknown as Partial<Request>;
+      serviceMock.getAll.mockResolvedValue([]);
+
+      await controller.list(req as Request, res as Response);
+
+      expect(serviceMock.getAll).toHaveBeenCalledWith('inactive');
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should return 400 for an invalid status filter', async () => {
+      req = { query: { status: 'nope' } } as unknown as Partial<Request>;
+
+      await controller.list(req as Request, res as Response);
+
+      expect(serviceMock.getAll).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
     it('should handle errors', async () => {
@@ -112,24 +134,49 @@ describe('RoleController', () => {
   });
 
   // =========================================================================
-  // delete
+  // toggleActive
   // =========================================================================
-  describe('delete', () => {
-    it('should delete a role by id', async () => {
-      req = { params: { id: 'role-1' } };
-      serviceMock.delete.mockResolvedValue(undefined);
+  describe('toggleActive', () => {
+    it('should toggle a role and return it', async () => {
+      req = { params: { id: 'role-1' } } as unknown as Partial<Request>;
+      const role = { id: 'role-1', name: 'MODERATOR', accountId: null, deletedAt: new Date() };
+      serviceMock.toggleActive.mockResolvedValue(role);
 
-      await controller.delete(req as Request, res as Response);
+      await controller.toggleActive(req as Request, res as Response);
 
-      expect(serviceMock.delete).toHaveBeenCalledWith('role-1');
+      expect(serviceMock.toggleActive).toHaveBeenCalledWith('role-1');
       expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'success',
+          data: { role },
+        }),
+      );
     });
 
-    it('should handle errors', async () => {
-      req = { params: { id: 'bad-id' } };
-      serviceMock.delete.mockRejectedValue(new Error('Not found'));
+    it('should return 404 when the role does not exist', async () => {
+      req = { params: { id: 'bad-id' } } as unknown as Partial<Request>;
+      serviceMock.toggleActive.mockRejectedValue(new RoleNotFoundError());
 
-      await controller.delete(req as Request, res as Response);
+      await controller.toggleActive(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it('should return 409 for a protected system role', async () => {
+      req = { params: { id: 'role-sa' } } as unknown as Partial<Request>;
+      serviceMock.toggleActive.mockRejectedValue(new SystemRoleProtectedError());
+
+      await controller.toggleActive(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+    });
+
+    it('should return 500 for unexpected errors', async () => {
+      req = { params: { id: 'role-1' } } as unknown as Partial<Request>;
+      serviceMock.toggleActive.mockRejectedValue(new Error('boom'));
+
+      await controller.toggleActive(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(500);
     });
@@ -147,6 +194,24 @@ describe('RoleController', () => {
 
       expect(serviceMock.assignRole).toHaveBeenCalledWith('user-1', 'role-1');
       expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should return 404 when the role does not exist', async () => {
+      req = { params: { userId: 'user-1', roleId: 'bad-role' } } as unknown as Partial<Request>;
+      serviceMock.assignRole.mockRejectedValue(new RoleNotFoundError());
+
+      await controller.assignRole(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+    it('should return 409 when the role is deactivated', async () => {
+      req = { params: { userId: 'user-1', roleId: 'role-1' } } as unknown as Partial<Request>;
+      serviceMock.assignRole.mockRejectedValue(new RoleInactiveError());
+
+      await controller.assignRole(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(409);
     });
 
     it('should handle errors', async () => {
