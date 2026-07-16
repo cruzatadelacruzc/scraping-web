@@ -155,6 +155,41 @@
     "removeRoleSuccess": "Role removed successfully",
     "removeRoleError": "Failed to remove role"
   },
+  "products": {
+    "searchPlaceholder": "Search products…",
+    "table": {
+      "caption": "Products catalog",
+      "title": "Title",
+      "price": "Price",
+      "category": "Category",
+      "location": "Location",
+      "views": "Views",
+      "status": "Status",
+      "created": "Created"
+    },
+    "empty": {
+      "title": "No products found",
+      "description": "Products will appear here once they are scraped from the bazaars."
+    },
+    "error": {
+      "message": "Failed to load products."
+    },
+    "outstanding": "Outstanding",
+    "promoted": "Promoted",
+    "filters": {
+      "categoryPlaceholder": "Category…",
+      "minPrice": "Min price",
+      "maxPrice": "Max price",
+      "isOutstanding": "Outstanding",
+      "isPromoted": "Promoted"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "info": "Page {{page}} of {{totalPages}} · {{total}} total",
+      "prev": "‹ Prev",
+      "next": "Next ›"
+    }
+  },
   "forbidden": {
     "title": "Access Denied",
     "description": "You do not have permission to access this page.",

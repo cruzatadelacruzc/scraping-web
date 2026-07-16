@@ -155,6 +155,41 @@
     "removeRoleSuccess": "Rol removido exitosamente",
     "removeRoleError": "Error al remover el rol"
   },
+  "products": {
+    "searchPlaceholder": "Buscar productos…",
+    "table": {
+      "caption": "Catálogo de productos",
+      "title": "Título",
+      "price": "Precio",
+      "category": "Categoría",
+      "location": "Ubicación",
+      "views": "Vistas",
+      "status": "Estado",
+      "created": "Creado"
+    },
+    "empty": {
+      "title": "No se encontraron productos",
+      "description": "Los productos aparecerán aquí una vez que se extraigan de los bazaars."
+    },
+    "error": {
+      "message": "Error al cargar los productos."
+    },
+    "outstanding": "Destacado",
+    "promoted": "Promocionado",
+    "filters": {
+      "categoryPlaceholder": "Categoría…",
+      "minPrice": "Precio mín",
+      "maxPrice": "Precio máx",
+      "isOutstanding": "Destacado",
+      "isPromoted": "Promocionado"
+    },
+    "pagination": {
+      "rowsPerPage": "Filas por página",
+      "info": "Página {{page}} de {{totalPages}} · {{total}} total",
+      "prev": "‹ Anterior",
+      "next": "Siguiente ›"
+    }
+  },
   "forbidden": {
     "title": "Acceso Denegado",
     "description": "No tienes permiso para acceder a esta página.",
