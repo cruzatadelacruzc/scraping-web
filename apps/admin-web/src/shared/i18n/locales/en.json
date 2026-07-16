@@ -34,6 +34,115 @@
     "prev": "Prev",
     "next": "Next"
   },
+  "scrapers": {
+    "stores": {
+      "empty": {
+        "title": "No stores registered",
+        "description": "Stores will appear here once scraper modules are registered at bootstrap."
+      },
+      "error": {
+        "message": "Failed to load stores."
+      },
+      "card": {
+        "schemaFields": "Job Schema Fields",
+        "required": "Required"
+      }
+    },
+    "schedules": {
+      "title": "Scraping Schedules",
+      "table": {
+        "caption": "Scraping schedules list",
+        "name": "Name",
+        "store": "Store",
+        "cron": "Cron",
+        "enabled": "Enabled",
+        "lastRun": "Last Run",
+        "jobsCount": "Jobs",
+        "actions": "Actions",
+        "actionsFor": "Actions for {{name}}",
+        "edit": "Edit",
+        "delete": "Delete",
+        "toggleLabel": "Toggle {{name}}",
+        "never": "Never",
+        "count": "{{count}} schedule(s)",
+        "create": "+ New",
+        "searchPlaceholder": "Search by name or store…",
+        "search": "Search schedules",
+        "noResults": "No schedules match your search."
+      },
+      "empty": {
+        "title": "No schedules yet",
+        "description": "Create your first scraping schedule to automate product collection.",
+        "create": "Create Schedule"
+      },
+      "error": {
+        "message": "Failed to load scraping schedules."
+      },
+      "delete": {
+        "title": "Delete schedule?",
+        "description": "This will permanently delete the scraping schedule. This action cannot be undone.",
+        "confirm": "Delete permanently",
+        "deleting": "Deleting…",
+        "cancel": "Cancel"
+      },
+      "form": {
+        "createTitle": "Create Scraping Schedule",
+        "editTitle": "Edit Scraping Schedule",
+        "name": "Schedule Name",
+        "namePlaceholder": "e.g. Daily Revolico Scrape",
+        "store": "Store",
+        "storePlaceholder": "Select a store…",
+        "cron": "Cron Expression",
+        "cronHelp": "Format: minute hour day month weekday (e.g. 0 0 * * * = daily at midnight)",
+        "enabled": "Enabled",
+        "jobs": "Scraping Jobs",
+        "addJob": "Add Job",
+        "removeJob": "Remove job",
+        "jobNumber": "Job #{{number}}",
+        "selectStoreFirst": "Select a store to configure job fields.",
+        "cancel": "Cancel",
+        "create": "Create",
+        "update": "Update",
+        "submitting": "Saving…"
+      }
+    },
+    "revolico": {
+      "title": "Revolico",
+      "error": {
+        "loadConfigs": "Failed to load scraper configs."
+      },
+      "config": {
+        "title": "Scraper Configs (JSONata Expressions)",
+        "noConfigs": "No scraper configs found.",
+        "selectStoreKey": "Select Config Key",
+        "storeKeyPlaceholder": "Select a config key…",
+        "storeKey": "Config Key",
+        "expression": "JSONata Expression",
+        "newConfig": "New config — will be created on save",
+        "editingConfig": "Editing existing config",
+        "confirmTitle": "Save scraper config?",
+        "confirmDescription": "This changes live scraping behavior and invalidates the backend cache. Make sure the JSONata expression is correct before proceeding.",
+        "confirmSave": "Save Config",
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create",
+        "saving": "Saving…"
+      },
+      "job": {
+        "title": "Manual Scraping Job",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "pageNumber": "Page Number",
+        "totalPages": "Total Pages",
+        "trigger": "Scrape Now",
+        "triggering": "Triggering…",
+        "confirmTitle": "Trigger scraping job?",
+        "confirmDescription": "This enqueues a real scraping job for \"{{category}}\". This action cannot be undone.",
+        "confirmTrigger": "Trigger Job",
+        "cancel": "Cancel"
+      }
+    }
+  },
   "accounts": {
     "searchPlaceholder": "Search accounts…",
     "table": {
@@ -154,6 +263,119 @@
     "assignRoleError": "Failed to assign role",
     "removeRoleSuccess": "Role removed successfully",
     "removeRoleError": "Failed to remove role"
+  },
+  "products": {
+    "searchPlaceholder": "Search products…",
+    "table": {
+      "caption": "Products catalog",
+      "title": "Title",
+      "price": "Price",
+      "category": "Category",
+      "location": "Location",
+      "views": "Views",
+      "status": "Status",
+      "created": "Created"
+    },
+    "empty": {
+      "title": "No products found",
+      "description": "Products will appear here once they are scraped from the bazaars."
+    },
+    "error": {
+      "message": "Failed to load products."
+    },
+    "outstanding": "Outstanding",
+    "promoted": "Promoted",
+    "filters": {
+      "categoryPlaceholder": "Category…",
+      "minPrice": "Min price",
+      "maxPrice": "Max price",
+      "isOutstanding": "Outstanding",
+      "isPromoted": "Promoted"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "info": "Page {{page}} of {{totalPages}} · {{total}} total",
+      "prev": "‹ Prev",
+      "next": "Next ›"
+    },
+    "stats": {
+      "title": "Products Stats",
+      "viewStats": "View stats",
+      "lastScraped": "Last scraped",
+      "totalProducts": "Total Products",
+      "outstanding": "Outstanding",
+      "promoted": "Promoted",
+      "enrichedCount": "Enriched",
+      "byCategory": "By Category",
+      "byState": "By State",
+      "priceRange": "Price Range",
+      "empty": {
+        "title": "No stats available",
+        "description": "Statistics will appear once products have been scraped."
+      },
+      "error": {
+        "message": "Failed to load products stats."
+      },
+      "chartDesc": {
+        "byCategory": "Bar chart showing product count by category",
+        "byState": "Bar chart showing product count by state"
+      },
+      "chartEmpty": "No data"
+    },
+    "detail": {
+      "backToCatalog": "← Back to catalog",
+      "notFound": "Product not found",
+      "notFoundDesc": "The product you're looking for doesn't exist or has been removed.",
+      "goToCatalog": "Go to catalog",
+      "tabsLabel": "Product history sections",
+      "tabs": {
+        "overview": "Overview",
+        "price": "Price",
+        "views": "Views",
+        "location": "Location",
+        "outstanding": "Outstanding",
+        "promoted": "Promoted"
+      },
+      "currentStatus": "Current Status",
+      "standard": "Standard",
+      "notPromoted": "Not promoted",
+      "price": "Price",
+      "views": "Views",
+      "created": "Created",
+      "sellerInfo": "Seller Info",
+      "name": "Name",
+      "location": "Location",
+      "category": "Category",
+      "phone": "Phone",
+      "email": "Email"
+    },
+    "history": {
+      "error": "Failed to load history",
+      "empty": "No history data",
+      "emptyDesc": "No data available in this range.",
+      "emptyLocation": "No location changes",
+      "locationTimeline": "Location change timeline",
+      "selectTimeRange": "Select time range",
+      "chartDesc": {
+        "price": "Line chart showing product price over time",
+        "views": "Area chart showing product views over time",
+        "outstanding": "Step chart showing outstanding status changes over time",
+        "promoted": "Step chart showing promoted status changes over time"
+      },
+      "range": {
+        "1w": "1W",
+        "1m": "1M",
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1Y",
+        "all": "All"
+      }
+    }
+  },
+  "forbidden": {
+    "title": "Access Denied",
+    "description": "You do not have permission to access this page.",
+    "action": "Go to Dashboard"
   },
   "dashboard": {
     "title": "Dashboard",

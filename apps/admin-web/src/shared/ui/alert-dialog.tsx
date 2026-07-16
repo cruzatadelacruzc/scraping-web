@@ -25,17 +25,19 @@ export function AlertDialog({
 }: AlertDialogProps): JSX.Element | null {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isLoading) {
         onCancel();
       }
     },
-    [onCancel],
+    [isLoading, onCancel],
   );
 
   useEffect(() => {
     if (!open) return;
     document.addEventListener('keydown', handleKeyDown);
-    return () => { document.removeEventListener('keydown', handleKeyDown); };
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [open, handleKeyDown]);
 
   if (!open) return null;
@@ -46,8 +48,8 @@ export function AlertDialog({
       <div
         className="fixed inset-0 z-50 bg-black/30"
         role="presentation"
-        onClick={onCancel}
-        onKeyDown={onCancel}
+        onClick={isLoading ? undefined : onCancel}
+        onKeyDown={isLoading ? undefined : onCancel}
       />
 
       {/* Dialog */}
@@ -73,9 +75,7 @@ export function AlertDialog({
             onClick={onConfirm}
             disabled={isLoading}
             className={`rounded-sm px-sm py-xs text-body-sm font-medium text-white transition-colors disabled:opacity-50 ${
-              destructive
-                ? 'bg-danger hover:bg-danger-hover'
-                : 'bg-primary hover:bg-primary-hover'
+              destructive ? 'bg-danger hover:bg-danger-hover' : 'bg-primary hover:bg-primary-hover'
             }`}
           >
             {confirmLabel}
