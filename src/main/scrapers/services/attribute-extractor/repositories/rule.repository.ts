@@ -1,6 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { PrismaClient, Rule as RuleModel } from '@prisma/client';
 import { TYPES } from '@shared/types.container';
+import { RuleNotFoundError } from '@scrapers/revolico/errors/rule-not-found.error';
 
 /**
  * Database access layer for the Rule table (PostgreSQL via Prisma).
@@ -52,5 +53,29 @@ export class RuleRepository {
       create: { ruleKey, values },
       update: { values, version: { increment: 1 } },
     });
+  }
+
+  /**
+   * Alternates the enabled flag and returns the updated row.
+   * @throws {RuleNotFoundError} If the ruleKey does not exist.
+   */
+  public async toggleEnabled(ruleKey: string): Promise<RuleModel> {
+    const current = await this._prisma.rule.findUnique({ where: { ruleKey } });
+    if (!current) throw new RuleNotFoundError(ruleKey);
+    return this._prisma.rule.update({
+      where: { ruleKey },
+      data: { enabled: !current.enabled },
+    });
+  }
+
+  /**
+   * Physically deletes a rule row.
+   * @returns {Promise<boolean>} true if deleted, false if key not found.
+   */
+  public async delete(ruleKey: string): Promise<boolean> {
+    const existing = await this._prisma.rule.findUnique({ where: { ruleKey } });
+    if (!existing) return false;
+    await this._prisma.rule.delete({ where: { ruleKey } });
+    return true;
   }
 }
