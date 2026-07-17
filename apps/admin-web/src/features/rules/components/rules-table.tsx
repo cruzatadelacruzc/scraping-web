@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, ToggleLeft, Trash2 } from 'lucide-react';
 
 import { useDeleteRule } from '../hooks/useDeleteRule';
 import { useGetRules } from '../hooks/useGetRules';
+import { useToggleRule } from '../hooks/useToggleRule';
 import type { RuleViewModel } from '../view-models/rule-view-model';
 
 import { RuleFormDialog } from './rule-form-dialog';
@@ -22,6 +23,7 @@ export function RulesTable(): JSX.Element {
 
   const { data, isLoading, isError, error, refetch } = useGetRules();
   const deleteRule = useDeleteRule();
+  const toggleRule = useToggleRule();
 
   // Dialog state
   const [dialog, setDialog] = useState<{
@@ -178,6 +180,17 @@ export function RulesTable(): JSX.Element {
                       aria-label={t('rules.edit', 'Edit')}
                     >
                       <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        toggleRule.mutate(rule.ruleKey);
+                      }}
+                      className="rounded-sm p-1 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                      aria-label={
+                        rule.enabled ? t('rules.disable', 'Disable') : t('rules.enable', 'Enable')
+                      }
+                    >
+                      <ToggleLeft className={`h-4 w-4 ${rule.enabled ? '' : 'rotate-180'}`} />
                     </button>
                     <button
                       onClick={() => {

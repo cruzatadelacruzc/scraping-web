@@ -60,4 +60,9 @@ export const rulesService = {
   delete(ruleKey: string) {
     return apiClient.delete(`/admin/rules/${ruleKey}`);
   },
+
+  /** Toggle a rule's enabled flag. */
+  toggle(ruleKey: string) {
+    return apiClient.patch<RuleDetailResponseDTO>(`/admin/rules/${ruleKey}/toggle`);
+  },
 };

@@ -428,6 +428,9 @@
     "permanentlyDelete": "Permanently Delete",
     "deleteCancel": "Cancel",
     "emptyTitle": "No rules yet",
-    "emptyDescription": "Create your first rule to start extracting product attributes."
+    "emptyDescription": "Create your first rule to start extracting product attributes.",
+    "enable": "Enable",
+    "disable": "Disable",
+    "toggled": "Rule toggled"
   }
 }

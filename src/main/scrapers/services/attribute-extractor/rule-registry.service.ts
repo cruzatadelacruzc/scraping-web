@@ -68,6 +68,17 @@ export class RuleRegistryService {
     this._refresh(ruleKey);
   }
 
+  /**
+   * Evicts a key from cache without re-fetching from the database.
+   * Used when a rule is permanently deleted — unlike invalidate(),
+   * this does NOT fall back to FALLBACK_RULES.
+   *
+   * @param {string} ruleKey - The rule key to evict.
+   */
+  public evict(ruleKey: string): void {
+    this._cache.delete(ruleKey);
+  }
+
   // ── private ──────────────────────────────────────────────────────────
 
   /** Loads all enabled rules from DB and replaces cache entries. */

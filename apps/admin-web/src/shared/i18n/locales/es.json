@@ -428,6 +428,9 @@
     "permanentlyDelete": "Eliminar Permanentemente",
     "deleteCancel": "Cancelar",
     "emptyTitle": "No hay reglas aún",
-    "emptyDescription": "Crea tu primera regla para empezar a extraer atributos de productos."
+    "emptyDescription": "Crea tu primera regla para empezar a extraer atributos de productos.",
+    "enable": "Activar",
+    "disable": "Desactivar",
+    "toggled": "Regla alternada"
   }
 }

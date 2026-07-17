@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { controller, httpGet, httpPost, httpPut, request, response, requestParam } from 'inversify-express-utils';
+import { controller, httpDelete, httpGet, httpPatch, httpPost, httpPut, request, response, requestParam } from 'inversify-express-utils';
 import { inject } from 'inversify';
 import { TYPES } from '@shared/types.container';
 import { AuthMiddleware } from '@shared/middleware/auth.middleware';
@@ -19,6 +19,8 @@ import { RuleAlreadyExistsError } from '@scrapers/revolico/errors/rule-already-e
  *   GET    /api/admin/rules/:ruleKey   — get one rule
  *   POST   /api/admin/rules            — create a new rule
  *   PUT    /api/admin/rules/:ruleKey   — update an existing rule's values
+ *   PATCH  /api/admin/rules/:ruleKey/toggle — toggle enabled flag
+ *   DELETE /api/admin/rules/:ruleKey   — permanently delete a rule
  */
 @controller('/api/admin/rules')
 export class RuleController {
@@ -97,6 +99,42 @@ export class RuleController {
       }
       this._log.error('Failed to update rule', { ruleKey, error: err });
       ResponseHandler.error(res, 'Failed to update rule', 500);
+    }
+  }
+
+  /**
+   * Toggles a rule's enabled flag. Returns 404 if not found.
+   */
+  @httpPatch('/:ruleKey/toggle', AuthMiddleware.forRoles('SUPER_ADMIN'))
+  public async toggle(@requestParam('ruleKey') ruleKey: string, @response() res: Response): Promise<void> {
+    try {
+      const rule = await this._service.toggle(ruleKey);
+      ResponseHandler.created(res, 'Rule toggled', { rule });
+    } catch (err) {
+      if (err instanceof RuleNotFoundError) {
+        ResponseHandler.notFound(res, err.message);
+        return;
+      }
+      this._log.error('Failed to toggle rule', { ruleKey, error: err });
+      ResponseHandler.error(res, 'Failed to toggle rule', 500);
+    }
+  }
+
+  /**
+   * Permanently deletes a rule. Returns 404 if not found.
+   */
+  @httpDelete('/:ruleKey', AuthMiddleware.forRoles('SUPER_ADMIN'))
+  public async delete(@requestParam('ruleKey') ruleKey: string, @response() res: Response): Promise<void> {
+    try {
+      await this._service.delete(ruleKey);
+      ResponseHandler.ok(res, { message: `Rule '${ruleKey}' deleted` });
+    } catch (err) {
+      if (err instanceof RuleNotFoundError) {
+        ResponseHandler.notFound(res, err.message);
+        return;
+      }
+      this._log.error('Failed to delete rule', { ruleKey, error: err });
+      ResponseHandler.error(res, 'Failed to delete rule', 500);
     }
   }
 }
