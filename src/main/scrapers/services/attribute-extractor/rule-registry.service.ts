@@ -97,6 +97,8 @@ export class RuleRegistryService {
       }
       if (cleaned > 0) {
         this._log.info(`Cleaned ${cleaned} stale fallback keys from cache (deleted from DB)`);
+      } else {
+        this._log.debug('No stale fallback keys to clean');
       }
 
       for (const row of rows) {
@@ -133,8 +135,8 @@ export class RuleRegistryService {
           }
         }
       })
-      .catch(() => {
-        // Silently keep stale/fallback values on refresh failure
+      .catch((err: unknown) => {
+        this._log.warn(`Rule refresh failed for '${ruleKey}' — cache may be stale`, (err as Error).message);
       });
   }
 }
