@@ -132,6 +132,65 @@ patterns: 38 brands, 14 property types, 31 conditions, 34 colors, 53
 locations, plus numeric parsers for rooms, bathrooms, floors, storage, RAM,
 and price mentions.
 
+## Rules management
+
+The rule-based extractor uses word-list patterns stored in the Rule
+PostgreSQL table. Each rule is a named list of strings — for example, the
+brands rule contains common brand names. During extraction, the product
+description is matched against these lists to identify attributes like brand,
+color, condition, and property type.
+
+There are six word-list categories that can be edited at runtime: brands,
+conditions, colors, property types, locations, and warranty keywords. The
+other seven categories (rooms, bathrooms, garage, floors, storage, RAM, and
+price mentions) use regular expressions that are hardcoded in the extractor
+source code and cannot be changed without modifying the software.
+
+### How the cache works
+
+At server startup, the cache is immediately seeded with hardcoded default
+values so that extraction can begin even if the database is unavailable. The
+first time an extraction runs, the cache is warmed from the database in the
+background. Only rules marked as enabled are loaded. If a rule was deleted
+from the database, its hardcoded default is purged from the cache so the
+deleted rule does not come back.
+
+During extraction, the cache is read from memory with no database query.
+This keeps extraction fast and synchronous. Each cache entry expires after
+30 seconds. When an entry expires, it is still returned to the caller while
+a background refresh fetches the latest data from the database.
+
+### Managing rules at runtime
+
+Rules can be created, updated, enabled, disabled, and deleted through the
+admin API. All operations require the SUPER_ADMIN role. Changes made through
+the API take effect immediately — the cache is invalidated on every write.
+
+When a rule is disabled, it stops being used for extraction right away but
+remains in the database and can be re-enabled later. When a rule is
+permanently deleted, it is removed from both the database and the cache, and
+the hardcoded default is not loaded as a replacement.
+
+Rules inserted directly into the database via the seed script or SQL are not
+picked up immediately. They only take effect after the cache entry expires
+(within 30 seconds) or the server restarts. Always use the API for runtime
+changes and the seed script only for deploy-time defaults.
+
+### Changing the hardcoded defaults
+
+The six word-list categories have hardcoded fallback values defined in the
+rule-fallbacks.ts file. These defaults serve two purposes: they let
+extraction work when the database is down, and they are the canonical values
+loaded by the seed script. Changing the fallback file requires a server
+restart.
+
+### Adding a new rule category
+
+To add a new word-list category that can be edited at runtime, you need to
+add fallback values to the rule-fallbacks file, add a cache lookup in the
+rule-based extractor service, run the seed script, and increment the pattern
+count so the confidence score reflects the new category.
+
 ## Keywords cache
 
 Two-layer cache to avoid redundant LLM calls:
