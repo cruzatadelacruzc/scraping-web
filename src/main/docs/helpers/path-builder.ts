@@ -69,6 +69,57 @@ export class PathBuilder {
     return this;
   }
 
+  /**
+   * Path parameter variant for non-UUID string values (e.g. `storeKey` like
+   * `revolico:listing`). Use when the URL segment is a logical key rather
+   * than a database-generated UUID. Optional `pattern` adds a regex constraint.
+   */
+  public pathParamString(name: string, description: string, pattern?: string): this {
+    if (!this._config.request) {
+      this._config.request = {};
+    }
+    if (!this._config.request.params) {
+      this._config.request.params = z.object({});
+    }
+    let paramSchema = z.string();
+    if (pattern) {
+      paramSchema = paramSchema.regex(new RegExp(pattern));
+    }
+    const annotated = paramSchema.openapi({
+      param: { name, in: 'path', description },
+      description,
+    });
+    (this._config.request.params as z.ZodObject<Record<string, z.ZodString>>) = (
+      this._config.request.params as z.ZodObject<Record<string, z.ZodString>>
+    ).extend({
+      [name]: annotated,
+    });
+    return this;
+  }
+
+  /**
+   * Adds a query parameter to the endpoint documentation.
+   * @param name - The query parameter name.
+   * @param schema - Zod schema for the parameter (e.g. `z.string()`, `z.coerce.boolean().optional()`).
+   * @param description - Human-readable description.
+   */
+  public queryParam(name: string, schema: z.ZodTypeAny, description: string): this {
+    if (!this._config.request) {
+      this._config.request = {};
+    }
+    if (!this._config.request.query) {
+      this._config.request.query = z.object({});
+    }
+    const annotated = schema.openapi({
+      param: { name, in: 'query', description },
+      description,
+    });
+    (this._config.request.query as z.ZodObject<Record<string, z.ZodTypeAny>>) = (
+      this._config.request.query as z.ZodObject<Record<string, z.ZodTypeAny>>
+    ).extend({ [name]: annotated });
+    return this;
+  }
+
   public requestBody(schema: z.ZodTypeAny, description?: string): this {
     this._config.request = {
       ...(this._config.request || {}),

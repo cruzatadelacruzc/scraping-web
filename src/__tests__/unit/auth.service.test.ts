@@ -5,6 +5,9 @@ import { TokenService } from '@shared/security/token.service';
 import { PasswordHasher } from '@shared/security/password-hasher.serice';
 import { UserMapper } from '@users/mappers/user.mapper';
 import { UserLoginDTO } from '@users/dto/user-login.dto';
+import { LoginRateLimitService } from '@users/services/login-rate-limit.service';
+import { TokenManagementService } from '@users/services/token-management.service';
+import { LoginAttemptRepository } from '@users/repositories/login-attempt.repository';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -12,7 +15,10 @@ describe('AuthService', () => {
   let tokenService: jest.Mocked<TokenService>;
   let passwordHasher: jest.Mocked<PasswordHasher>;
   let userMapper: jest.Mocked<UserMapper>;
-  const loggerMock = { debug: jest.fn(), warn: jest.fn(), error: jest.fn(), context: '' } as any;
+  let rateLimiter: jest.Mocked<LoginRateLimitService>;
+  let tokenMgmt: jest.Mocked<TokenManagementService>;
+  let loginAttemptRepo: jest.Mocked<LoginAttemptRepository>;
+  const loggerMock = { debug: jest.fn(), warn: jest.fn(), error: jest.fn(), info: jest.fn(), context: '' } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -46,7 +52,27 @@ describe('AuthService', () => {
       toDTOs: jest.fn(),
     } as unknown as jest.Mocked<UserMapper>;
 
-    authService = new AuthService(loggerMock, userRepo, userMapper, passwordHasher, tokenService);
+    rateLimiter = {
+      checkByIp: jest.fn().mockResolvedValue({ allowed: true, retryAfterMs: 0, remaining: 5 }),
+      checkByUsername: jest.fn().mockResolvedValue({ allowed: true, retryAfterMs: 0, remaining: 10 }),
+      recordSuccessfulLogin: jest.fn(),
+      destroy: jest.fn(),
+    } as unknown as jest.Mocked<LoginRateLimitService>;
+
+    tokenMgmt = {
+      issueRefreshToken: jest.fn().mockResolvedValue('raw-refresh-token'),
+      rotateRefreshToken: jest.fn(),
+      revokeAllUserTokens: jest.fn(),
+      revokeRefreshToken: jest.fn(),
+    } as unknown as jest.Mocked<TokenManagementService>;
+
+    loginAttemptRepo = {
+      create: jest.fn(),
+      countRecentFailedAttempts: jest.fn(),
+      countRecentFailedAttemptsByUser: jest.fn(),
+    } as unknown as jest.Mocked<LoginAttemptRepository>;
+
+    authService = new AuthService(loggerMock, userRepo, userMapper, passwordHasher, tokenService, rateLimiter, tokenMgmt, loginAttemptRepo);
   });
 
   describe('login', () => {
@@ -58,6 +84,7 @@ describe('AuthService', () => {
       accountId: 'acc-1',
       passwordHash: 'hashed-pw',
       roles: [{ id: 'r1', name: 'ACCOUNT_OWNER' }],
+      deletedAt: null,
     } as any;
 
     it('should login successfully with username', async () => {
@@ -67,6 +94,7 @@ describe('AuthService', () => {
       const result = await authService.login(loginDTO);
 
       expect(result.token).toBe('jwt-token');
+      expect(result.refreshToken).toBe('raw-refresh-token');
       expect(result.user).toBeDefined();
       expect(tokenService.generateToken).toHaveBeenCalledWith('u1', 'acc-1', ['ACCOUNT_OWNER']);
     });
@@ -100,6 +128,12 @@ describe('AuthService', () => {
       userRepo.findByUsername.mockResolvedValue({ ...dbUser, passwordHash: null });
 
       await expect(authService.login(loginDTO)).rejects.toThrow('Invalid credentials');
+    });
+
+    it('should throw when account is deactivated', async () => {
+      userRepo.findByUsername.mockResolvedValue({ ...dbUser, deletedAt: new Date() });
+
+      await expect(authService.login(loginDTO)).rejects.toThrow('deactivated');
     });
   });
 });

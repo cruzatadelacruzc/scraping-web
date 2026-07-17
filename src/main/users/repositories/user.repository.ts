@@ -5,6 +5,9 @@ import { RoleType } from '@users/dto';
 
 export type UserWithRoles = User & { roles: RoleType[] };
 
+/** Deactivated roles must not appear in auth/JWT flows — always filter. */
+const ACTIVE_ROLES_INCLUDE = { roles: { where: { deletedAt: null } } } as const;
+
 @injectable()
 export class UserRepository {
   public constructor(@inject(TYPES.PrismaClient) private readonly prisma: PrismaClient) {}
@@ -12,34 +15,34 @@ export class UserRepository {
   public findByEmail(email: string): Promise<UserWithRoles | null> {
     return this.prisma.user.findFirst({
       where: { email },
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
   public findByUsername(username: string): Promise<UserWithRoles | null> {
     return this.prisma.user.findFirst({
       where: { username },
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
   public create(data: Prisma.UserCreateInput): Promise<UserWithRoles> {
     return this.prisma.user.create({
       data,
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
   public findById(id: string): Promise<UserWithRoles | null> {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id },
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
   public findAll(): Promise<UserWithRoles[]> {
     return this.prisma.user.findMany({
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
@@ -53,14 +56,14 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id },
       data,
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
   public async findByIdWithRoles(id: string): Promise<UserWithRoles | null> {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id },
-      include: { roles: true },
+      include: ACTIVE_ROLES_INCLUDE,
     });
   }
 
@@ -72,7 +75,7 @@ export class UserRepository {
     const created = await this.prisma.$transaction(async tx => {
       const user = await tx.user.create({
         data: userCreateInput,
-        include: { roles: true },
+        include: ACTIVE_ROLES_INCLUDE,
       });
 
       await tx.userIdentity.create({

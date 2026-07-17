@@ -1,0 +1,403 @@
+{
+  "auth": {
+    "title": "BazaarSentinel",
+    "subtitle": "Consola de Super Admin",
+    "emailOrUsername": "Correo o usuario",
+    "emailPlaceholder": "Ingresa tu correo o usuario",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "signOut": "Cerrar sesión",
+    "invalidCredentials": "Credenciales inválidas",
+    "sessionExpired": "Sesión expirada",
+    "loginFailed": "Error al iniciar sesión"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "accounts": "Cuentas",
+    "users": "Usuarios",
+    "roles": "Roles",
+    "products": "Productos",
+    "scrapers": "Scrapers",
+    "rules": "Reglas",
+    "queues": "Colas",
+    "settings": "Configuración"
+  },
+  "common": {
+    "notFound": "404 — No Encontrado",
+    "notFoundDesc": "Esta página no existe.",
+    "loading": "Cargando…",
+    "error": "Algo salió mal",
+    "retry": "Reintentar",
+    "noData": "Sin datos disponibles",
+    "prev": "Anterior",
+    "next": "Siguiente"
+  },
+  "scrapers": {
+    "stores": {
+      "empty": {
+        "title": "No hay tiendas registradas",
+        "description": "Las tiendas aparecerán aquí cuando los módulos de scraping se registren durante el inicio."
+      },
+      "error": {
+        "message": "Error al cargar las tiendas."
+      },
+      "card": {
+        "schemaFields": "Campos del Schema",
+        "required": "Requerido"
+      }
+    },
+    "schedules": {
+      "title": "Programaciones de Scraping",
+      "table": {
+        "caption": "Lista de programaciones de scraping",
+        "name": "Nombre",
+        "store": "Tienda",
+        "cron": "Cron",
+        "enabled": "Activo",
+        "lastRun": "Última ejecución",
+        "jobsCount": "Trabajos",
+        "actions": "Acciones",
+        "actionsFor": "Acciones para {{name}}",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "toggleLabel": "Alternar {{name}}",
+        "never": "Nunca",
+        "count": "{{count}} programación(es)",
+        "create": "+ Nueva",
+        "searchPlaceholder": "Buscar por nombre o tienda…",
+        "search": "Buscar programaciones",
+        "noResults": "Ninguna programación coincide con tu búsqueda."
+      },
+      "empty": {
+        "title": "Sin programaciones",
+        "description": "Crea tu primera programación de scraping para automatizar la recolección de productos.",
+        "create": "Crear Programación"
+      },
+      "error": {
+        "message": "Error al cargar las programaciones de scraping."
+      },
+      "delete": {
+        "title": "¿Eliminar programación?",
+        "description": "Esto eliminará permanentemente la programación de scraping. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar permanentemente",
+        "deleting": "Eliminando…",
+        "cancel": "Cancelar"
+      },
+      "form": {
+        "createTitle": "Crear Programación de Scraping",
+        "editTitle": "Editar Programación de Scraping",
+        "name": "Nombre de la Programación",
+        "namePlaceholder": "ej. Scraping Diario de Revolico",
+        "store": "Tienda",
+        "storePlaceholder": "Seleccionar una tienda…",
+        "cron": "Expresión Cron",
+        "cronHelp": "Formato: minuto hora día mes día_semana (ej. 0 0 * * * = diario a medianoche)",
+        "enabled": "Activo",
+        "jobs": "Trabajos de Scraping",
+        "addJob": "Agregar Trabajo",
+        "removeJob": "Eliminar trabajo",
+        "jobNumber": "Trabajo #{{number}}",
+        "selectStoreFirst": "Selecciona una tienda para configurar los campos del trabajo.",
+        "cancel": "Cancelar",
+        "create": "Crear",
+        "update": "Actualizar",
+        "submitting": "Guardando…"
+      }
+    },
+    "revolico": {
+      "title": "Revolico",
+      "error": {
+        "loadConfigs": "Error al cargar las configuraciones de scraping."
+      },
+      "config": {
+        "title": "Configuraciones de Scraping (Expresiones JSONata)",
+        "noConfigs": "No se encontraron configuraciones de scraping.",
+        "selectStoreKey": "Seleccionar Clave de Config",
+        "storeKeyPlaceholder": "Seleccionar una clave…",
+        "storeKey": "Clave de Config",
+        "expression": "Expresión JSONata",
+        "newConfig": "Nueva configuración — se creará al guardar",
+        "editingConfig": "Editando configuración existente",
+        "confirmTitle": "¿Guardar configuración de scraping?",
+        "confirmDescription": "Esto cambia el comportamiento de scraping en vivo e invalida el caché del backend. Asegúrate de que la expresión JSONata sea correcta antes de continuar.",
+        "confirmSave": "Guardar Config",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "create": "Crear",
+        "saving": "Guardando…"
+      },
+      "job": {
+        "title": "Trabajo de Scraping Manual",
+        "category": "Categoría",
+        "subcategory": "Subcategoría",
+        "pageNumber": "Número de Página",
+        "totalPages": "Total de Páginas",
+        "trigger": "Scrapear Ahora",
+        "triggering": "Ejecutando…",
+        "confirmTitle": "¿Ejecutar trabajo de scraping?",
+        "confirmDescription": "Esto encola un trabajo de scraping real para \"{{category}}\". Esta acción no se puede deshacer.",
+        "confirmTrigger": "Ejecutar Trabajo",
+        "cancel": "Cancelar"
+      }
+    }
+  },
+  "accounts": {
+    "searchPlaceholder": "Buscar cuentas…",
+    "table": {
+      "name": "Nombre",
+      "users": "Usuarios",
+      "subscriptions": "Suscripciones",
+      "alarms": "Alertas",
+      "created": "Creado",
+      "actions": "Acciones"
+    },
+    "empty": {
+      "title": "No se encontraron cuentas",
+      "description": "Las cuentas aparecerán aquí cuando los inquilinos se registren."
+    },
+    "error": {
+      "message": "Error al cargar las cuentas."
+    },
+    "cannotDeleteSelf": "No puedes eliminar tu propia cuenta",
+    "delete": {
+      "title": "¿Eliminar cuenta?",
+      "description": "Esto eliminará permanentemente la cuenta y todos sus datos. Esta acción no se puede deshacer.",
+      "confirm": "Eliminar permanentemente",
+      "cancel": "Cancelar",
+      "success": "Cuenta eliminada exitosamente",
+      "error": "Error al eliminar la cuenta"
+    },
+    "selected": {
+      "count": "{{count}} seleccionadas",
+      "delete": "Eliminar seleccionadas"
+    },
+    "pagination": {
+      "info": "Página {{page}} de {{totalPages}} · {{total}} total",
+      "prev": "‹ Anterior",
+      "next": "Siguiente ›"
+    },
+    "drawer": {
+      "title": "Detalle de Cuenta",
+      "close": "Cerrar panel",
+      "error": "Error al cargar los detalles de la cuenta.",
+      "name": "Nombre",
+      "accountId": "ID de Cuenta",
+      "users": "Usuarios",
+      "subscriptions": "Suscripciones",
+      "alarms": "Alarmas",
+      "created": "Creada"
+    }
+  },
+  "roles": {
+    "table": {
+      "title": "Roles ({{count}})",
+      "caption": "Lista de roles",
+      "name": "Nombre del Rol",
+      "users": "Usuarios",
+      "actions": "Acciones"
+    },
+    "create": {
+      "button": "Nuevo Rol",
+      "placeholder": "Ingresa el nombre del rol",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "success": "Rol creado exitosamente",
+      "error": "Error al crear el rol"
+    },
+    "cannotDeleteSelf": "No puedes eliminar un rol asignado a tu cuenta",
+    "delete": {
+      "label": "Eliminar {{role}}",
+      "title": "Eliminar rol?",
+      "description": "Estas seguro de eliminar el rol \"{{role}}\"? Esta accion no se puede deshacer.",
+      "confirm": "Eliminar permanentemente",
+      "cancel": "Cancelar",
+      "deleting": "Eliminando…",
+      "success": "Rol eliminado exitosamente",
+      "error": "Error al eliminar el rol"
+    },
+    "empty": {
+      "title": "No se encontraron roles",
+      "description": "Los roles definen los permisos de los usuarios. Crea tu primer rol para comenzar."
+    },
+    "error": {
+      "title": "Error al cargar roles",
+      "message": "Ocurrio un error al cargar los roles. Por favor intenta de nuevo."
+    },
+    "pagination": {
+      "info": "{{total}} total"
+    }
+  },
+  "users": {
+    "searchPlaceholder": "Buscar por correo o usuario…",
+    "noUsers": "No se encontraron usuarios",
+    "noUsersDesc": "Los usuarios aparecerán aquí después de registrarse.",
+    "displayName": "Nombre",
+    "username": "Usuario",
+    "email": "Correo",
+    "roles": "Roles",
+    "verified": "Verificado",
+    "verifiedYes": "Verificado",
+    "verifiedNo": "Pendiente",
+    "createdAt": "Creado",
+    "detailTitle": "Detalle del Usuario",
+    "detailError": "Error al cargar los detalles del usuario.",
+    "noRoles": "Sin roles asignados",
+    "assignRole": "Asignar Rol",
+    "selectRole": "Seleccionar un rol…",
+    "addRole": "Agregar",
+    "removeRole": "Eliminar {{role}}",
+    "deleteUser": "Eliminar Usuario",
+    "deleteTitle": "¿Eliminar Usuario?",
+    "deleteDescription": "Esto eliminará permanentemente el usuario y todos sus datos. Esta acción no se puede deshacer.",
+    "permanentlyDelete": "Eliminar Permanentemente",
+    "cancelDelete": "Cancelar",
+    "total": "total",
+    "pageOf": "Página {{page}} de {{total}}",
+    "cannotDeleteSelf": "No puedes eliminar tu propia cuenta",
+    "drawerClose": "Cerrar panel",
+    "deleteSuccess": "Usuario eliminado permanentemente",
+    "deleteError": "Error al eliminar el usuario",
+    "assignRoleSuccess": "Rol asignado exitosamente",
+    "assignRoleError": "Error al asignar el rol",
+    "removeRoleSuccess": "Rol removido exitosamente",
+    "removeRoleError": "Error al remover el rol"
+  },
+  "products": {
+    "searchPlaceholder": "Buscar productos…",
+    "table": {
+      "caption": "Catálogo de productos",
+      "title": "Título",
+      "price": "Precio",
+      "category": "Categoría",
+      "location": "Ubicación",
+      "views": "Vistas",
+      "status": "Estado",
+      "created": "Creado"
+    },
+    "empty": {
+      "title": "No se encontraron productos",
+      "description": "Los productos aparecerán aquí una vez que se extraigan de los bazaars."
+    },
+    "error": {
+      "message": "Error al cargar los productos."
+    },
+    "outstanding": "Destacado",
+    "promoted": "Promocionado",
+    "filters": {
+      "categoryPlaceholder": "Categoría…",
+      "minPrice": "Precio mín",
+      "maxPrice": "Precio máx",
+      "isOutstanding": "Destacado",
+      "isPromoted": "Promocionado"
+    },
+    "pagination": {
+      "rowsPerPage": "Filas por página",
+      "info": "Página {{page}} de {{totalPages}} · {{total}} total",
+      "prev": "‹ Anterior",
+      "next": "Siguiente ›"
+    },
+    "stats": {
+      "title": "Estadísticas de Productos",
+      "viewStats": "Ver estadísticas",
+      "lastScraped": "Última extracción",
+      "totalProducts": "Total de Productos",
+      "outstanding": "Destacados",
+      "promoted": "Promocionados",
+      "enrichedCount": "Enriquecidos",
+      "byCategory": "Por Categoría",
+      "byState": "Por Estado",
+      "priceRange": "Rango de Precios",
+      "empty": {
+        "title": "Sin estadísticas disponibles",
+        "description": "Las estadísticas aparecerán una vez que se hayan extraído productos."
+      },
+      "error": {
+        "message": "Error al cargar las estadísticas de productos."
+      },
+      "chartDesc": {
+        "byCategory": "Gráfico de barras que muestra el conteo de productos por categoría",
+        "byState": "Gráfico de barras que muestra el conteo de productos por estado"
+      },
+      "chartEmpty": "Sin datos"
+    },
+    "detail": {
+      "backToCatalog": "← Volver al catálogo",
+      "notFound": "Producto no encontrado",
+      "notFoundDesc": "El producto que buscas no existe o ha sido eliminado.",
+      "goToCatalog": "Ir al catálogo",
+      "tabsLabel": "Secciones del historial del producto",
+      "tabs": {
+        "overview": "Resumen",
+        "price": "Precio",
+        "views": "Vistas",
+        "location": "Ubicación",
+        "outstanding": "Destacado",
+        "promoted": "Promocionado"
+      },
+      "currentStatus": "Estado Actual",
+      "standard": "Normal",
+      "notPromoted": "No promocionado",
+      "price": "Precio",
+      "views": "Vistas",
+      "created": "Creado",
+      "sellerInfo": "Información del Vendedor",
+      "name": "Nombre",
+      "location": "Ubicación",
+      "category": "Categoría",
+      "phone": "Teléfono",
+      "email": "Correo"
+    },
+    "history": {
+      "error": "Error al cargar el historial",
+      "empty": "Sin datos de historial",
+      "emptyDesc": "Sin datos disponibles en este rango.",
+      "emptyLocation": "Sin cambios de ubicación",
+      "locationTimeline": "Línea de tiempo de cambios de ubicación",
+      "selectTimeRange": "Seleccionar rango de tiempo",
+      "chartDesc": {
+        "price": "Gráfico de líneas que muestra el precio del producto a lo largo del tiempo",
+        "views": "Gráfico de área que muestra las vistas del producto a lo largo del tiempo",
+        "outstanding": "Gráfico escalonado que muestra cambios de estado destacado a lo largo del tiempo",
+        "promoted": "Gráfico escalonado que muestra cambios de estado promocionado a lo largo del tiempo"
+      },
+      "range": {
+        "1w": "1S",
+        "1m": "1M",
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1A",
+        "all": "Todo"
+      }
+    }
+  },
+  "forbidden": {
+    "title": "Acceso Denegado",
+    "description": "No tienes permiso para acceder a esta página.",
+    "action": "Ir al Panel"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "totalAccounts": "Total de Cuentas",
+    "activeUsers": "Usuarios Activos",
+    "productsScraped": "Productos Scrapeados",
+    "activeSubscriptions": "Suscripciones Activas",
+    "systemHealth": "Salud del Sistema",
+    "enrichment": "Pipeline de Enriquecimiento",
+    "cacheHitRate": "Tasa de Aciertos",
+    "llmCalls": "Llamadas LLM",
+    "totalEnrichments": "Total Enriquecidos",
+    "estimatedSavings": "Ahorro Est.",
+    "rulesAtGlance": "Vistazo a Reglas",
+    "rulesErrors": "Reglas con errores",
+    "rulesLastModified": "Última modificación",
+    "noRules": "Sin reglas configuradas",
+    "viewRules": "Ver Rules Engine",
+    "quickActions": "Acciones Rápidas",
+    "newAccount": "Nueva Cuenta",
+    "newSchedule": "Nuevo Scraping Programado",
+    "viewQueues": "Ver Colas",
+    "viewAccounts": "Ver Cuentas"
+  }
+}

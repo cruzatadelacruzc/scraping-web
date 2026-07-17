@@ -70,7 +70,10 @@ describe('ProductService Integration Test', () => {
     const insertedProducts = await productRepository.find(0, 2);
     expect(insertedProducts).toHaveLength(2);
 
-    expect(insertedProducts[0]).toEqual(
+    // sort by ID for deterministic order across CI environments
+    const sorted = [...insertedProducts].sort((a, b) => (a.ID ?? '').localeCompare(b.ID ?? ''));
+
+    expect(sorted[0]).toEqual(
       expect.objectContaining({
         _id: expect.anything(),
         ID: productData[0].ID,
@@ -124,19 +127,19 @@ describe('ProductService Integration Test', () => {
   });
 
   it('should return errors if required fields are missing', async () => {
-    const invalidProductData = { ...productData[0], category: '', cost: '', url: '' };
+    // url and price are the only remaining required fields (category and cost were relaxed).
+    const invalidProductData = { ...productData[0], url: '', price: null as unknown as number };
 
     const result = await productService.bulkAddOrEditUrls([invalidProductData]);
 
     expect(result.urls).toHaveLength(0);
-    expect(result.errors).toHaveLength(3);
-    expect(result.errors).toEqual(
-      expect.arrayContaining(['Path `category` is required.', 'Path `url` is required.', 'Path `cost` is required.']),
-    );
+    expect(result.errors).toHaveLength(2);
+    expect(result.errors).toEqual(expect.arrayContaining(['Path `url` is required.', 'Path `price` is required.']));
   });
 
   it('should return invalid product data if required fields are missing', async () => {
-    const invalidProductData = { ...productData[0], category: '' };
+    // url is required — emptying it should reject the product and push it to invalidProductInfo.
+    const invalidProductData = { ...productData[0], url: '' };
 
     const result = await productService.bulkAddOrEditUrls([invalidProductData]);
 
@@ -145,18 +148,13 @@ describe('ProductService Integration Test', () => {
     expect(result.invalidProductInfo[0]).toEqual(
       expect.objectContaining({
         ID: invalidProductData.ID,
-        category: '',
-        subcategory: invalidProductData.subcategory,
-        url: invalidProductData.url,
+        url: '',
         cost: invalidProductData.cost,
         description: invalidProductData.description,
         imageURL: invalidProductData.imageURL,
         isOutstanding: invalidProductData.isOutstanding,
         currency: invalidProductData.currency,
         price: invalidProductData.price,
-        location: expect.any(Object),
-        views: invalidProductData.views,
-        seller: expect.any(Object),
       }),
     );
   });

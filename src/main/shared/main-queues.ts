@@ -11,7 +11,9 @@ import { IQueueAdapterRegistry } from '@shared/queue/port/queue-adapter-registry
  */
 export const getQueueModules = (): ReadonlyArray<IQueueModule> => {
   const revolicoQueues = container.get<IQueueModule>(TYPES.RevolicoQueues);
-  return Object.freeze([revolicoQueues]);
+  const botQueues = container.get<IQueueModule>(TYPES.BotQueues);
+  const emailQueues = container.get<IQueueModule>(TYPES.EmailQueues);
+  return Object.freeze([revolicoQueues, botQueues, emailQueues]);
 };
 
 /**

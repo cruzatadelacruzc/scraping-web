@@ -51,6 +51,8 @@ model Role {
   id   String @id @default(uuid())
   name String
 
+  deletedAt DateTime? // null = active; set = deactivated (soft-delete, reversible)
+
   accountId String? // null = global role
   account   Account? @relation(fields: [accountId], references: [id])
   users     User[]   @relation("UserRoles")
@@ -73,6 +75,74 @@ model UserIdentity {
 }
 
 // -----------------------------------------------------------------------------
+// Password Reset Tokens — single-use, expire in 1 hour
+// -----------------------------------------------------------------------------
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// Email Verification Tokens — single-use, expire in 24 hours
+// -----------------------------------------------------------------------------
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// Refresh Tokens — opaque random string stored hashed, 30-day expiry
+// -----------------------------------------------------------------------------
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  family     String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  createdAt  DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@index([family])
+}
+
+// -----------------------------------------------------------------------------
+// Login Attempts — brute-force tracking per user / IP
+// -----------------------------------------------------------------------------
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([ipAddress, createdAt])
+}
+
+// -----------------------------------------------------------------------------
 // Accounts OR Tenants
 // -----------------------------------------------------------------------------
 model Account {
@@ -84,6 +154,7 @@ model Account {
   alarms           Alarm[]
   notifications    Notification[]
   botLinkCodes     BotLinkCode[]
+  botLinkAudits    BotLinkAudit[]
   botConversations BotConversation[]
   deletedAt        DateTime?
 
@@ -105,12 +176,18 @@ model User {
   displayName      String?
   avatarUrl        String?
   emailVerified    Boolean           @default(false)
+  deletedAt        DateTime?
   roles            Role[]            @relation("UserRoles")
   botLinkCodes     BotLinkCode[]
+  botLinkAudits    BotLinkAudit[]
   botConversations BotConversation[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  userIdentity     UserIdentity[]    @relation("userIdentities")
+  userIdentity              UserIdentity[]              @relation("userIdentities")
+  passwordResetTokens       PasswordResetToken[]
+  emailVerificationTokens   EmailVerificationToken[]
+  refreshTokens             RefreshToken[]
+  loginAttempts             LoginAttempt[]
 }
 
 // -----------------------------------------------------------------------------
@@ -220,22 +297,80 @@ model Notification {
 }
 
 // -----------------------------------------------------------------------------
+// Bot Link Code status
+// -----------------------------------------------------------------------------
+enum BotLinkCodeStatus {
+  PENDING
+  VALIDATED
+  CONFIRMED
+  CONSUMED
+  EXPIRED
+  REJECTED
+}
+
+// -----------------------------------------------------------------------------
+// Bot Link Audit action
+// -----------------------------------------------------------------------------
+enum BotLinkAction {
+  CODE_GENERATED
+  CODE_VALIDATED
+  CODE_CONFIRMED
+  CODE_DENIED
+  CODE_EXPIRED
+  LINKED
+  UNLINKED
+}
+
+// -----------------------------------------------------------------------------
 // Bot Link Codes (WhatsApp / Telegram account linking)
 // -----------------------------------------------------------------------------
 model BotLinkCode {
-  id         String    @id @default(uuid())
-  code       String    @unique
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  accountId  String
-  account    Account   @relation(fields: [accountId], references: [id])
-  expiresAt  DateTime
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id             String             @id @default(uuid())
+  code           String             @unique
+  userId         String
+  user           User               @relation(fields: [userId], references: [id])
+  accountId      String
+  account        Account            @relation(fields: [accountId], references: [id])
+  status         BotLinkCodeStatus  @default(PENDING)
+  expiresAt      DateTime
+  validatedAt    DateTime?
+  confirmedAt    DateTime?
+  rejectedAt     DateTime?
+  consumedAt     DateTime?
+  validatedFrom  String?            // chatId that submitted the code
+  provider       String?            // "telegram" | "whatsapp"
+  attemptCount   Int                @default(0)
+  createdAt      DateTime           @default(now())
 
   @@index([code])
   @@index([accountId, userId])
+  @@index([status])
   @@map("bot_link_codes")
+}
+
+// -----------------------------------------------------------------------------
+// Bot Link Audit — complete audit trail for link/unlink actions
+// -----------------------------------------------------------------------------
+model BotLinkAudit {
+  id         String         @id @default(uuid())
+  accountId  String
+  account    Account        @relation(fields: [accountId], references: [id])
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  action     BotLinkAction
+  code       String?
+  codeId     String?
+  provider   String?         // "telegram" | "whatsapp" | null for API actions
+  externalId String?         // chatId / phone number
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([code])
+  @@index([userId, createdAt])
+  @@map("bot_link_audit")
 }
 
 // -----------------------------------------------------------------------------
@@ -244,8 +379,8 @@ model BotLinkCode {
 // -----------------------------------------------------------------------------
 model BotConversation {
   id            String   @id @default(uuid())
-  accountId     String
-  account       Account  @relation(fields: [accountId], references: [id])
+  accountId     String?
+  account       Account? @relation(fields: [accountId], references: [id])
   userId        String? // null until linked
   user          User?    @relation(fields: [userId], references: [id])
   provider      String // "whatsapp" | "telegram"
@@ -253,9 +388,53 @@ model BotConversation {
   preferredLang String   @default("es")
   lastMessage   String?
   lastActivity  DateTime @default(now())
+  linkExpiresAt DateTime? // null when not linked; set to createdAt + 30d on link
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   @@unique([provider, externalId])
   @@index([accountId, userId])
+  @@index([linkExpiresAt])
   @@map("bot_conversations")
+}
+
+// -----------------------------------------------------------------------------
+// Scraper Config — externalized JSONata expressions per storeKey
+// -----------------------------------------------------------------------------
+model ScraperConfig {
+  id         String   @id @default(uuid())
+  storeKey   String   @unique
+  expression String
+  version    Int      @default(1)
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Rule — externalized word-list patterns for rule-based attribute extraction
+// -----------------------------------------------------------------------------
+model Rule {
+  id        String   @id @default(uuid())
+  ruleKey   String   @unique
+  values    Json
+  version   Int      @default(1)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Scraping Schedule — cron-driven automated scraping per store
+// -----------------------------------------------------------------------------
+model ScrapingSchedule {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  store     String    @default("revolico")
+  cron      String
+  enabled   Boolean   @default(true)
+  jobs      Json
+  lastRunAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }

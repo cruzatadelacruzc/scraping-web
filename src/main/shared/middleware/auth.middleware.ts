@@ -7,6 +7,7 @@ import { ResponseHandler } from '@shared/response-handler';
 import { getRequestContext, runWithRequestContext } from '@shared/tenant-context-als';
 import prisma from '@users/custom-prisma-client';
 import { TokenService } from '@shared/security/token.service';
+import type Redis from 'ioredis';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -37,6 +38,7 @@ export class AuthMiddleware extends BaseMiddleware {
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(TYPES.TokenService) private readonly _tokenService: TokenService,
+    @inject(TYPES.RedisClient) private readonly _redis?: Redis,
   ) {
     super();
     this._log.context = AuthMiddleware.name;
@@ -56,6 +58,22 @@ export class AuthMiddleware extends BaseMiddleware {
 
       const token = authHeader.slice(7);
       const payload = await this._tokenService.verifyToken(token);
+
+      // JWT blacklist check (fail-open if Redis is down)
+      if (payload.jti && this._redis) {
+        try {
+          const blacklisted = await this._redis.get(`jwt:blacklist:${payload.jti}`);
+          if (blacklisted) {
+            this._log.warn('Token is blacklisted', { jti: payload.jti });
+            ResponseHandler.unAuthenticated(res, false, 'Token has been revoked');
+            return;
+          }
+        } catch {
+          // Fail-open: if Redis is down, allow the request
+          this._log.warn('Redis unavailable, skipping JWT blacklist check');
+        }
+      }
+
       const tenantId = payload?.tenantId || req.header('x-tenant-id');
       const userId = payload?.userId;
 
@@ -89,13 +107,21 @@ export class AuthMiddleware extends BaseMiddleware {
           },
           include: {
             userIdentity: true,
-            roles: true,
+            // Deactivated roles must not grant permissions — filter them out
+            roles: { where: { deletedAt: null } },
           },
         });
 
         if (!found) {
           this._log.warn(`Token validation failed: user=${userId} tenant=${tenantId}`);
           ResponseHandler.unAuthorized(res);
+          return false;
+        }
+
+        // Reject deactivated accounts
+        if (found.deletedAt) {
+          this._log.warn(`Deactivated account attempted access: user=${userId}`);
+          ResponseHandler.unAuthenticated(res, false, 'Account is deactivated. Contact support to reactivate.');
           return false;
         }
 
@@ -158,7 +184,7 @@ export class AuthMiddleware extends BaseMiddleware {
           return;
         }
 
-        const hasRole = roles.some(role => userRoles.includes(role));
+        const hasRole = userRoles.includes('SUPER_ADMIN') || roles.some(role => userRoles.includes(role));
         if (!hasRole) {
           ResponseHandler.unAuthorized(res);
           return;

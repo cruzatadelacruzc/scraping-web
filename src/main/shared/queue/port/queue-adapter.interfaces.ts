@@ -43,12 +43,17 @@ export interface IQueueCompletedEvent<TResult = unknown> {
 
 /**
  * Event payload emitted by a queue adapter for failed jobs.
+ *
+ * `error` carries the original thrown value (typically an `Error`, but
+ * `unknown` to accommodate non-Error throws from the Mock adapter and
+ * third-party libraries). Listeners can read `.stack` / `.cause` from it.
  */
 export interface IQueueFailedEvent {
   jobId: string;
   name?: string;
   reason: string;
   data?: unknown;
+  error?: unknown;
 }
 
 /**

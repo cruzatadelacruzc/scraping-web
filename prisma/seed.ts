@@ -1,9 +1,109 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { FALLBACK_RULES } from '../src/main/scrapers/services/attribute-extractor/rule-fallbacks';
 
 const prisma = new PrismaClient();
 
 const DEFAULT_ROLES = ['ACCOUNT_OWNER', 'SUPER_ADMIN', 'MEMBER'] as const;
+
+// JSONata expressions for externalized scraping.
+//
+// The input to each expression is the DOM tree produced by
+// `RevolicoFetchDataService.fetchRenderedJson(url, selector, ctx)`. For
+// `revolico:listing` the page-level selector is
+// `div[class*="GridList__CardsContainer"]`, so the input is the single
+// container subtree. The expression walks down to `CardsList` (regular
+// grid) and `PromotedsContainer` (promoted carousel) and returns two
+// arrays. The shape of each element is the `domToJson` output from
+// `services/scraping/utils/dom-to-json.util.ts`:
+//
+//   { tag: string, attrs: Record<string, string>, children: DomNode[], text?: string }
+//
+// Validate against the latest Revolico HTML before bumping. Failures surface
+// as JsonataExtractionError in Bull-Board's failedReason + ctx.log() entries.
+const REVOLICO_LISTING_EXPRESSION = `{
+  "products": $map(
+    $.**[ $.tag = "ul" and $count($.attrs.*[ $contains($, "GridList__CardsList") ]) > 0 ]
+            .children[ $.tag = "li" and $count($.children[ $.tag = "a" ]) > 0 ]
+            .children[ $.tag = "a" ],
+    function($a) {
+      {
+        "url":           $a.attrs.href,
+        "description":   $a.children[ $.tag = "div" ][1].children[ $.tag = "p" ][0].text,
+        "cost":          $exists($a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text)
+                          ? $a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text
+                          : "",
+        "imageURL":      $a.children[ $.tag = "div" ][0].children[ $.tag = "picture" ][0].children[ $.tag = "source" ][0].attrs.srcset,
+        "isOutstanding": $count($a.**[ $.tag = "div" and $.attrs.title = "Anuncio destacado" ]) > 0
+      }
+    }
+  ),
+  "promoted": $map(
+    $.**[ $.tag = "div" and $count($.attrs.*[ $contains($, "GridList__PromotedsContainer") ]) > 0 ]
+            .**[ $.tag = "a" and $contains($.attrs.href, "/item/") ],
+    function($a) {
+      {
+        "url":           $a.attrs.href,
+        "description":   $a.children[ $.tag = "div" ][1].children[ $.tag = "p" ][0].text,
+        "cost":          $exists($a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text)
+                          ? $a.children[ $.tag = "div" ][1].children[ $.tag = "div" ][0].children[ $.tag = "p" ][0].text
+                          : "",
+        "imageURL":      $a.children[ $.tag = "div" ][0].children[ $.tag = "picture" ][0].children[ $.tag = "source" ][0].attrs.srcset,
+        "isOutstanding": $count($a.**[ $.tag = "div" and $.attrs.title = "Anuncio destacado" ]) > 0
+      }
+    }
+  )
+}`;
+
+const REVOLICO_DETAIL_EXPRESSION = `(
+  $ ~> |$|{
+    "views":    $."div"."p"."@class" = "cZACiy" ? $."div"."p".text : "",
+    "location": $.**."p"."@data-cy" = "adLocation" ? $.**."p".text : "",
+    "seller": {
+      "name":     $.**."p"."@data-cy" = "adName" ? $.**."p".text : "",
+      "whatsapp": $.**."a"."@href" ~> /^https:\\/\\/wa\\.me\\// ? $replace($.**."a"."@href", /^https:\\/\\/wa\\.me\\/([0-9]+).*$/, "$1") : "",
+      "phone":    $.**."a"."@href" ~> /^tel:/ ? $replace($.**."a"."@href", /^tel:(.*)$/, "$1") : "",
+      "email":    $.**."a"."@href" ~> /^mailto:/ ? $replace($.**."a"."@href", /^mailto:(.*)$/, "$1") : ""
+    }
+  }|
+)`;
+
+// Keep in sync with FALLBACK_SYSTEM_PROMPT in:
+// src/main/scrapers/services/attribute-extractor/llm-extractor.service.ts
+const LLM_KEYWORD_EXTRACTION_PROMPT =
+  'You are a classified-ad keyword extraction assistant for Cuban marketplaces (e.g. Revolico). ' +
+  'Extract relevant keywords that represent the product being advertised.\n\n' +
+  'STRICT RULES:\n' +
+  '- Only include information EXPLICITLY present in the description.\n' +
+  '- Do not invent brands, prices, locations, or features not written in the text.\n' +
+  '- Prefer short 1–3 word phrases (e.g. "casa independiente", "iphone 14").\n' +
+  '- Include: product type, brand/model, location, condition, ' +
+  'distinctive features (bedrooms, bathrooms, garage, storage, color, etc.).\n' +
+  '- Omit sales filler words: "se vende", "vendo", "venta de", "precio", "oferta".\n' +
+  '- Order keywords by relevance (most distinctive first).\n' +
+  '- Respond in the SAME LANGUAGE as the input description.\n\n' +
+  'EXAMPLE 1:\n' +
+  'Description: "Apartamento en Miramar 3 cuartos 2 baños excelente estado"\n' +
+  'Keywords: ["apartamento", "miramar", "3 cuartos", "2 baños", "excelente estado"]\n\n' +
+  'EXAMPLE 2:\n' +
+  'Description: "iPhone 14 Pro Max 256GB negro como nuevo con garantía"\n' +
+  'Keywords: ["iphone 14 pro max", "256gb", "negro", "como nuevo", "con garantía"]\n\n' +
+  'EXAMPLE 3:\n' +
+  'Description: "Casa independiente biplanta en Playa con garaje 4 cuartos"\n' +
+  'Keywords: ["casa independiente", "playa", "biplanta", "garaje", "4 cuartos"]\n\n' +
+  'EXAMPLE 4:\n' +
+  'Description: "Vendo Laptop Dell Inspiron 15 3000 Series 8GB RAM"\n' +
+  'Keywords: ["laptop", "dell inspiron", "15 pulgadas", "8gb ram", "laptop dell"]\n\n' +
+  'EXAMPLE 5:\n' +
+  'Description: "Se vende auto Hyundai Accent 2018 azul impecable"\n' +
+  'Keywords: ["hyundai accent", "2018", "azul", "impecable", "auto"]\n\n' +
+  'Output ONLY the JSON object { "keywords": [...] }. Nothing else.';
+
+const SCRAPER_CONFIGS = [
+  { storeKey: 'revolico:listing', expression: REVOLICO_LISTING_EXPRESSION },
+  { storeKey: 'revolico:detail', expression: REVOLICO_DETAIL_EXPRESSION },
+  { storeKey: 'llm:keyword-extraction-prompt', expression: LLM_KEYWORD_EXTRACTION_PROMPT },
+] as const;
 
 async function main(): Promise<void> {
   console.log('Seeding default roles...');
@@ -18,6 +118,47 @@ async function main(): Promise<void> {
       console.log(`  Role "${name}" created`);
     } else {
       console.log(`  Role "${name}" already exists`);
+    }
+  }
+
+  // ── ScraperConfig rows (externalized JSONata expressions) ───────
+  console.log('Seeding scraper configs...');
+  for (const cfg of SCRAPER_CONFIGS) {
+    const existing = await prisma.scraperConfig.findUnique({ where: { storeKey: cfg.storeKey } });
+    if (!existing) {
+      await prisma.scraperConfig.create({ data: cfg });
+      console.log(`  ScraperConfig "${cfg.storeKey}" created`);
+    } else if (existing.expression !== cfg.expression) {
+      await prisma.scraperConfig.update({
+        where: { storeKey: cfg.storeKey },
+        data: { expression: cfg.expression, version: { increment: 1 } },
+      });
+      console.log(`  ScraperConfig "${cfg.storeKey}" updated (expression changed, version bumped)`);
+    } else {
+      console.log(`  ScraperConfig "${cfg.storeKey}" already up to date`);
+    }
+  }
+
+  // ── Rule rows (word-list patterns for rule-based extraction) ──────
+  console.log('\nSeeding rule-based extractor patterns...');
+  for (const [ruleKey, values] of Object.entries(FALLBACK_RULES)) {
+    const valueArr = values as string[];
+    const existing = await prisma.rule.findUnique({ where: { ruleKey } });
+    if (!existing) {
+      await prisma.rule.create({ data: { ruleKey, values: valueArr } });
+      console.log(`  Rule "${ruleKey}" created (${valueArr.length} items)`);
+    } else {
+      // Update if values changed
+      const existingValues = existing.values as string[];
+      if (JSON.stringify(existingValues.sort()) !== JSON.stringify([...valueArr].sort())) {
+        await prisma.rule.update({
+          where: { ruleKey },
+          data: { values: valueArr, version: { increment: 1 } },
+        });
+        console.log(`  Rule "${ruleKey}" updated (${valueArr.length} items, version bumped)`);
+      } else {
+        console.log(`  Rule "${ruleKey}" already up to date`);
+      }
     }
   }
 

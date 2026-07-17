@@ -84,6 +84,22 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 - Tests mirror source structure in `src/__tests__/`
 - File naming conventions: see `.claude/rules/compliance-checklist.md` "File naming (canonical suffixes)" section.
 
+### Scraper Module
+
+- `src/main/scrapers/` — multi-store scraping architecture with enrichment pipeline.
+- See `src/main/scrapers/CLAUDE.md` for scraper-specific patterns (extraction, storage, analytics, attributes, LLM integration).
+
+### Cron Module
+
+- `src/main/cron/` — automated scraping scheduler. See `.claude/skills/cron-scheduler/SKILL.md` for agent instructions.
+- **StoreRegistry** (`store-registry.ts`): in-memory `Map<storeKey, IStoreConfig>`. Each store module calls `register()` at bootstrap; the scheduler resolves `store → queueName` via `get()`. Stores also publish a `jobSchema` (field descriptors) so the admin dashboard can render dynamic forms per store.
+- **CronSchedulerService** (`services/scheduler.service.ts`): node-cron runtime. Maintains a `Map<scheduleId, ScheduledTask>`. On tick: resolves store → queue, enqueues each job with error isolation, best-effort updates `lastRunAt`. Uses `require('node-cron')` with an inline type cast — the `.d.ts` at `src/main/types/node-cron.d.ts` works for `tsc` but not `ts-node-dev`.
+- **ScheduleService** (`services/schedule.service.ts`): CRUD orchestration. Every write (create/update/delete/toggle) syncs the in-memory scheduler immediately — no restart needed.
+- **ScheduleController**: REST endpoints at `/api/admin/scraping-schedules` and `/api/admin/stores`. All `SUPER_ADMIN` only. Endpoint details are in `swagger.json` (tag: `Admin - Scraping Schedules`).
+- **ScrapingSchedule** model (Prisma): `name`, `store`, `cron`, `enabled`, `jobs` (JSON array — opaque to the scheduler, each store interprets its own shape), `lastRunAt`. No tenant isolation (no `accountId`).
+- **DI**: 6 symbols in `types.container.ts` + bindings in `container.ts` (`StoreRegistry`, `CronSchedulerService`, `ScheduleService`, `ScheduleRepository`, `ScheduleController`, `StoreInfoController`).
+- **Adding a store**: create `scrapers/<store>/index.ts` with a `register<Store>Store(container)` function that calls `storeRegistry.register(key, config)`. Call it in `app.ts` before `scheduler.initialize()`.
+
 ## Creating New Components
 
 1. Add Symbol to `types.container.ts`
@@ -125,7 +141,7 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 ### Architecture
 
 - OpenAPI metadata centralized in `src/main/docs/schema-registry.ts` — DTOs are NEVER modified
-- Paths defined in `src/main/docs/modules/*.paths.ts` (9 files, one per module)
+- Paths defined in `src/main/docs/modules/*.paths.ts` — one file per module. **When adding a new module with controllers**: (a) register its Zod DTO schemas in `schema-registry.ts`, (b) create `<module>.paths.ts` using `endpoint()` from `helpers/path-builder`, and (c) import and call it in `path-registry.ts`.
 - For `$ref` in paths use the return value of `registry.register()`, not the raw Zod schema
 - `tsconfig.build.json` excludes `src/main/docs/**` — code only used at build time
 
@@ -136,4 +152,34 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 
 ### Path aliases
 
-`@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`
+`@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`, `@cron/*`
+
+### Email Service
+
+`IEmailService` (`src/main/users/services/email/email.service.interface.ts`) with two implementations selected via `EMAIL_PROVIDER` env var:
+- `MockEmailService` — logs emails to `ILogger` (development, default when unset)
+- `SmtpEmailService` — sends via nodemailer with SMTP (Gmail or any provider)
+
+Emails are NOT sent synchronously — services enqueue an `EMAIL_SEND_JOB` on BullMQ and the `EmailQueues` worker dispatches to `IEmailService.send()`. This provides retry with backoff. Template rendering is handled by the pure-static `EmailTemplateService`.
+
+SMTP env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`.
+
+### Token Management
+
+`TokenManagementService` (`src/main/users/services/token-management.service.ts`) manages refresh token lifecycle:
+- **Issue**: generates opaque 96-hex-char random token, stores SHA-256 hash in `RefreshToken` model, 30-day expiry
+- **Rotate**: validates incoming token, revokes old, issues new in same family. If an already-replaced token is presented (possible theft), the entire family is revoked
+- **Revoke all**: called on password change and account deactivation
+
+`TokenService.generateToken()` now includes a `jti` (JWT ID, UUID v4) claim for per-token blacklisting on logout. The `ITokenPayload` interface also carries the `exp` claim.
+
+### Rate Limiting
+
+`LoginRateLimitService` follows the same Redis fail-open pattern as `BotRateLimitService`. Counters per IP and per username, with lock after exceeding thresholds. All checks fail-open (allow) if Redis is unavailable.
+
+### Account Soft-Delete
+
+`AccountDeactivationService` at `src/main/users/services/account-deactivation.service.ts`:
+- Sets `User.deletedAt`, pauses all alarms (`enabled = false`), revokes all refresh tokens, blacklists current JWT
+- Reversible within 30 days by `SUPER_ADMIN` via `POST /api/auth/reactivate`
+- `purgeExpiredAccounts()` hard-deletes personal data after 30 days (run as daily cron). Alarm/account data is preserved.

@@ -14,6 +14,7 @@ Related references:
 - Auth/tenant: `.claude/skills/security/SKILL.md`
 - Testing: `.claude/skills/testing/SKILL.md`
 - TypeScript patterns: `.claude/skills/typescript-best-practices/SKILL.md`
+- Bot module: `.claude/rules/bots.md`
 
 ## Code Standards
 
@@ -161,6 +162,14 @@ See @../skills/docker-dev/SKILL.md for the docker-compose workflow and @../skill
 - [ ] OpenAPI metadata lives in `src/main/docs/schema-registry.ts` — DTOs are NEVER modified for OpenAPI reasons.
 - [ ] For `$ref` in paths use the return value of `registry.register('SchemaName')`, never the raw Zod schema.
 - [ ] CI runs `npm run docs:validate` to catch `swagger.json` drift. A failed check means the agent forgot to regenerate.
+
+### README / Project docs
+
+- [ ] After completing a feature, update existing `README.md` and `CLAUDE.md` files that cover the changed area — outdated docs are worse than missing docs.
+- [ ] If a new module or feature has no `README.md`, create one with at minimum: what it does, how to configure it, and how to test it.
+- [ ] Before making doc changes, notify the user which files you intend to update and wait for approval — don't silently rewrite project documentation.
+- [ ] External behavior changes (new endpoints, new query params, new env vars, renamed env vars) MUST be reflected in the corresponding doc file.
+- [ ] After significant refactors, audit the relevant `CLAUDE.md` / `SKILL.md` files for stale references (removed functions, renamed symbols, deprecated patterns).
 
 ## Quality gates (run before committing)
 

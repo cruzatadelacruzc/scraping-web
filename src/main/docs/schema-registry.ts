@@ -23,6 +23,30 @@ import { UserProviderRegisterSchema } from '@users/dto/user-provider-register.dt
 import { AccountSubscriptionSchema } from '@users/dto/account-subscriptions.dto';
 import { CreateAlarmSchema } from '@alarms/dto/create-alarm.dto';
 import { UpdateAlarmSchema } from '@alarms/dto/update-alarm.dto';
+import { GenerateLinkCodeSchema } from '@bots/services/dto/generate-link-code.dto';
+import { ConfirmLinkSchema } from '@bots/services/dto/confirm-link.dto';
+import { LinkHistoryQuerySchema } from '@bots/services/dto/link-history.dto';
+// Admin DTOs
+import {
+  ProductListItemSchema,
+  ProductDetailSchema,
+  PriceHistoryEntrySchema,
+  ProductHistorySchema,
+  ProductStatsSchema,
+} from '@admin/services/dto/product-response.dto';
+import { ProductListQuerySchema } from '@admin/services/dto/product-list-query.dto';
+import { DashboardMetricsSchema, HealthResponseSchema } from '@admin/services/dto/dashboard-metrics.dto';
+import { QueueStatsSchema, JobDetailSchema } from '@admin/services/dto/queue-stats.dto';
+import { CreateRoleSchema, RoleResponseSchema } from '@admin/services/dto/role.dto';
+// Account Management DTOs
+import { ForgotPasswordSchema } from '@users/services/dto/forgot-password.dto';
+import { ResetPasswordSchema } from '@users/services/dto/reset-password.dto';
+import { ChangePasswordSchema } from '@users/services/dto/change-password.dto';
+import { ChangeEmailSchema } from '@users/services/dto/change-email.dto';
+import { RefreshTokenSchema } from '@users/services/dto/refresh-token.dto';
+import { VerifyEmailSchema } from '@users/services/dto/verify-email.dto';
+import { DeactivateAccountSchema } from '@users/services/dto/deactivate-account.dto';
+import { LinkProviderSchema } from '@users/services/dto/link-provider.dto';
 
 // ── Companion schemas for DTOs without Zod ───────────────────────────
 const AlarmResponseSchema = z.object({
@@ -66,6 +90,70 @@ const ScrapingProductJobSchema = z.object({
   id: z.string().min(1).openapi({ description: 'Product ID to scrape', example: '12345678' }),
 });
 
+const ScraperConfigResponseSchema = z.object({
+  id: uuid('ScraperConfig unique identifier'),
+  storeKey: z.string().openapi({
+    description: 'Logical key identifying the scraping target',
+    example: 'revolico:listing',
+  }),
+  expression: z.string().openapi({
+    description: 'JSONata expression (or plain-text prompt for storeKeys prefixed with "llm:")',
+    example: '$ ~> | $ | { "products": $ | [*] } |',
+  }),
+  version: z.number().int().openapi({ description: 'Monotonic version counter', example: 1 }),
+  enabled: z.boolean().openapi({ description: 'Whether the worker should use this row', example: true }),
+  createdAt: timestamp('Creation timestamp'),
+  updatedAt: timestamp('Last update timestamp'),
+});
+
+const ScraperConfigCreateSchema = z.object({
+  storeKey: z.string().min(1).openapi({
+    description: 'Logical key identifying the scraping target (must be unique)',
+    example: 'revolico:listing',
+  }),
+  expression: z.string().min(1).openapi({
+    description: 'JSONata expression to persist (or plain-text prompt for storeKeys prefixed with "llm:")',
+    example: '$ ~> | $ | { "products": $ | [*] } |',
+  }),
+});
+
+const ScraperConfigUpdateSchema = z.object({
+  expression: z.string().min(1).openapi({
+    description: 'New JSONata expression (or plain-text prompt for storeKeys prefixed with "llm:")',
+    example: '$ ~> | $ | { "products": $ | [*] } |',
+  }),
+});
+
+// ── Bot link schemas ──────────────────────────────────────────────────
+const LinkTokenResponseSchema = z.object({
+  deepLink: z.string().openapi({ description: 'One-time deep link URL for the bot', example: 'https://t.me/BazaarSentinelBot?start=...' }),
+  expiresAt: z.string().openapi({ description: 'ISO timestamp when the link expires', example: '2026-01-01T00:05:00.000Z' }),
+});
+
+const GenerateLinkCodeResponseSchema = z.object({
+  links: z
+    .record(LinkTokenResponseSchema)
+    .openapi({ description: 'Provider → link data', example: { telegram: { deepLink: '...', expiresAt: '...' } } }),
+  ttlMinutes: z.number().openapi({ description: 'Token time-to-live in minutes', example: 5 }),
+});
+
+const LinkStatusResponseSchema = z.object({
+  linked: z.boolean().openapi({ description: 'Whether the chat is linked', example: true }),
+  provider: z.string().nullable().openapi({ description: 'Provider name', example: 'telegram' }),
+  externalId: z.string().optional().openapi({ description: 'Masked chat ID', example: '****5678' }),
+  preferredLang: z.string().openapi({ description: 'Preferred language', example: 'es' }),
+  lastActivity: z.string().optional().openapi({ description: 'Last activity timestamp' }),
+  linkExpiresAt: z.string().nullable().optional().openapi({ description: 'When the link expires' }),
+});
+
+const LinkHistoryEntrySchema = z.object({
+  id: uuid('Audit entry identifier'),
+  action: z.string().openapi({ description: 'Action performed', example: 'LINKED' }),
+  provider: z.string().nullable().optional().openapi({ description: 'Provider name', example: 'telegram' }),
+  externalId: z.string().nullable().optional().openapi({ description: 'Masked chat ID' }),
+  createdAt: z.string().openapi({ description: 'ISO timestamp' }),
+});
+
 // ── Exported schema registry (populated by registerAllSchemas) ───────
 export const Schemas: Record<string, z.ZodTypeAny> = {};
 
@@ -85,4 +173,190 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
   Schemas.NotificationDTO = registry.register('NotificationDTO', NotificationSchema);
   Schemas.ScrapingProductsDTO = registry.register('ScrapingProductsDTO', ScrapingProductsJobSchema);
   Schemas.ScrapingProductDTO = registry.register('ScrapingProductDTO', ScrapingProductJobSchema);
+  Schemas.ScraperConfigResponseDTO = registry.register('ScraperConfigResponseDTO', ScraperConfigResponseSchema);
+  Schemas.ScraperConfigCreateDTO = registry.register('ScraperConfigCreateDTO', ScraperConfigCreateSchema);
+  Schemas.ScraperConfigUpdateDTO = registry.register('ScraperConfigUpdateDTO', ScraperConfigUpdateSchema);
+  // Bot DTOs
+  Schemas.GenerateLinkCodeDTO = registry.register('GenerateLinkCodeDTO', GenerateLinkCodeSchema);
+  Schemas.ConfirmLinkDTO = registry.register('ConfirmLinkDTO', ConfirmLinkSchema);
+  Schemas.LinkHistoryQueryDTO = registry.register('LinkHistoryQueryDTO', LinkHistoryQuerySchema);
+  // Bot response schemas
+  Schemas.GenerateLinkCodeResponseDTO = registry.register('GenerateLinkCodeResponseDTO', GenerateLinkCodeResponseSchema);
+  Schemas.LinkStatusResponseDTO = registry.register('LinkStatusResponseDTO', LinkStatusResponseSchema);
+  Schemas.LinkHistoryEntryDTO = registry.register('LinkHistoryEntryDTO', LinkHistoryEntrySchema);
+
+  // Admin DTOs
+  const ProductPriceHistoryDTO = ProductHistorySchema(PriceHistoryEntrySchema);
+  Schemas.PaginatedResponse = registry.register(
+    'PaginatedResponse',
+    z.object({
+      data: z.array(z.object({}).passthrough()).openapi({ description: 'Array of items for the current page' }),
+      meta: z.object({
+        total: z.number().openapi({ description: 'Total number of items matching the query' }),
+        skip: z.number().openapi({ description: 'Number of items skipped' }),
+        limit: z.number().openapi({ description: 'Max items per page' }),
+        hasMore: z.boolean().openapi({ description: 'Whether additional pages are available' }),
+      }),
+    }),
+  );
+  Schemas.ProductListItemDTO = registry.register('ProductListItemDTO', ProductListItemSchema);
+  Schemas.ProductDetailDTO = registry.register('ProductDetailDTO', ProductDetailSchema);
+  Schemas.ProductPriceHistoryDTO = registry.register('ProductPriceHistoryDTO', ProductPriceHistoryDTO);
+  Schemas.ProductListQueryDTO = registry.register('ProductListQueryDTO', ProductListQuerySchema);
+  Schemas.ProductStatsDTO = registry.register('ProductStatsDTO', ProductStatsSchema);
+  Schemas.DashboardMetricsDTO = registry.register('DashboardMetricsDTO', DashboardMetricsSchema);
+  Schemas.HealthResponseDTO = registry.register('HealthResponseDTO', HealthResponseSchema);
+
+  // Inline schema for enrichment metrics — no standalone DTO file.
+  const EnrichmentMetricsSchema = z.object({
+    startedAt: z.string().openapi({ description: 'ISO-8601 timestamp of when the service started accumulating' }),
+    totalEnrichments: z.number().int().openapi({ description: 'Total number of enrichment invocations' }),
+    enrichmentHashSkips: z
+      .number()
+      .int()
+      .openapi({ description: 'How many enrichments were skipped because the description hash matched' }),
+    enrichmentHashSkipRate: z.number().openapi({ description: 'skips / total (0 if total=0)' }),
+    ruleHighConfidence: z.number().int().openapi({ description: 'How many times the rule-based extractor reached confidence ≥ 0.4' }),
+    ruleHighConfidenceRate: z.number().openapi({ description: 'ruleHits / (total - skips). Denominator of zero → 0' }),
+    cacheHits: z.number().int().openapi({ description: 'KeywordsCache hits (memory or MongoDB)' }),
+    cacheMisses: z.number().int().openapi({ description: 'KeywordsCache misses (both layers)' }),
+    cacheHitRate: z.number().openapi({ description: 'hits / (hits + misses). Denominator of zero → 0' }),
+    llmCalls: z.number().int().openapi({ description: 'Successful LLM calls' }),
+    llmFailures: z.number().int().openapi({ description: 'Failed LLM calls (network error, timeout, bad response)' }),
+    llmFailureRate: z.number().openapi({ description: 'failures / calls. Denominator of zero → 0' }),
+    llmPromptCacheHitTokens: z.number().int().openapi({ description: 'Cumulative prompt tokens served from the LLM provider cache' }),
+    llmPromptCacheMissTokens: z.number().int().openapi({ description: 'Cumulative prompt tokens NOT served from cache' }),
+    llmCompletionTokens: z.number().int().openapi({ description: 'Cumulative completion tokens generated by the LLM' }),
+    llmCacheHitRate: z.number().openapi({ description: 'hitTokens / (hitTokens + missTokens). Denominator of zero → 0' }),
+    estimatedSavingsUSD: z
+      .number()
+      .openapi({ description: 'Estimated USD saved via LLM prompt caching. 0 if LLM_COST_PER_MILLION_TOKENS not set' }),
+    costPerMillionTokens: z.number().openapi({ description: 'Price per million tokens used for savings calculation (from env)' }),
+  });
+  Schemas.EnrichmentMetricsDTO = registry.register('EnrichmentMetricsDTO', EnrichmentMetricsSchema);
+
+  Schemas.QueueStatsDTO = registry.register('QueueStatsDTO', QueueStatsSchema);
+  Schemas.JobDetailDTO = registry.register('JobDetailDTO', JobDetailSchema);
+  Schemas.CreateRoleDTO = registry.register('CreateRoleDTO', CreateRoleSchema);
+  Schemas.RoleResponseDTO = registry.register('RoleResponseDTO', RoleResponseSchema);
+
+  // Rule-based extractor patterns
+  const RuleResponse = z.object({
+    id: uuid('Rule unique identifier'),
+    ruleKey: z.string().openapi({ description: 'Rule category key', example: 'brands' }),
+    values: z.array(z.string()).openapi({ description: 'Word-list values', example: ['apple', 'samsung'] }),
+    version: z.number().int().openapi({ description: 'Monotonic version counter', example: 1 }),
+    enabled: z.boolean().openapi({ description: 'Whether the rule is active', example: true }),
+    createdAt: timestamp('Creation timestamp'),
+    updatedAt: timestamp('Last update timestamp'),
+  });
+  Schemas.RuleResponseDTO = registry.register('RuleResponse', RuleResponse);
+
+  Schemas.CreateRuleDTO = registry.register(
+    'CreateRule',
+    z.object({
+      ruleKey: z.string().min(1).openapi({ description: 'Unique rule category key', example: 'brands' }),
+      values: z
+        .array(z.string().min(1))
+        .min(1)
+        .openapi({ description: 'Non-empty array of word-list values', example: ['apple', 'samsung', 'nokia'] }),
+    }),
+  );
+
+  Schemas.UpdateRuleDTO = registry.register(
+    'UpdateRule',
+    z.object({
+      values: z
+        .array(z.string().min(1))
+        .min(1)
+        .openapi({ description: 'Non-empty array of values (replaces existing)', example: ['apple', 'samsung', 'xiaomi'] }),
+    }),
+  );
+
+  // Scraping schedules
+  const ScrapingScheduleResponse = z.object({
+    id: uuid('Schedule unique identifier'),
+    name: z.string().openapi({ description: 'Human-readable schedule name', example: 'Daily morning scrape' }),
+    store: z.string().openapi({ description: 'Store key this schedule targets', example: 'revolico' }),
+    cron: z.string().openapi({ description: 'Cron expression', example: '0 6 * * *' }),
+    enabled: z.boolean().openapi({ description: 'Whether the schedule is active', example: true }),
+    jobs: z.array(z.object({}).passthrough()).openapi({ description: 'Array of store-specific scraping job descriptors' }),
+    lastRunAt: z.string().nullable().openapi({ description: 'ISO timestamp of last execution' }),
+    createdAt: timestamp('Creation timestamp'),
+    updatedAt: timestamp('Last update timestamp'),
+  });
+  Schemas.ScrapingScheduleResponseDTO = registry.register('ScrapingScheduleResponse', ScrapingScheduleResponse);
+
+  Schemas.CreateScrapingScheduleDTO = registry.register(
+    'CreateScrapingSchedule',
+    z.object({
+      name: z.string().min(1).max(100).openapi({ description: 'Unique schedule name', example: 'Daily morning scrape' }),
+      store: z.string().min(1).openapi({ description: 'Store key', example: 'revolico' }),
+      cron: z.string().min(1).openapi({ description: 'Cron expression', example: '0 6 * * *' }),
+      enabled: z.boolean().optional().openapi({ description: 'Enable on creation (defaults to true)', example: true }),
+      jobs: z
+        .array(z.object({}).passthrough())
+        .min(1)
+        .openapi({ description: 'Array of job descriptors', example: [{ category: 'celulares' }] }),
+    }),
+  );
+
+  Schemas.UpdateScrapingScheduleDTO = registry.register(
+    'UpdateScrapingSchedule',
+    z.object({
+      name: z.string().min(1).max(100).optional(),
+      store: z.string().min(1).optional(),
+      cron: z.string().min(1).optional(),
+      enabled: z.boolean().optional(),
+      jobs: z.array(z.object({}).passthrough()).min(1).optional(),
+    }),
+  );
+
+  const StoreInfoResponse = z.object({
+    key: z.string().openapi({ description: 'Store key', example: 'revolico' }),
+    displayName: z.string().openapi({ description: 'Human-readable store name', example: 'Revolico' }),
+    scrapingQueue: z.string().openapi({ description: 'BullMQ queue name', example: 'PRODUCTS_SCRAPING' }),
+    jobSchema: z.object({
+      fields: z.array(
+        z.object({
+          name: z.string(),
+          type: z.enum(['string', 'number', 'boolean']),
+          required: z.boolean(),
+          label: z.string(),
+          placeholder: z.string().optional(),
+        }),
+      ),
+    }),
+  });
+  Schemas.StoreInfoDTO = registry.register('StoreInfo', StoreInfoResponse);
+
+  // Account Management DTOs
+  Schemas.ForgotPasswordDTO = registry.register('ForgotPasswordDTO', ForgotPasswordSchema);
+  Schemas.ResetPasswordDTO = registry.register('ResetPasswordDTO', ResetPasswordSchema);
+  Schemas.ChangePasswordDTO = registry.register('ChangePasswordDTO', ChangePasswordSchema);
+  Schemas.ChangeEmailDTO = registry.register('ChangeEmailDTO', ChangeEmailSchema);
+  Schemas.RefreshTokenDTO = registry.register('RefreshTokenDTO', RefreshTokenSchema);
+  Schemas.VerifyEmailDTO = registry.register('VerifyEmailDTO', VerifyEmailSchema);
+  Schemas.DeactivateAccountDTO = registry.register('DeactivateAccountDTO', DeactivateAccountSchema);
+  Schemas.LinkProviderDTO = registry.register('LinkProviderDTO', LinkProviderSchema);
+
+  // Auth response (login + register) — includes refreshToken
+  const AuthResponseWithRefreshSchema = z.object({
+    user: Schemas.UserDTO,
+    token: z.string().openapi({ description: 'JWT access token' }),
+    refreshToken: z.string().optional().openapi({ description: 'Opaque refresh token (30-day expiry)' }),
+  });
+  Schemas.AuthResponseWithRefreshDTO = registry.register('AuthResponseWithRefresh', AuthResponseWithRefreshSchema);
+
+  // Generic message response
+  const MessageResponseSchema = z.object({
+    message: z.string().openapi({ description: 'Human-readable result message', example: 'Password reset successfully.' }),
+  });
+  Schemas.MessageResponseDTO = registry.register('MessageResponse', MessageResponseSchema);
+
+  // Reactivate user request
+  const ReactivateUserSchema = z.object({
+    userId: z.string().uuid().openapi({ description: 'ID of the user to reactivate' }),
+  });
+  Schemas.ReactivateUserDTO = registry.register('ReactivateUser', ReactivateUserSchema);
 }

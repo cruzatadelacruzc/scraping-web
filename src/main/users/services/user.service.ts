@@ -16,6 +16,8 @@ import { ProviderTokenVerifier } from '@shared/security/provider-token-verifier'
 import { AccountRepository } from '@users/repositories/account.repository';
 import { AccountNotFoundError } from '@users/errors/account-not-found.error';
 import { PrismaClient } from '@prisma/client';
+import { EmailVerificationService } from './email-verification.service';
+import { TokenManagementService } from './token-management.service';
 
 @injectable()
 export class UserService {
@@ -29,6 +31,8 @@ export class UserService {
     @inject(TYPES.ProviderTokenVerifier) private readonly _providerVerifier: ProviderTokenVerifier,
     @inject(AccountRepository) private readonly _accountRepository: AccountRepository,
     @inject(TYPES.PrismaClient) private readonly _prisma: PrismaClient,
+    @inject(TYPES.EmailVerificationService) private readonly _emailVerify?: EmailVerificationService,
+    @inject(TYPES.TokenManagementService) private readonly _tokenMgmt?: TokenManagementService,
   ) {
     this._log.context = UserService.name;
   }
@@ -288,7 +292,22 @@ export class UserService {
         (createdUser.roles || []).map((r: any) => r.name),
       );
 
-      return { user: this._userMapper.toDTO(createdUser)!, token };
+      // Issue refresh token
+      let refreshToken: string | undefined;
+      if (this._tokenMgmt) {
+        refreshToken = await this._tokenMgmt.issueRefreshToken(createdUser.id);
+      }
+
+      // Enqueue email verification
+      if (this._emailVerify) {
+        try {
+          await this._emailVerify.requestVerification(createdUser.id, createdUser.email);
+        } catch {
+          this._log.warn('Failed to enqueue verification email', { userId: createdUser.id });
+        }
+      }
+
+      return { user: this._userMapper.toDTO(createdUser)!, token, refreshToken };
     } catch (err: any) {
       if (isPrismaUniqueConstraintError(err)) {
         // Handle race condition: email/username created concurrently
@@ -348,5 +367,110 @@ export class UserService {
       throw new UserNotFoundError(`User with id ${id} not found`);
     }
     await this._userRepository.delete(id);
+  }
+
+  /**
+   * Initiates an email change for an authenticated user.
+   * Verifies the current password, checks the new email is available,
+   * and sends a verification email to the new address.
+   *
+   * @param userId    - The authenticated user's ID.
+   * @param newEmail  - The desired new email address.
+   * @param password  - The user's current password for re-authentication.
+   * @throws {Error} If the password is wrong or the email is already taken.
+   */
+  public async requestEmailChange(userId: string, newEmail: string, password: string): Promise<void> {
+    const user = await this._userRepository.findById(userId);
+    if (!user) {
+      throw new UserNotFoundError(`User with id ${userId} not found`);
+    }
+
+    if (!user.passwordHash) {
+      throw new Error('Cannot change email for accounts without a password');
+    }
+
+    const valid = await this._hasher.compare(password, user.passwordHash);
+    if (!valid) {
+      throw new Error('Password is incorrect');
+    }
+
+    const normalizedEmail = newEmail.toLowerCase().trim();
+    const existingByEmail = await this._userRepository.findByEmail(normalizedEmail);
+    if (existingByEmail && existingByEmail.id !== userId) {
+      throw new ConflictError('Email is already in use');
+    }
+
+    if (this._emailVerify) {
+      await this._emailVerify.requestVerification(userId, normalizedEmail);
+    }
+
+    this._log.info('Email change requested', { userId, newEmail: normalizedEmail });
+  }
+
+  /**
+   * Links an OAuth provider identity to an authenticated user.
+   *
+   * @param userId      - The authenticated user's ID.
+   * @param provider    - The provider name (google | facebook).
+   * @param providerId  - The provider's user ID.
+   * @param idToken     - Optional ID token for verification.
+   * @param accessToken - Optional access token.
+   * @throws {ConflictError} If the provider identity is already linked to another user.
+   */
+  public async linkProvider(userId: string, provider: string, providerId: string, idToken?: string, accessToken?: string): Promise<void> {
+    // Verify provider token if provided
+    if (idToken) {
+      const claims = await this._providerVerifier.verifyProvider(provider as any, { idToken, accessToken });
+      providerId = claims.providerId || providerId;
+    }
+
+    // Check if identity is already linked
+    const existing = await this._userIdentityRepository.findByProvider(provider, providerId);
+    if (existing) {
+      if (existing.userId === userId) {
+        // Already linked to this user — no-op
+        return;
+      }
+      throw new ConflictError('This provider account is already linked to another user');
+    }
+
+    await this._userIdentityRepository.create(userId, provider, providerId);
+    this._log.info('Provider linked', { userId, provider, providerId });
+  }
+
+  /**
+   * Unlinks an OAuth provider identity from an authenticated user.
+   * The user must have either a password set or another provider identity
+   * to avoid being locked out.
+   *
+   * @param userId   - The authenticated user's ID.
+   * @param provider - The provider name to unlink.
+   * @throws {Error} If this is the last authentication method.
+   */
+  public async unlinkProvider(userId: string, provider: string): Promise<void> {
+    const user = await this._userRepository.findByIdWithRoles(userId);
+    if (!user) {
+      throw new UserNotFoundError(`User with id ${userId} not found`);
+    }
+
+    // Fetch identities separately (UserWithRoles doesn't include userIdentity)
+    // Check user has another way to log in
+    // We need to count all identities for this user — use a Prisma query
+    const allIdentities = await this._prisma.userIdentity.findMany({
+      where: { userId },
+    });
+
+    const otherIdentities = allIdentities.filter(i => i.provider !== provider);
+
+    if (otherIdentities.length === 0 && !user.passwordHash) {
+      throw new Error('Cannot unlink the last authentication method. Set a password first.');
+    }
+
+    // Find the specific identity to delete
+    const targetIdentity = allIdentities.find(i => i.provider === provider);
+    if (targetIdentity) {
+      await this._userIdentityRepository.delete(targetIdentity.id);
+      this._log.info('Provider unlinked', { userId, provider });
+    }
   }
 }

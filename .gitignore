@@ -17,6 +17,18 @@ tmp/
 # Visual Studio Code
 ######################
 .vscode/settings.*
+.vscode/tasks.json
+.vscode/launch.json
 
 ############# Local resources AI Agents ###########
 .plans
+.firecrawl/
+.playwright-cli/
+.playwright-mcp/
+docs/superpowers/
+
+######################
+# Bot runtime logs
+######################
+*.class.log
+baileys.log

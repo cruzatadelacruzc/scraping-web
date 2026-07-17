@@ -4,6 +4,22 @@ import mongoose from 'mongoose';
 // Global mock — avoids ESM 'jose' import in ALL integration tests
 jest.mock('@shared/security/provider-token-verifier');
 
+// Global mock — @builderbot/provider-baileys transitively imports
+// baileys (ESM) which Jest cannot parse. All tests use mocked providers.
+jest.mock('@builderbot/provider-baileys', () => ({ BaileysProvider: jest.fn() }));
+// Global mock — @builderbot-plugins/telegram transitively imports
+// telegraf (ESM) which Jest cannot parse. All tests use mocked providers.
+jest.mock('@builderbot-plugins/telegram', () => ({ TelegramProvider: jest.fn() }));
+jest.mock('@builderbot/bot', () => ({
+  createBot: jest.fn(),
+  createFlow: jest.fn(f => f),
+  createProvider: jest.fn(),
+  addKeyword: jest.fn(() => ({ addAction: jest.fn().mockReturnThis(), addAnswer: jest.fn().mockReturnThis() })),
+  EVENTS: { WELCOME: 'WELCOME' },
+  MemoryDB: jest.fn(),
+  ProviderClass: null,
+}));
+
 beforeAll(async () => {
   // put your client connection code here, example with mongoose:
   const dbUri = process.env.DB_URI;
