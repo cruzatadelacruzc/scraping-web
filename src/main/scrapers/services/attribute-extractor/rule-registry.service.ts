@@ -81,10 +81,24 @@ export class RuleRegistryService {
 
   // ── private ──────────────────────────────────────────────────────────
 
-  /** Loads all enabled rules from DB and replaces cache entries. */
+  /** Loads all enabled rules from DB and cleans up stale fallback entries. */
   private async _warmFromDb(): Promise<void> {
     try {
       const rows = await this._repo.findAllEnabled();
+      const dbKeys = new Set(rows.map(r => r.ruleKey));
+
+      // Remove fallback-cached keys that were permanently deleted from DB
+      let cleaned = 0;
+      for (const key of Object.keys(FALLBACK_RULES)) {
+        if (!dbKeys.has(key)) {
+          this._cache.delete(key);
+          cleaned++;
+        }
+      }
+      if (cleaned > 0) {
+        this._log.info(`Cleaned ${cleaned} stale fallback keys from cache (deleted from DB)`);
+      }
+
       for (const row of rows) {
         const values = row.values as string[];
         this._cache.set(row.ruleKey, {
