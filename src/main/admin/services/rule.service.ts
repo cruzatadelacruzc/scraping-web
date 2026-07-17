@@ -75,4 +75,31 @@ export class RuleService {
     this._log.info('Rule updated', { ruleKey, count: values.length });
     return toRuleResponseDTO(row);
   }
+
+  /**
+   * Toggles the enabled flag of a rule.
+   * Uses invalidate() (with fallback) since the rule stays in DB.
+   * @param {string} ruleKey - The unique rule key.
+   * @returns {Promise<IRuleResponseDTO>} The updated rule.
+   * @throws {RuleNotFoundError} If the key does not exist.
+   */
+  public async toggle(ruleKey: string): Promise<IRuleResponseDTO> {
+    const row = await this._repo.toggleEnabled(ruleKey);
+    this._registry.invalidate(ruleKey);
+    this._log.info('Rule toggled', { ruleKey, enabled: row.enabled });
+    return toRuleResponseDTO(row);
+  }
+
+  /**
+   * Permanently deletes a rule.
+   * Uses evict() (without fallback) since the rule is gone, not missing.
+   * @param {string} ruleKey - The unique rule key.
+   * @throws {RuleNotFoundError} If the key does not exist.
+   */
+  public async delete(ruleKey: string): Promise<void> {
+    const existed = await this._repo.delete(ruleKey);
+    if (!existed) throw new RuleNotFoundError(ruleKey);
+    this._registry.evict(ruleKey);
+    this._log.info('Rule deleted', { ruleKey });
+  }
 }

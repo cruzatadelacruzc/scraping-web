@@ -68,12 +68,39 @@ export class RuleRegistryService {
     this._refresh(ruleKey);
   }
 
+  /**
+   * Evicts a key from cache without re-fetching from the database.
+   * Used when a rule is permanently deleted — unlike invalidate(),
+   * this does NOT fall back to FALLBACK_RULES.
+   *
+   * @param {string} ruleKey - The rule key to evict.
+   */
+  public evict(ruleKey: string): void {
+    this._cache.delete(ruleKey);
+  }
+
   // ── private ──────────────────────────────────────────────────────────
 
-  /** Loads all enabled rules from DB and replaces cache entries. */
+  /** Loads all enabled rules from DB and cleans up stale fallback entries. */
   private async _warmFromDb(): Promise<void> {
     try {
       const rows = await this._repo.findAllEnabled();
+      const dbKeys = new Set(rows.map(r => r.ruleKey));
+
+      // Remove fallback-cached keys that were permanently deleted from DB
+      let cleaned = 0;
+      for (const key of Object.keys(FALLBACK_RULES)) {
+        if (!dbKeys.has(key)) {
+          this._cache.delete(key);
+          cleaned++;
+        }
+      }
+      if (cleaned > 0) {
+        this._log.info(`Cleaned ${cleaned} stale fallback keys from cache (deleted from DB)`);
+      } else {
+        this._log.debug('No stale fallback keys to clean');
+      }
+
       for (const row of rows) {
         const values = row.values as string[];
         this._cache.set(row.ruleKey, {
@@ -108,8 +135,8 @@ export class RuleRegistryService {
           }
         }
       })
-      .catch(() => {
-        // Silently keep stale/fallback values on refresh failure
+      .catch((err: unknown) => {
+        this._log.warn(`Rule refresh failed for '${ruleKey}' — cache may be stale`, (err as Error).message);
       });
   }
 }
