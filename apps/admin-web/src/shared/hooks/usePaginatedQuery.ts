@@ -52,6 +52,10 @@ export interface UsePaginatedQueryParams<
  * the partial-match behavior in TanStack Query matches against the prefix +
  * `'list'` segments regardless of the extra keys inside the object.
  *
+ * `refetchOnMount` is set to `false` to prevent React StrictMode from
+ * double-fetching on initial mount in development. Query-key changes
+ * (page, filters) always trigger a new fetch regardless of this setting.
+ *
  * @example
  * const { data, isLoading, isFetching } = usePaginatedQuery({
  *   page: 1,
@@ -82,6 +86,8 @@ export function usePaginatedQuery<TFilters extends Record<string, unknown>, TIte
       });
     },
     staleTime,
+    /** Prevent StrictMode double-mount from refetching; queryKey changes still trigger fetch. */
+    refetchOnMount: false,
     placeholderData: params.placeholderData ? (prev) => prev : undefined,
   });
 }

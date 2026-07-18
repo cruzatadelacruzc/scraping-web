@@ -50,6 +50,7 @@ export interface ProductListParams {
 
 export const productsService = {
   list(params: ProductListParams) {
-    return apiClient.get<ProductListResponse>('/admin/products', { params });
+    const { signal, ...queryParams } = params;
+    return apiClient.get<ProductListResponse>('/admin/products', { params: queryParams, signal });
   },
 };
