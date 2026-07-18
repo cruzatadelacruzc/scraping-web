@@ -1,10 +1,7 @@
-import { ENV } from '@shared/config/env';
-import { useQuery } from '@tanstack/react-query';
+import { usePaginatedQuery } from '@shared/hooks/usePaginatedQuery';
 
 import { mapProductDTOToViewModel } from '../mappers/product-mapper';
 import { productsService } from '../services/products-service';
-
-import { productKeys } from './query-keys';
 
 export interface UseGetProductsParams {
   page: number;
@@ -18,38 +15,35 @@ export interface UseGetProductsParams {
 }
 
 export function useGetProducts(params: UseGetProductsParams) {
-  const skip = (params.page - 1) * params.limit;
-  const filters: Record<string, unknown> = {
+  return usePaginatedQuery({
     page: params.page,
     limit: params.limit,
-    search: params.search ?? '',
-    category: params.category ?? '',
-    minPrice: params.minPrice,
-    maxPrice: params.maxPrice,
-    isOutstanding: params.isOutstanding,
-    isPromoted: params.isPromoted,
-  };
-
-  return useQuery({
-    queryKey: productKeys.list(filters),
-    queryFn: async ({ signal }) => {
-      const response = await productsService.list({
-        skip,
-        limit: params.limit,
-        search: params.search,
-        category: params.category,
-        minPrice: params.minPrice,
-        maxPrice: params.maxPrice,
-        isOutstanding: params.isOutstanding,
-        isPromoted: params.isPromoted,
-        signal,
-      });
-      return {
-        items: response.data.data.map(mapProductDTOToViewModel),
-        total: response.data.meta.total,
-      };
+    filters: {
+      search: params.search ?? '',
+      category: params.category ?? '',
+      ...(params.minPrice !== undefined && { minPrice: params.minPrice }),
+      ...(params.maxPrice !== undefined && { maxPrice: params.maxPrice }),
+      ...(params.isOutstanding !== undefined && { isOutstanding: params.isOutstanding }),
+      ...(params.isPromoted !== undefined && { isPromoted: params.isPromoted }),
     },
-    staleTime: ENV.STALE_TIME_STANDARD,
-    placeholderData: (prev) => prev,
+    queryKeyBase: 'products',
+    placeholderData: true,
+    queryFn: ({ skip, limit, signal }) =>
+      productsService
+        .list({
+          skip,
+          limit,
+          search: params.search,
+          category: params.category,
+          minPrice: params.minPrice,
+          maxPrice: params.maxPrice,
+          isOutstanding: params.isOutstanding,
+          isPromoted: params.isPromoted,
+          signal,
+        })
+        .then((res) => ({
+          items: res.data.data.map(mapProductDTOToViewModel),
+          total: res.data.meta.total,
+        })),
   });
 }

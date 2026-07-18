@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { productDetailRoute } from '@shared/config/routes';
+import { useDebouncedFilter } from '@shared/hooks/useDebouncedFilter';
 import { PackageSearch, Search } from 'lucide-react';
 
 import { useGetProducts } from '../hooks/useGetProducts';
@@ -12,68 +13,28 @@ export function ProductsTable(): JSX.Element {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [categoryInput, setCategoryInput] = useState('');
-  const [category, setCategory] = useState('');
-  const [minPriceInput, setMinPriceInput] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPriceInput, setMaxPriceInput] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  const search = useDebouncedFilter();
+  const category = useDebouncedFilter();
+  const minPrice = useDebouncedFilter();
+  const maxPrice = useDebouncedFilter();
   const [isOutstanding, setIsOutstanding] = useState(false);
   const [isPromoted, setIsPromoted] = useState(false);
 
-  // Debounce search input (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput);
+  const handleFilterChange = useCallback(
+    <TValue,>(setter: (value: TValue) => void, value: TValue): void => {
+      setter(value);
       setPage(1);
-    }, 300);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchInput]);
-
-  // Debounce category filter (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCategory(categoryInput);
-      setPage(1);
-    }, 300);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [categoryInput]);
-
-  // Debounce minPrice filter (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinPrice(minPriceInput);
-      setPage(1);
-    }, 300);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [minPriceInput]);
-
-  // Debounce maxPrice filter (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMaxPrice(maxPriceInput);
-      setPage(1);
-    }, 300);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [maxPriceInput]);
+    },
+    [],
+  );
 
   const { data, isLoading, isError, error, isFetching, refetch } = useGetProducts({
     page,
     limit: pageSize,
-    search: search || undefined,
-    category: category || undefined,
-    minPrice: minPrice ? Number(minPrice) : undefined,
-    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    search: search.debouncedValue || undefined,
+    category: category.debouncedValue || undefined,
+    minPrice: minPrice.debouncedValue ? Number(minPrice.debouncedValue) : undefined,
+    maxPrice: maxPrice.debouncedValue ? Number(maxPrice.debouncedValue) : undefined,
     isOutstanding: isOutstanding || undefined,
     isPromoted: isPromoted || undefined,
   });
@@ -138,9 +99,9 @@ export function ProductsTable(): JSX.Element {
           />
           <input
             type="text"
-            value={searchInput}
+            value={search.value}
             onChange={(e) => {
-              setSearchInput(e.target.value);
+              handleFilterChange(search.setValue, e.target.value);
             }}
             placeholder={t('products.searchPlaceholder')}
             aria-label={t('products.searchPlaceholder')}
@@ -151,9 +112,9 @@ export function ProductsTable(): JSX.Element {
         {/* Category filter */}
         <input
           type="text"
-          value={categoryInput}
+          value={category.value}
           onChange={(e) => {
-            setCategoryInput(e.target.value);
+            handleFilterChange(category.setValue, e.target.value);
           }}
           placeholder={t('products.filters.categoryPlaceholder')}
           aria-label={t('products.filters.categoryPlaceholder')}
@@ -163,9 +124,9 @@ export function ProductsTable(): JSX.Element {
         {/* Min price */}
         <input
           type="number"
-          value={minPriceInput}
+          value={minPrice.value}
           onChange={(e) => {
-            setMinPriceInput(e.target.value);
+            handleFilterChange(minPrice.setValue, e.target.value);
           }}
           placeholder={t('products.filters.minPrice')}
           aria-label={t('products.filters.minPrice')}
@@ -176,9 +137,9 @@ export function ProductsTable(): JSX.Element {
         {/* Max price */}
         <input
           type="number"
-          value={maxPriceInput}
+          value={maxPrice.value}
           onChange={(e) => {
-            setMaxPriceInput(e.target.value);
+            handleFilterChange(maxPrice.setValue, e.target.value);
           }}
           placeholder={t('products.filters.maxPrice')}
           aria-label={t('products.filters.maxPrice')}
@@ -192,8 +153,7 @@ export function ProductsTable(): JSX.Element {
             type="checkbox"
             checked={isOutstanding}
             onChange={(e) => {
-              setIsOutstanding(e.target.checked);
-              setPage(1);
+              handleFilterChange(setIsOutstanding, e.target.checked);
             }}
             className="h-4 w-4 rounded border-outline-variant bg-surface text-primary focus:ring-1 focus:ring-primary"
           />
@@ -206,8 +166,7 @@ export function ProductsTable(): JSX.Element {
             type="checkbox"
             checked={isPromoted}
             onChange={(e) => {
-              setIsPromoted(e.target.checked);
-              setPage(1);
+              handleFilterChange(setIsPromoted, e.target.checked);
             }}
             className="h-4 w-4 rounded border-outline-variant bg-surface text-primary focus:ring-1 focus:ring-primary"
           />
