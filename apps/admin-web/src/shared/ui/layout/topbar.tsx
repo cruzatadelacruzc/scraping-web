@@ -47,7 +47,7 @@ export function TopBar(): JSX.Element {
         className="flex items-center gap-xs rounded-md border border-outline-variant px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high"
       >
         <Search size={14} aria-hidden="true" />
-        <kbd className="rounded-sm bg-surface-container-high px-xs text-label-xs font-mono">K</kbd>
+        <kbd className="rounded-sm bg-surface-container-high px-xs text-label-xs font-mono">⌘K</kbd>
       </button>
 
       {/* User */}

@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useCallback, useMemo } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useLogout } from '@shared/auth';
@@ -20,6 +20,24 @@ export function CommandPalette(): JSX.Element | null {
   const navigate = useNavigate();
   const logout = useLogout();
   const hasPermission = useHasPermission();
+
+  const paletteRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Store the currently focused element before opening
+  useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+    }
+  }, [open]);
+
+  // Restore focus on close
+  useEffect(() => {
+    if (!open && previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [open]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
@@ -43,6 +61,33 @@ export function CommandPalette(): JSX.Element | null {
       if (e.key === 'Escape') {
         e.stopPropagation();
         setOpen(false);
+        return;
+      }
+
+      // Focus trap: Tab / Shift+Tab
+      if (e.key === 'Tab' && paletteRef.current) {
+        const focusableSelector =
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const focusableElements =
+          paletteRef.current.querySelectorAll<HTMLElement>(focusableSelector);
+        if (focusableElements.length === 0) {
+          e.preventDefault();
+          return;
+        }
+        const first = focusableElements[0];
+        const last = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       }
     },
     [setOpen],
@@ -59,6 +104,7 @@ export function CommandPalette(): JSX.Element | null {
     <>
       <div className="fixed inset-0 z-50 bg-black/30" role="presentation" onClick={handleClose} />
       <div
+        ref={paletteRef}
         className="fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2"
         onKeyDown={handleKeyDown}
         role="presentation"
