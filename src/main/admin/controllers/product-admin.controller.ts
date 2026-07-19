@@ -26,7 +26,7 @@ export class ProductAdminController {
   @httpGet('/', AuthMiddleware.forRoles('SUPER_ADMIN'), ValidateRequestMiddleware.with(ProductListQueryDTO))
   public async list(@request() req: Request, @response() res: Response): Promise<void> {
     try {
-      const result = await this._service.list(req.body as ProductListQueryDTO);
+      const result = await this._service.list(ProductListQueryDTO.from(req.query));
       ResponseHandler.ok(res, result);
     } catch (err) {
       this._log.error('Failed to list products', { error: err });
