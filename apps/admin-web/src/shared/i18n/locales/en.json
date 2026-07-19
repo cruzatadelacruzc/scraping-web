@@ -34,6 +34,15 @@
     "serviceRecovered": "Service {{service}} recovered",
     "jobsFailed": "{{count}} job(s) failed in {{queue}}"
   },
+  "palette": {
+    "label": "Command palette",
+    "open": "Open command palette",
+    "placeholder": "Type a command or search…",
+    "empty": "No results found.",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "signOut": "Sign out"
+  },
   "common": {
     "notFound": "404 — Not Found",
     "notFoundDesc": "This page does not exist.",
