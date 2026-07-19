@@ -36,6 +36,18 @@
     "close": "Cerrar"
   },
   "queues": {
+    "description": "Monitorea las colas BullMQ: conteos, jobs recientes y fallos.",
+    "drawer": {
+      "title": "Detalle del job",
+      "error": "No se pudo cargar el detalle del job",
+      "createdAt": "Creado",
+      "processedAt": "Procesado",
+      "finishedAt": "Finalizado",
+      "progress": "Progreso",
+      "payload": "Payload",
+      "returnValue": "Valor de retorno",
+      "none": "—"
+    },
     "cards": {
       "total": "total",
       "error": "No se pudieron cargar las estadísticas de colas",

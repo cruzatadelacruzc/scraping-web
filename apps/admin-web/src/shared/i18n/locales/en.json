@@ -36,6 +36,18 @@
     "close": "Close"
   },
   "queues": {
+    "description": "Monitor BullMQ queues: job counts, recent jobs and failures.",
+    "drawer": {
+      "title": "Job detail",
+      "error": "Failed to load job detail",
+      "createdAt": "Created at",
+      "processedAt": "Processed at",
+      "finishedAt": "Finished at",
+      "progress": "Progress",
+      "payload": "Payload",
+      "returnValue": "Return value",
+      "none": "—"
+    },
     "cards": {
       "total": "total",
       "error": "Failed to load queue stats",
