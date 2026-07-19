@@ -28,7 +28,11 @@
     "title": "Notificaciones",
     "open": "Abrir notificaciones",
     "markAllRead": "Marcar todas como leídas",
-    "empty": "Sin notificaciones"
+    "empty": "Sin notificaciones",
+    "mutationFailedTitle": "Operación fallida",
+    "serviceDown": "El servicio {{service}} está caído",
+    "serviceRecovered": "El servicio {{service}} se recuperó",
+    "jobsFailed": "{{count}} job(s) fallidos en {{queue}}"
   },
   "common": {
     "notFound": "404 — No Encontrado",

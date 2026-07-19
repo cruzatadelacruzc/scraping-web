@@ -12,6 +12,7 @@ import { ScrapersPage } from '@pages/scrapers-page';
 import { SettingsPage } from '@pages/settings-page';
 import { UsersPage } from '@pages/users-page';
 import { configureAuthHandlers } from '@shared/api/client';
+import { createAppQueryClient } from '@shared/api/query-client';
 import { AuthProvider } from '@shared/auth/auth-provider';
 import { AuthService } from '@shared/auth/auth-service';
 import { InMemoryStorage } from '@shared/auth/in-memory-storage';
@@ -21,7 +22,7 @@ import { ROUTES } from '@shared/config/routes';
 import { NotificationProvider } from '@shared/notifications';
 import { Permission, RequirePermission } from '@shared/permissions';
 import { AppLayout } from '@shared/ui/layout/app-layout';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
 const DASHBOARD_PERMISSIONS: Permission[] = [Permission.VIEW_DASHBOARD];
@@ -44,14 +45,7 @@ const TOAST_OPTIONS = {
   },
 };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
+const queryClient = createAppQueryClient();
 
 const storage = new InMemoryStorage();
 const authService = new AuthService(storage);

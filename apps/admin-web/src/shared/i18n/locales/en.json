@@ -28,7 +28,11 @@
     "title": "Notifications",
     "open": "Open notifications",
     "markAllRead": "Mark all as read",
-    "empty": "No notifications"
+    "empty": "No notifications",
+    "mutationFailedTitle": "Operation failed",
+    "serviceDown": "Service {{service}} is down",
+    "serviceRecovered": "Service {{service}} recovered",
+    "jobsFailed": "{{count}} job(s) failed in {{queue}}"
   },
   "common": {
     "notFound": "404 — Not Found",
