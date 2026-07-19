@@ -1,7 +1,8 @@
-import { useCallback,useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrentUser } from '@shared/auth';
-import { Trash2,X } from 'lucide-react';
+import { Drawer } from '@shared/ui/drawer';
+import { Trash2, X } from 'lucide-react';
 
 import { AlertDialog } from '@/shared/ui/alert-dialog';
 
@@ -28,8 +29,6 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
 
   const [selectedRoleId, setSelectedRoleId] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const isOpen = userId !== null;
 
   const handleAssignRole = useCallback(() => {
     if (!selectedRoleId || !userId) return;
@@ -68,48 +67,16 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
   }
 
   // Roles that are not assigned to this user (filter out duplicates)
-  const availableRoles =
-    roles?.filter((r) => !data?.roles.includes(r.name)) ?? [];
+  const availableRoles = roles?.filter((r) => !data?.roles.includes(r.name)) ?? [];
 
   return (
     <>
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30"
-          onClick={onClose}
-          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') onClose(); }}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Drawer */}
-      <div
-        className={`fixed right-0 top-0 z-50 h-full w-96 transform border-l border-outline-variant bg-surface-container-high p-lg shadow-lg transition-transform duration-200 ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="mb-lg flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-on-surface">
-            {t('users.detailTitle')}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-sm p-xs text-on-surface-variant hover:bg-surface-container-highest"
-            aria-label={t('users.drawerClose')}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
+      <Drawer open={userId !== null} title={t('users.detailTitle')} onClose={onClose}>
         {/* Loading skeleton */}
         {isLoading && (
           <div className="space-y-sm">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-6 animate-pulse rounded-sm bg-surface-container-highest"
-              />
+              <div key={i} className="h-6 animate-pulse rounded-sm bg-surface-container-highest" />
             ))}
           </div>
         )}
@@ -188,7 +155,9 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
                           {roleName}
                           {roleId && (
                             <button
-                              onClick={() => { handleRemoveRole(roleId); }}
+                              onClick={() => {
+                                handleRemoveRole(roleId);
+                              }}
                               className="rounded-sm p-[1px] text-primary/60 hover:bg-primary/20 hover:text-primary"
                               aria-label={t('users.removeRole', { role: roleName })}
                             >
@@ -211,7 +180,9 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
               <div className="flex gap-xs">
                 <select
                   value={selectedRoleId}
-                  onChange={(e) => { setSelectedRoleId(e.target.value); }}
+                  onChange={(e) => {
+                    setSelectedRoleId(e.target.value);
+                  }}
                   className="flex-1 rounded-sm border border-outline-variant bg-surface px-sm py-xs text-body-sm text-on-surface"
                   aria-label={t('users.selectRole')}
                 >
@@ -235,7 +206,9 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
             {/* Actions */}
             <div className="mt-lg border-t border-outline-variant pt-lg">
               <button
-                onClick={() => { setShowDeleteDialog(true); }}
+                onClick={() => {
+                  setShowDeleteDialog(true);
+                }}
                 disabled={isSelf}
                 title={isSelf ? t('users.cannotDeleteSelf') : undefined}
                 className="inline-flex items-center gap-xs rounded-sm px-sm py-xs text-body-sm text-danger transition-colors hover:bg-danger-muted disabled:cursor-not-allowed disabled:opacity-40"
@@ -247,7 +220,7 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
             </div>
           </>
         )}
-      </div>
+      </Drawer>
 
       {/* Delete confirmation */}
       <AlertDialog

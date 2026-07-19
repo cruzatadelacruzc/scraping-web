@@ -1,17 +1,27 @@
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+// Deliberate shell -> feature import: the app shell hosts the Notification
+// Center trigger. No cycle: features/notifications never imports the layout.
+import { NotificationBell } from '@features/notifications';
 import { useCurrentUser, useLogout } from '@shared/auth';
+import { useCommandPalette } from '@shared/command-palette';
 import { ROUTES } from '@shared/config/routes';
-import { Shield } from 'lucide-react';
+import { Search, Shield } from 'lucide-react';
 
 export function TopBar(): JSX.Element {
   const { t } = useTranslation();
   const user = useCurrentUser();
   const logout = useLogout();
+  const { setOpen } = useCommandPalette();
 
   const handleLogout = (): void => {
     logout();
     window.location.href = ROUTES.LOGIN;
   };
+
+  const handleOpenPalette = useCallback(() => {
+    setOpen(true);
+  }, [setOpen]);
 
   return (
     <header className="sticky top-0 z-50 flex h-12 items-center justify-between border-b border-outline-variant bg-surface px-md">
@@ -21,14 +31,33 @@ export function TopBar(): JSX.Element {
           <Shield size={18} />
         </div>
         <div>
-          <a href={ROUTES.DASHBOARD} className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
+          <a
+            href={ROUTES.DASHBOARD}
+            className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary"
+          >
             BazaarSentinel
           </a>
         </div>
       </div>
 
+      {/* Command palette trigger — search bar on md+, icon-only on mobile */}
+      <button
+        onClick={handleOpenPalette}
+        className="flex items-center gap-xs rounded-md border border-outline-variant px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high min-w-0 flex-shrink"
+        aria-label={t('palette.open', 'Open command palette')}
+      >
+        <Search size={14} className="shrink-0" aria-hidden="true" />
+        <span className="hidden md:inline truncate">
+          {t('palette.placeholder', 'Type a command or search…')}
+        </span>
+        <kbd className="hidden rounded-sm bg-surface-container-high px-xs text-label-xs font-mono sm:inline">
+          ⌘K
+        </kbd>
+      </button>
+
       {/* User */}
       <div className="flex items-center gap-sm">
+        <NotificationBell />
         {user && (
           <>
             <span className="text-body-sm font-medium text-on-surface">{user.username}</span>

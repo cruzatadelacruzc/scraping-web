@@ -24,15 +24,76 @@
     "queues": "Queues",
     "settings": "Settings"
   },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Open notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications",
+    "mutationFailedTitle": "Operation failed",
+    "serviceDown": "Service {{service}} is down",
+    "serviceRecovered": "Service {{service}} recovered",
+    "jobsFailed": "{{count}} job(s) failed in {{queue}}"
+  },
+  "palette": {
+    "label": "Command palette",
+    "open": "Open command palette",
+    "placeholder": "Type a command or search…",
+    "empty": "No results found.",
+    "navigation": "Navigation",
+    "actions": "Actions",
+    "signOut": "Sign out"
+  },
   "common": {
     "notFound": "404 — Not Found",
     "notFoundDesc": "This page does not exist.",
+    "goToDashboard": "Go to dashboard",
     "loading": "Loading…",
     "error": "Something went wrong",
     "retry": "Retry",
     "noData": "No data available",
     "prev": "Prev",
-    "next": "Next"
+    "next": "Next",
+    "close": "Close"
+  },
+  "queues": {
+    "description": "Monitor BullMQ queues: job counts, recent jobs and failures.",
+    "drawer": {
+      "title": "Job detail",
+      "error": "Failed to load job detail",
+      "createdAt": "Created at",
+      "processedAt": "Processed at",
+      "finishedAt": "Finished at",
+      "progress": "Progress",
+      "payload": "Payload",
+      "returnValue": "Return value",
+      "none": "—"
+    },
+    "cards": {
+      "total": "total",
+      "error": "Failed to load queue stats",
+      "empty": {
+        "title": "No queues registered",
+        "description": "Queues appear here once the backend registers them."
+      }
+    },
+    "jobs": {
+      "hint": "Select a queue to inspect its recent jobs.",
+      "caption": "Recent jobs for the selected queue",
+      "filterLabel": "Status",
+      "all": "All statuses",
+      "id": "Job ID",
+      "name": "Name",
+      "status": "Status",
+      "attempts": "Attempts",
+      "created": "Created",
+      "duration": "Duration",
+      "failedReason": "Failure reason",
+      "error": "Failed to load jobs",
+      "empty": {
+        "title": "No jobs",
+        "description": "No recent jobs match the current filter."
+      }
+    }
   },
   "scrapers": {
     "stores": {

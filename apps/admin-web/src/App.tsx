@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AccountsPage } from '@pages/accounts-page';
 import { DashboardPage } from '@pages/dashboard-page';
 import { LoginPage } from '@pages/login-page';
+import { NotFoundPage } from '@pages/not-found-page';
 import { ProductDetailPage } from '@pages/product-detail-page';
 import { ProductsPage } from '@pages/products-page';
 import { ProductsStatsPage } from '@pages/products-stats-page';
@@ -12,15 +13,18 @@ import { ScrapersPage } from '@pages/scrapers-page';
 import { SettingsPage } from '@pages/settings-page';
 import { UsersPage } from '@pages/users-page';
 import { configureAuthHandlers } from '@shared/api/client';
+import { createAppQueryClient } from '@shared/api/query-client';
 import { AuthProvider } from '@shared/auth/auth-provider';
 import { AuthService } from '@shared/auth/auth-service';
 import { InMemoryStorage } from '@shared/auth/in-memory-storage';
 import { ProtectedRoute } from '@shared/auth/protected-route';
 import { SessionManager } from '@shared/auth/session-manager';
+import { CommandPaletteProvider } from '@shared/command-palette';
 import { ROUTES } from '@shared/config/routes';
+import { NotificationProvider } from '@shared/notifications';
 import { Permission, RequirePermission } from '@shared/permissions';
 import { AppLayout } from '@shared/ui/layout/app-layout';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
 const DASHBOARD_PERMISSIONS: Permission[] = [Permission.VIEW_DASHBOARD];
@@ -43,14 +47,7 @@ const TOAST_OPTIONS = {
   },
 };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
+const queryClient = createAppQueryClient();
 
 const storage = new InMemoryStorage();
 const authService = new AuthService(storage);
@@ -73,128 +70,118 @@ export function App(): JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider authService={authService} sessionManager={sessionManager} storage={storage}>
-        <Routes>
-          {/* Public */}
-          <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <NotificationProvider>
+          <CommandPaletteProvider>
+            <Routes>
+              {/* Public */}
+              <Route path={ROUTES.LOGIN} element={<LoginPage />} />
 
-          {/* Protected */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-            <Route
-              path={ROUTES.DASHBOARD}
-              element={
-                <RequirePermission permissions={DASHBOARD_PERMISSIONS}>
-                  <DashboardPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.ACCOUNTS}
-              element={
-                <RequirePermission permissions={ACCOUNTS_PERMISSIONS}>
-                  <AccountsPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.USERS}
-              element={
-                <RequirePermission permissions={USERS_PERMISSIONS}>
-                  <UsersPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.ROLES}
-              element={
-                <RequirePermission permissions={ROLES_PERMISSIONS}>
-                  <RolesPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.PRODUCTS}
-              element={
-                <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
-                  <ProductsPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.PRODUCTS_STATS}
-              element={
-                <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
-                  <ProductsStatsPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.PRODUCT_DETAIL}
-              element={
-                <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
-                  <ProductDetailPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.SCRAPERS}
-              element={
-                <RequirePermission permissions={SCRAPERS_PERMISSIONS}>
-                  <ScrapersPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.RULES}
-              element={
-                <RequirePermission permissions={RULES_PERMISSIONS}>
-                  <RulesPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.QUEUES}
-              element={
-                <RequirePermission permissions={QUEUES_PERMISSIONS}>
-                  <QueuesPage />
-                </RequirePermission>
-              }
-            />
-            <Route
-              path={ROUTES.SETTINGS}
-              element={
-                <RequirePermission permissions={SETTINGS_PERMISSIONS}>
-                  <SettingsPage />
-                </RequirePermission>
-              }
-            />
-          </Route>
+              {/* Protected */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+                <Route
+                  path={ROUTES.DASHBOARD}
+                  element={
+                    <RequirePermission permissions={DASHBOARD_PERMISSIONS}>
+                      <DashboardPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.ACCOUNTS}
+                  element={
+                    <RequirePermission permissions={ACCOUNTS_PERMISSIONS}>
+                      <AccountsPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.USERS}
+                  element={
+                    <RequirePermission permissions={USERS_PERMISSIONS}>
+                      <UsersPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.ROLES}
+                  element={
+                    <RequirePermission permissions={ROLES_PERMISSIONS}>
+                      <RolesPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.PRODUCTS}
+                  element={
+                    <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
+                      <ProductsPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.PRODUCTS_STATS}
+                  element={
+                    <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
+                      <ProductsStatsPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.PRODUCT_DETAIL}
+                  element={
+                    <RequirePermission permissions={PRODUCTS_PERMISSIONS}>
+                      <ProductDetailPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.SCRAPERS}
+                  element={
+                    <RequirePermission permissions={SCRAPERS_PERMISSIONS}>
+                      <ScrapersPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.RULES}
+                  element={
+                    <RequirePermission permissions={RULES_PERMISSIONS}>
+                      <RulesPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.QUEUES}
+                  element={
+                    <RequirePermission permissions={QUEUES_PERMISSIONS}>
+                      <QueuesPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.SETTINGS}
+                  element={
+                    <RequirePermission permissions={SETTINGS_PERMISSIONS}>
+                      <SettingsPage />
+                    </RequirePermission>
+                  }
+                />
+              </Route>
 
-          {/* Catch-all */}
-          <Route
-            path="*"
-            element={
-              <div className="flex min-h-screen items-center justify-center bg-surface">
-                <div className="text-center">
-                  <h1 className="text-headline-lg font-semibold text-on-surface">
-                    404 — Not Found
-                  </h1>
-                  <p className="mt-sm text-body-md text-on-surface-variant">
-                    This page does not exist.
-                  </p>
-                </div>
-              </div>
-            }
-          />
-        </Routes>
-        <Toaster position="bottom-right" toastOptions={TOAST_OPTIONS} />
+              {/* Catch-all */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+            <Toaster position="bottom-right" toastOptions={TOAST_OPTIONS} />
+          </CommandPaletteProvider>
+        </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

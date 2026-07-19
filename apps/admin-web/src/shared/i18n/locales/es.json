@@ -24,15 +24,76 @@
     "queues": "Colas",
     "settings": "Configuración"
   },
+  "notifications": {
+    "title": "Notificaciones",
+    "open": "Abrir notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "empty": "Sin notificaciones",
+    "mutationFailedTitle": "Operación fallida",
+    "serviceDown": "El servicio {{service}} está caído",
+    "serviceRecovered": "El servicio {{service}} se recuperó",
+    "jobsFailed": "{{count}} job(s) fallidos en {{queue}}"
+  },
+  "palette": {
+    "label": "Paleta de comandos",
+    "open": "Abrir paleta de comandos",
+    "placeholder": "Escribe un comando o busca…",
+    "empty": "Sin resultados.",
+    "navigation": "Navegación",
+    "actions": "Acciones",
+    "signOut": "Cerrar sesión"
+  },
   "common": {
     "notFound": "404 — No Encontrado",
     "notFoundDesc": "Esta página no existe.",
+    "goToDashboard": "Ir al dashboard",
     "loading": "Cargando…",
     "error": "Algo salió mal",
     "retry": "Reintentar",
     "noData": "Sin datos disponibles",
     "prev": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "close": "Cerrar"
+  },
+  "queues": {
+    "description": "Monitorea las colas BullMQ: conteos, jobs recientes y fallos.",
+    "drawer": {
+      "title": "Detalle del job",
+      "error": "No se pudo cargar el detalle del job",
+      "createdAt": "Creado",
+      "processedAt": "Procesado",
+      "finishedAt": "Finalizado",
+      "progress": "Progreso",
+      "payload": "Payload",
+      "returnValue": "Valor de retorno",
+      "none": "—"
+    },
+    "cards": {
+      "total": "total",
+      "error": "No se pudieron cargar las estadísticas de colas",
+      "empty": {
+        "title": "Sin colas registradas",
+        "description": "Las colas aparecerán aquí cuando el backend las registre."
+      }
+    },
+    "jobs": {
+      "hint": "Selecciona una cola para inspeccionar sus jobs recientes.",
+      "caption": "Jobs recientes de la cola seleccionada",
+      "filterLabel": "Estado",
+      "all": "Todos los estados",
+      "id": "ID del job",
+      "name": "Nombre",
+      "status": "Estado",
+      "attempts": "Intentos",
+      "created": "Creado",
+      "duration": "Duración",
+      "failedReason": "Motivo del fallo",
+      "error": "No se pudieron cargar los jobs",
+      "empty": {
+        "title": "Sin jobs",
+        "description": "Ningún job reciente coincide con el filtro actual."
+      }
+    }
   },
   "scrapers": {
     "stores": {

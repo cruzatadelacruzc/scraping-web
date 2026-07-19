@@ -140,6 +140,9 @@ Reusable primitives live in `src/shared/ui/`. Do NOT duplicate these inside feat
 | `dropdown-menu.tsx`            | Row action menus and context menus                                     |
 | `tabs.tsx`                     | Tab navigation panels                                                  |
 | `skeletons/chart-skeleton.tsx` | Shape-matched skeleton for chart loading states                        |
+| `drawer.tsx`                   | Global right drawer — slide-in detail panel (used by accounts, users, queues) |
+| `command-palette/`             | ⌘K palette (`CommandPaletteProvider` + `CommandPalette`), items from `shared/config/nav-items.ts` |
+| `notifications/` (in `shared/`) | Notification Center core: `NotificationProvider`, `useNotifications`, `publishNotification` bus |
 
 All standard shadcn/ui primitives (Button, Input, Select, Checkbox, Popover, etc.) are also available from `src/shared/ui/`. Use `cn()` from `@shared/utils` for conditional class composition.
 
