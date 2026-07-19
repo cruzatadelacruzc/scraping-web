@@ -125,7 +125,7 @@ export class BotController {
   // GET /link-history — paginated audit trail
   // ---------------------------------------------------------------------------
 
-  @httpGet('/link-history', AuthMiddleware.forRoles('ACCOUNT_OWNER'), ValidateRequestMiddleware.with(LinkHistoryQueryDTO))
+  @httpGet('/link-history', AuthMiddleware.forRoles('ACCOUNT_OWNER'))
   public async linkHistory(req: Request, res: Response): Promise<void> {
     const tenantId = this._tenantCtx.requireTenantId();
     const dto = LinkHistoryQueryDTO.from(req.query);

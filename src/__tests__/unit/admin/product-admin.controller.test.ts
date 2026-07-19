@@ -82,6 +82,25 @@ describe('ProductAdminController', () => {
       const req = { query: { skip: '0', limit: '20' } } as unknown as Request;
       await controller.list(req, mockRes);
 
+      expect(serviceMock.list).toHaveBeenCalledWith(expect.objectContaining({ skip: 0, limit: 20 }));
+      expect(ResponseHandler.ok).toHaveBeenCalledWith(mockRes, paginated);
+    });
+
+    it('should pass parsed query parameters with filters to the service', async () => {
+      const paginated = {
+        data: [{ _id: 'xyz' }],
+        meta: { total: 1, skip: 40, limit: 10, hasMore: false },
+      };
+      serviceMock.list.mockResolvedValue(paginated);
+
+      const req = {
+        query: { skip: '40', limit: '10', search: 'casa', category: 'inmuebles' },
+      } as unknown as Request;
+      await controller.list(req, mockRes);
+
+      expect(serviceMock.list).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 40, limit: 10, search: 'casa', category: 'inmuebles' }),
+      );
       expect(ResponseHandler.ok).toHaveBeenCalledWith(mockRes, paginated);
     });
 
