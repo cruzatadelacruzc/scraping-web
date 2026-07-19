@@ -32,7 +32,8 @@
     "retry": "Reintentar",
     "noData": "Sin datos disponibles",
     "prev": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "close": "Cerrar"
   },
   "scrapers": {
     "stores": {
