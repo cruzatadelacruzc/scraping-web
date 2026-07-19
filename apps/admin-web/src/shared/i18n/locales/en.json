@@ -35,6 +35,34 @@
     "next": "Next",
     "close": "Close"
   },
+  "queues": {
+    "cards": {
+      "total": "total",
+      "error": "Failed to load queue stats",
+      "empty": {
+        "title": "No queues registered",
+        "description": "Queues appear here once the backend registers them."
+      }
+    },
+    "jobs": {
+      "hint": "Select a queue to inspect its recent jobs.",
+      "caption": "Recent jobs for the selected queue",
+      "filterLabel": "Status",
+      "all": "All statuses",
+      "id": "Job ID",
+      "name": "Name",
+      "status": "Status",
+      "attempts": "Attempts",
+      "created": "Created",
+      "duration": "Duration",
+      "failedReason": "Failure reason",
+      "error": "Failed to load jobs",
+      "empty": {
+        "title": "No jobs",
+        "description": "No recent jobs match the current filter."
+      }
+    }
+  },
   "scrapers": {
     "stores": {
       "empty": {

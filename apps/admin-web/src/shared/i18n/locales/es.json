@@ -35,6 +35,34 @@
     "next": "Siguiente",
     "close": "Cerrar"
   },
+  "queues": {
+    "cards": {
+      "total": "total",
+      "error": "No se pudieron cargar las estadísticas de colas",
+      "empty": {
+        "title": "Sin colas registradas",
+        "description": "Las colas aparecerán aquí cuando el backend las registre."
+      }
+    },
+    "jobs": {
+      "hint": "Selecciona una cola para inspeccionar sus jobs recientes.",
+      "caption": "Jobs recientes de la cola seleccionada",
+      "filterLabel": "Estado",
+      "all": "Todos los estados",
+      "id": "ID del job",
+      "name": "Nombre",
+      "status": "Estado",
+      "attempts": "Intentos",
+      "created": "Creado",
+      "duration": "Duración",
+      "failedReason": "Motivo del fallo",
+      "error": "No se pudieron cargar los jobs",
+      "empty": {
+        "title": "Sin jobs",
+        "description": "Ningún job reciente coincide con el filtro actual."
+      }
+    }
+  },
   "scrapers": {
     "stores": {
       "empty": {
