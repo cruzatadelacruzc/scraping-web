@@ -67,7 +67,6 @@ export function CommandPalette(): JSX.Element | null {
           label={t('palette.label', 'Command palette')}
           className="overflow-hidden rounded-md border border-outline-variant bg-surface-container-high shadow-lg"
         >
-          {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
           <Command.Input
             autoFocus
             placeholder={t('palette.placeholder', 'Type a command or search…')}

@@ -46,6 +46,7 @@
   "common": {
     "notFound": "404 — Not Found",
     "notFoundDesc": "This page does not exist.",
+    "goToDashboard": "Go to dashboard",
     "loading": "Loading…",
     "error": "Something went wrong",
     "retry": "Retry",

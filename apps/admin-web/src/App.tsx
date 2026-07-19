@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AccountsPage } from '@pages/accounts-page';
 import { DashboardPage } from '@pages/dashboard-page';
 import { LoginPage } from '@pages/login-page';
+import { NotFoundPage } from '@pages/not-found-page';
 import { ProductDetailPage } from '@pages/product-detail-page';
 import { ProductsPage } from '@pages/products-page';
 import { ProductsStatsPage } from '@pages/products-stats-page';
@@ -176,21 +177,7 @@ export function App(): JSX.Element {
               </Route>
 
               {/* Catch-all */}
-              <Route
-                path="*"
-                element={
-                  <div className="flex min-h-screen items-center justify-center bg-surface">
-                    <div className="text-center">
-                      <h1 className="text-headline-lg font-semibold text-on-surface">
-                        404 — Not Found
-                      </h1>
-                      <p className="mt-sm text-body-md text-on-surface-variant">
-                        This page does not exist.
-                      </p>
-                    </div>
-                  </div>
-                }
-              />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
             <Toaster position="bottom-right" toastOptions={TOAST_OPTIONS} />
           </CommandPaletteProvider>
