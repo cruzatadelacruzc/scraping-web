@@ -40,14 +40,19 @@ export function TopBar(): JSX.Element {
         </div>
       </div>
 
-      {/* Command palette trigger */}
+      {/* Command palette trigger — search bar on md+, icon-only on mobile */}
       <button
         onClick={handleOpenPalette}
+        className="flex items-center gap-xs rounded-md border border-outline-variant px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high min-w-0 flex-shrink"
         aria-label={t('palette.open', 'Open command palette')}
-        className="flex items-center gap-xs rounded-md border border-outline-variant px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high"
       >
-        <Search size={14} aria-hidden="true" />
-        <kbd className="rounded-sm bg-surface-container-high px-xs text-label-xs font-mono">⌘K</kbd>
+        <Search size={14} className="shrink-0" aria-hidden="true" />
+        <span className="hidden md:inline truncate">
+          {t('palette.placeholder', 'Type a command or search…')}
+        </span>
+        <kbd className="hidden rounded-sm bg-surface-container-high px-xs text-label-xs font-mono sm:inline">
+          ⌘K
+        </kbd>
       </button>
 
       {/* User */}
