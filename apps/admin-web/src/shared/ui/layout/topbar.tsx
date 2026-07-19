@@ -1,4 +1,7 @@
 import { useTranslation } from 'react-i18next';
+// Deliberate shell -> feature import: the app shell hosts the Notification
+// Center trigger. No cycle: features/notifications never imports the layout.
+import { NotificationBell } from '@features/notifications';
 import { useCurrentUser, useLogout } from '@shared/auth';
 import { ROUTES } from '@shared/config/routes';
 import { Shield } from 'lucide-react';
@@ -21,7 +24,10 @@ export function TopBar(): JSX.Element {
           <Shield size={18} />
         </div>
         <div>
-          <a href={ROUTES.DASHBOARD} className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary">
+          <a
+            href={ROUTES.DASHBOARD}
+            className="font-headline-lg-mobile text-headline-lg-mobile leading-none tracking-tighter text-primary"
+          >
             BazaarSentinel
           </a>
         </div>
@@ -29,6 +35,7 @@ export function TopBar(): JSX.Element {
 
       {/* User */}
       <div className="flex items-center gap-sm">
+        <NotificationBell />
         {user && (
           <>
             <span className="text-body-sm font-medium text-on-surface">{user.username}</span>

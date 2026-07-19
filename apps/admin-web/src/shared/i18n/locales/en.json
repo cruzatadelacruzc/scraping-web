@@ -24,6 +24,12 @@
     "queues": "Queues",
     "settings": "Settings"
   },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Open notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications"
+  },
   "common": {
     "notFound": "404 — Not Found",
     "notFoundDesc": "This page does not exist.",

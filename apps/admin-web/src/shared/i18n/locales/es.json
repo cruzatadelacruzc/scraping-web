@@ -24,6 +24,12 @@
     "queues": "Colas",
     "settings": "Configuración"
   },
+  "notifications": {
+    "title": "Notificaciones",
+    "open": "Abrir notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "empty": "Sin notificaciones"
+  },
   "common": {
     "notFound": "404 — No Encontrado",
     "notFoundDesc": "Esta página no existe.",
