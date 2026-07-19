@@ -36,7 +36,14 @@ const { mockList, mockGetById, mockDelete, mockRolesList } = vi.hoisted(() => ({
 
 // Mock the service layer
 vi.mock('@shared/auth', () => ({
-  useCurrentUser: () => ({ userId: 'user-1', accountId: 'acc-1', roles: ['SUPER_ADMIN'], username: 'admin', email: 'admin@test.dev', expiresAt: Date.now() + 86400000 }),
+  useCurrentUser: () => ({
+    userId: 'user-1',
+    accountId: 'acc-1',
+    roles: ['SUPER_ADMIN'],
+    username: 'admin',
+    email: 'admin@test.dev',
+    expiresAt: Date.now() + 86400000,
+  }),
   useIsAuthenticated: () => true,
   useLogin: () => vi.fn(),
   useLogout: () => vi.fn(),
@@ -255,7 +262,7 @@ describe('UsersTable', () => {
     expect(screen.getByText('users.detailTitle')).toBeInTheDocument();
 
     // Close it
-    fireEvent.click(screen.getByLabelText('users.drawerClose'));
+    fireEvent.click(screen.getByLabelText('common.close'));
 
     // After closing, the backdrop (only rendered when isOpen=true) should be removed
     await waitFor(() => {
