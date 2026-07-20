@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
 import { useUIStore } from '@shared/ui/ui-store';
 import { cn } from '@shared/utils/cn';
+import { AuthProvider } from '@features/auth/context/AuthContext';
 
 const App: React.FC = () => {
   const { sidebarOpen } = useUIStore();
@@ -13,7 +14,7 @@ const App: React.FC = () => {
       <aside
         className={cn(
           'hidden w-60 flex-col border-r border-outline-variant bg-surface-container transition-all lg:flex',
-          sidebarOpen ? 'block' : 'hidden'
+          sidebarOpen ? 'block' : 'hidden',
         )}
       >
         <div className="p-4">Sidebar</div>
@@ -27,7 +28,9 @@ const App: React.FC = () => {
             </div>
           }
         >
-          <RouterProvider router={router} />
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
         </Suspense>
       </main>
     </div>

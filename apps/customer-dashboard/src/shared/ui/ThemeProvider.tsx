@@ -1,1 +1,1 @@
-export { ThemeProviderInternal as ThemeProvider } from './ThemeProvider.internal';
+export { ThemeProvider } from './ThemeProvider.internal';
