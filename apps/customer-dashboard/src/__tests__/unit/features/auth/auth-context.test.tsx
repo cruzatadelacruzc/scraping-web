@@ -17,7 +17,7 @@ vi.mock('@/features/auth/services/token-storage', () => ({
     setTokens: vi.fn(),
     clear: vi.fn(),
   },
-  mapTokensToStorage: (t: any) => t,
+  mapTokensToStorage: (t: { accessToken: string; refreshToken: string; expiresIn: number }) => t,
 }));
 
 function TestComponent() {

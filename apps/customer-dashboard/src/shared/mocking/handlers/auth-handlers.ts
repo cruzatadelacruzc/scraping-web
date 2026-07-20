@@ -11,9 +11,11 @@ type UserRecord = User & {
 
 const users = new Map<string, UserRecord>();
 
+import type { Email, Token, UserId } from '@/features/auth/types/auth-types';
+
 const createTokens = (): AuthTokens => ({
-  accessToken: `mock_access_${Date.now()}` as any,
-  refreshToken: `mock_refresh_${Date.now()}` as any,
+  accessToken: `mock_access_${Date.now()}` as Token,
+  refreshToken: `mock_refresh_${Date.now()}` as Token,
   expiresIn: 3600,
 });
 
@@ -42,8 +44,8 @@ export const authHandlers = [
       return HttpResponse.json({ error: 'Email already exists' }, { status: 409 });
     }
     const newUser: UserRecord = {
-      id: `user_${Date.now()}` as any,
-      email: email as any,
+      id: `user_${Date.now()}` as UserId,
+      email: email as Email,
       name,
       passwordHash: parsed.data.password,
       role: 'ACCOUNT_OWNER',
@@ -62,7 +64,7 @@ export const authHandlers = [
     const user = users.get(parsed.data.email);
     if (user) {
       const token = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      user.resetToken = token as any;
+      user.resetToken = token as Token;
       user.resetTokenExpiry = Date.now() + 3600000;
       console.log(`[MSW] Reset token for ${parsed.data.email}: ${token}`);
     }
