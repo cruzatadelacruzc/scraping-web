@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
           runtimeCaching: [
             {
               urlPattern: new RegExp(`^https?://${apiHost}`),
-              handler: 'StaleWhileRevalidate',
+              handler: 'NetworkFirst',
               options: {
                 cacheName: 'api-cache',
                 expiration: { maxEntries: 100, maxAgeSeconds: 86400 },
@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 5173,
+      port: parseInt(env.VITE_DEV_PORT || '5174', 10),
       proxy: {
         '/api': {
           target: apiUrl,
