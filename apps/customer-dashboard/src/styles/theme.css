@@ -1,0 +1,189 @@
+:root {
+  /* Dark theme (default) - following DESIGN.md */
+  --color-surface: #141313;
+  --color-surface-dim: #141313;
+  --color-surface-bright: #3a3939;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container: #201f1f;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353434;
+
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #c4c7c8;
+
+  --color-primary: #ffffff;
+  --color-primary-container: #e2e2e2;
+  --color-on-primary: #2f3131;
+  --color-on-primary-container: #636565;
+
+  --color-secondary: #aec6ff;
+  --color-secondary-container: #4f8eff;
+  --color-on-secondary: #002e6b;
+  --color-on-secondary-container: #00275e;
+
+  --color-tertiary: #ffffff;
+  --color-tertiary-container: #e2e2e2;
+  --color-on-tertiary: #2f3131;
+  --color-on-tertiary-container: #636565;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-info: #0ea5e9;
+
+  --color-outline: #8e9192;
+  --color-outline-variant: #444748;
+
+  --color-background: #141313;
+  --color-on-background: #e5e2e1;
+
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', 'Fira Code', monospace;
+
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 9999px;
+
+  --shadow-elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-elevation-2: 0 4px 8px 0 rgb(0 0 0 / 0.4);
+  --shadow-elevation-3: 0 8px 32px 0 rgb(0 0 0 / 0.8);
+
+  --spacing-unit: 4px;
+  --spacing-gutter: 16px;
+  --spacing-container-desktop: 24px;
+  --spacing-container-mobile: 16px;
+  --spacing-sidebar-width: 240px;
+  --spacing-sidebar-collapsed: 64px;
+}
+
+[data-theme="light"] {
+  /* Light theme - inverted from dark for consistency */
+  --color-surface: #fafafa;
+  --color-surface-dim: #f4f4f5;
+  --color-surface-bright: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fafafa;
+  --color-surface-container: #f4f4f5;
+  --color-surface-container-high: #e4e4e7;
+  --color-surface-container-highest: #d4d4d8;
+
+  --color-on-surface: #18181b;
+  --color-on-surface-variant: #52525b;
+
+  --color-primary: #000000;
+  --color-primary-container: #e4e4e7;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #3f3f46;
+
+  --color-secondary: #004396;
+  --color-secondary-container: #d8e2ff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #001a42;
+
+  --color-error: #93000a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #7f1d1d;
+
+  --color-outline: #444748;
+  --color-outline-variant: #8e9192;
+
+  --color-background: #fafafa;
+  --color-on-background: #18181b;
+
+  --shadow-elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-elevation-3: 0 8px 16px 0 rgb(0 0 0 / 0.1);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--color-outline-variant);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: var(--color-on-surface);
+    background-color: var(--color-background);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-container);
+    color: var(--color-on-primary-container);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-outline-variant) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--color-outline-variant);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-outline);
+  }
+
+  .border-subtle {
+    border-color: #262626;
+  }
+
+  .bg-card {
+    background-color: #111111;
+    border: 1px solid #262626;
+  }
+
+  [data-theme="light"] .bg-card {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+  }
+}

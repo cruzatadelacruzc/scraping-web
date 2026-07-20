@@ -1,0 +1,168 @@
+---
+name: Sentience High-Density System
+colors:
+  surface: '#141313'
+  surface-dim: '#141313'
+  surface-bright: '#3a3939'
+  surface-container-lowest: '#0e0e0e'
+  surface-container-low: '#1c1b1b'
+  surface-container: '#201f1f'
+  surface-container-high: '#2a2a2a'
+  surface-container-highest: '#353434'
+  on-surface: '#e5e2e1'
+  on-surface-variant: '#c4c7c8'
+  inverse-surface: '#e5e2e1'
+  inverse-on-surface: '#313030'
+  outline: '#8e9192'
+  outline-variant: '#444748'
+  surface-tint: '#c6c6c7'
+  primary: '#ffffff'
+  on-primary: '#2f3131'
+  primary-container: '#e2e2e2'
+  on-primary-container: '#636565'
+  inverse-primary: '#5d5f5f'
+  secondary: '#aec6ff'
+  on-secondary: '#002e6b'
+  secondary-container: '#4f8eff'
+  on-secondary-container: '#00275e'
+  tertiary: '#ffffff'
+  on-tertiary: '#2f3131'
+  tertiary-container: '#e2e2e2'
+  on-tertiary-container: '#636565'
+  error: '#ffb4ab'
+  on-error: '#690005'
+  error-container: '#93000a'
+  on-error-container: '#ffdad6'
+  primary-fixed: '#e2e2e2'
+  primary-fixed-dim: '#c6c6c7'
+  on-primary-fixed: '#1a1c1c'
+  on-primary-fixed-variant: '#454747'
+  secondary-fixed: '#d8e2ff'
+  secondary-fixed-dim: '#aec6ff'
+  on-secondary-fixed: '#001a42'
+  on-secondary-fixed-variant: '#004396'
+  tertiary-fixed: '#e2e2e2'
+  tertiary-fixed-dim: '#c6c6c7'
+  on-tertiary-fixed: '#1a1c1c'
+  on-tertiary-fixed-variant: '#454747'
+  background: '#141313'
+  on-background: '#e5e2e1'
+  surface-variant: '#353434'
+typography:
+  display:
+    fontFamily: Geist
+    fontSize: 32px
+    fontWeight: '600'
+    lineHeight: '1.2'
+    letterSpacing: -0.04em
+  headline-lg:
+    fontFamily: Geist
+    fontSize: 24px
+    fontWeight: '600'
+    lineHeight: '1.3'
+    letterSpacing: -0.03em
+  headline-sm:
+    fontFamily: Geist
+    fontSize: 18px
+    fontWeight: '500'
+    lineHeight: '1.4'
+    letterSpacing: -0.02em
+  body-md:
+    fontFamily: Geist
+    fontSize: 14px
+    fontWeight: '400'
+    lineHeight: '1.6'
+    letterSpacing: -0.01em
+  body-sm:
+    fontFamily: Geist
+    fontSize: 13px
+    fontWeight: '400'
+    lineHeight: '1.5'
+  technical-md:
+    fontFamily: Geist Mono
+    fontSize: 13px
+    fontWeight: '400'
+    lineHeight: '1.4'
+  technical-sm:
+    fontFamily: Geist Mono
+    fontSize: 12px
+    fontWeight: '400'
+    lineHeight: '1.4'
+  label-caps:
+    fontFamily: Geist
+    fontSize: 11px
+    fontWeight: '600'
+    lineHeight: '1'
+    letterSpacing: 0.05em
+rounded:
+  sm: 0.125rem
+  DEFAULT: 0.25rem
+  md: 0.375rem
+  lg: 0.5rem
+  xl: 0.75rem
+  full: 9999px
+spacing:
+  unit: 4px
+  container-padding-desktop: 24px
+  container-padding-mobile: 16px
+  gutter: 16px
+  sidebar-width: 240px
+  sidebar-collapsed-width: 64px
+---
+
+## Brand & Style
+This design system is engineered for high-performance marketplace monitoring. The brand personality is clinical, precise, and authoritative, designed to instill confidence in operators managing high-volume data. 
+
+The aesthetic is **Modern/Corporate**, heavily influenced by the "developer-first" visual language of Linear and Vercel. It prioritizes information density and speed of recognition over decorative flair. The style utilizes deep neutral surfaces, extremely fine borders, and subtle interactive states to create a focused, low-distraction environment. 
+
+The UI should feel like a high-end tool—utilitarian yet refined, where every pixel serves a functional purpose in data visualization and system health monitoring.
+
+## Colors
+The palette is centered on a **Dark Mode** foundation. 
+- **Surfaces:** Use a tiered system of dark neutrals. The background starts at `#0A0A0A`, with containers and cards stepping up to `#111111` and `#171717`.
+- **Accents:** The primary action color is pure white (`#FFFFFF`), providing maximum contrast against dark backgrounds. A secondary "Geist Blue" (`#0072F5`) is used for subtle focus states and active links.
+- **Status:** Critical information uses semantic colors with high saturation to ensure visibility. 
+  - **Emerald (Success/Health):** Marketplace uptime and positive metrics.
+  - **Amber (Warning):** Threshold alerts and pending actions.
+  - **Ruby (Error):** System failures or critical breaches.
+- **Borders:** Use `#262626` for subtle separation and `#404040` for hover states.
+
+## Typography
+The system uses **Geist** for all UI elements to maintain a clean, neo-grotesque appearance that excels at small sizes. **Geist Mono** is strictly reserved for technical data: transaction IDs, logs, metrics, and terminal outputs.
+
+Hierarchy is established through weight and letter spacing rather than significant size jumps, maintaining high density. For headings, use tighter letter spacing to create a cohesive "block" feel. Small labels should use uppercase with slight tracking to improve legibility at 11px.
+
+## Layout & Spacing
+The layout follows a **Fixed-Fluid hybrid** model:
+- **Desktop (1280px+):** A 12-column grid with a fixed left sidebar (`240px`). Content resides in centered or wide-span fluid containers.
+- **Tablet (768px - 1279px):** The sidebar collapses to a condensed icon-only rail (`64px`). Margins reduce to `20px`.
+- **Mobile (<767px):** Transition to a single-column layout with a bottom navigation bar for primary app destinations.
+
+Spacing follows a strict **4px baseline grid**. Standard component internal padding is `8px` (2 units) or `12px` (3 units). Use `16px` gutters between dashboard cards to maintain a tight, compact information density.
+
+## Elevation & Depth
+This design system avoids traditional drop shadows in favor of **Tonal Layers** and **Subtle Outlines**.
+
+Depth is communicated through background color increments:
+1. **Level 0 (Canvas):** `#0A0A0A` - The base layer.
+2. **Level 1 (Cards/Sidebar):** `#111111` with a `1px` solid border of `#262626`.
+3. **Level 2 (Popovers/Modals):** `#171717` with a `1px` solid border of `#404040` and a very subtle, large-radius black shadow (0px 8px 32px rgba(0,0,0,0.8)).
+
+Use `backdrop-filter: blur(12px)` on navigation bars and sticky headers to provide context of the content scrolling underneath without sacrificing legibility.
+
+## Shapes
+The shape language is **Soft (0.25rem)**. This provides a professional, "tooled" look that feels modern but remains grounded and efficient.
+
+- **Standard Elements (Buttons, Inputs, Small Cards):** `4px` (0.25rem) radius.
+- **Large Containers (Dashboard Cards):** `8px` (0.5rem) radius.
+- **Technical Badges/Chips:** `2px` or `4px` radius depending on height.
+
+Avoid pill-shaped elements (except for specific toggle switches) to maintain the structured, grid-based aesthetic.
+
+## Components
+- **Buttons:** Primary buttons are Solid White with Black text. Secondary buttons are Ghost style (transparent with a `#262626` border). All buttons use a `13px` medium weight font.
+- **Input Fields:** Darker than the card background (`#050505`) with a subtle `1px` border. The focus state uses a `1px` Blue (`#0072F5`) border without an outer glow.
+- **Dashboard Cards:** High-density headers. Headers should have a bottom border of `1px solid #262626` and a height of exactly `40px` to align perfectly with the sidebar items.
+- **Status Chips:** Small, condensed labels with a low-opacity background of the semantic color and a high-opacity text/icon of the same color (e.g., Emerald text on 10% Emerald background).
+- **Data Tables:** No vertical borders. Horizontal borders only (`1px solid #1A1A1A`). Rows use a subtle hover state highlight (`#171717`). Use Geist Mono for numerical columns.
+- **Metric Cards:** Large technical-weight numbers (Geist Mono) with a small trend indicator (Arrow + Percentage) positioned in the top right.
