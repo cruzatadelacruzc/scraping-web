@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { useAuth } from '../hooks/use-auth';
 import { forgotPasswordSchema } from '../validation/auth-schemas';
+import type { Email } from '../types/auth-types';
 
 export default function ForgotPasswordPage() {
   const { forgotPassword, isLoading } = useAuth();
@@ -23,7 +24,7 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      await forgotPassword(parsed.data);
+      await forgotPassword({ email: parsed.data.email as Email });
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al enviar el enlace');

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { useAuth } from '../hooks/use-auth';
 import { authCredentialsSchema } from '../validation/auth-schemas';
