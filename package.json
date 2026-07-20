@@ -27,7 +27,13 @@
     "admin-web-test": "npm run test --workspace=@bazaarsentinel/admin-web",
     "admin-web-lint": "npm run lint --workspace=@bazaarsentinel/admin-web",
     "admin-web-typecheck": "npm run typecheck --workspace=@bazaarsentinel/admin-web",
-    "admin-web-storybook": "npm run storybook --workspace=@bazaarsentinel/admin-web"
+    "admin-web-storybook": "npm run storybook --workspace=@bazaarsentinel/admin-web",
+    "customer-dashboard-dev": "npm run dev --workspace=@bazaarsentinel/customer-dashboard",
+    "customer-dashboard-build": "npm run build --workspace=@bazaarsentinel/customer-dashboard",
+    "customer-dashboard-test": "npm run test --workspace=@bazaarsentinel/customer-dashboard",
+    "customer-dashboard-lint": "npm run lint --workspace=@bazaarsentinel/customer-dashboard",
+    "customer-dashboard-typecheck": "npm run typecheck --workspace=@bazaarsentinel/customer-dashboard",
+    "customer-dashboard-storybook": "npm run storybook --workspace=@bazaarsentinel/customer-dashboard"
   },
   "prisma": {
     "seed": "ts-node -O '{\"types\":[\"node\"]}' prisma/seed.ts"
@@ -119,7 +125,8 @@
   },
   "msw": {
     "workerDirectory": [
-      "apps/admin-web/public"
+      "apps/admin-web/public",
+      "apps/customer-dashboard/public"
     ]
   }
 }

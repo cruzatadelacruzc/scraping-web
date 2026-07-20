@@ -1,0 +1,1 @@
+export { ThemeProviderInternal as ThemeProvider } from './ThemeProvider.internal';
