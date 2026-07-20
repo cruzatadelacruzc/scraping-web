@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ROUTES } from '@shared/config/routes';
 import type { RouteObject } from 'react-router-dom';
 import { lazy } from 'react';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const AuthLayout = lazy(() => import('./layout/AuthLayout'));
 const AppLayout = lazy(() => import('./layout/AppLayout'));
@@ -44,37 +45,65 @@ const routes = [
   },
   {
     path: ROUTES.DASHBOARD,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Dashboard - To be implemented in Phase 1</div> }],
   },
   {
     path: ROUTES.ALARMS,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Alarms - To be implemented in Phase 2</div> }],
   },
   {
     path: ROUTES.BOTS,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Bots - To be implemented in Phase 4</div> }],
   },
   {
     path: ROUTES.NOTIFICATIONS,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Notifications - To be implemented in Phase 3</div> }],
   },
   {
     path: ROUTES.ACCOUNT,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Account - To be implemented in Phase 5</div> }],
   },
   {
     path: ROUTES.PROFILE,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Profile - To be implemented in Phase 1</div> }],
   },
   {
     path: ROUTES.ONBOARDING,
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [{ index: true, element: <div>Onboarding - To be implemented in Phase 1</div> }],
   },
   {
