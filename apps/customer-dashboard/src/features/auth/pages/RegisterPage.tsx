@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { useAuth } from '../hooks/use-auth';
 import { registerSchema } from '../validation/auth-schemas';
+import type { Email, Password } from '../types/auth-types';
 
 export default function RegisterPage() {
   const { register, isLoading } = useAuth();
@@ -31,7 +32,11 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(parsed.data);
+      await register({
+        name: parsed.data.name,
+        email: parsed.data.email as Email,
+        password: parsed.data.password as Password,
+      });
       navigate('/verify-email');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');
