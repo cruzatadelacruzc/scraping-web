@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi } from '../services/auth-api';
 import { tokenStorage, mapTokensToStorage } from '../services/token-storage';
 import type { AuthCredentials, RegisterData, ForgotPasswordData, ResetPasswordData, VerifyEmailData, User } from '../types/auth-types';
@@ -8,8 +7,8 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: AuthCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  login: (credentials: AuthCredentials) => Promise<User>;
+  register: (data: RegisterData) => Promise<User>;
   logout: () => Promise<void>;
   forgotPassword: (data: ForgotPasswordData) => Promise<void>;
   resetPassword: (data: ResetPasswordData) => Promise<void>;
@@ -22,8 +21,6 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -53,8 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       expiresIn: response.expiresIn,
     });
     setUser(response.user);
-    const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
-    navigate(from, { replace: true });
+    return response.user;
   };
 
   const register = async (data: RegisterData) => {
@@ -65,14 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       expiresIn: response.expiresIn,
     });
     setUser(response.user);
-    navigate('/dashboard', { replace: true });
+    return response.user;
   };
 
   const logout = async () => {
     await authApi.logout();
     tokenStorage.clear();
     setUser(null);
-    navigate('/login', { replace: true });
   };
 
   const forgotPassword = async (data: ForgotPasswordData) => {

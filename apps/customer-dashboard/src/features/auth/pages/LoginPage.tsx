@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { useAuth } from '../hooks/use-auth';
 import { authCredentialsSchema } from '../validation/auth-schemas';
@@ -7,6 +7,7 @@ import type { Email, Password } from '../types/auth-types';
 
 export default function LoginPage() {
   const { login, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -25,6 +26,7 @@ export default function LoginPage() {
 
     try {
       await login({ email: parsed.data.email as Email, password: parsed.data.password as Password });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error de autenticación');
     }
