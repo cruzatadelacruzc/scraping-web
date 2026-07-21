@@ -1,26 +1,28 @@
 {
   "name": "BazaarSentinel",
   "short_name": "Sentinel",
-  "description": "Multi-tenant SaaS for marketplace listing monitoring - watch prices, views, sellers, and outstanding status",
+  "description": "Multi-tenant SaaS for marketplace listing monitoring - watch prices, views, sellers, outstanding status and more",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#141313",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/icon-192.svg",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/icon-512.svg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/icons/maskable-512.png",
+      "src": "/icons/maskable-512.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ],

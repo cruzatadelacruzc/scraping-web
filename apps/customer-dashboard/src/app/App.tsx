@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
 import { useUIStore } from '@shared/ui/ui-store';
 import { cn } from '@shared/utils/cn';
+import { AuthProvider } from '@features/auth/context/AuthContext';
 
 const App: React.FC = () => {
   const { sidebarOpen } = useUIStore();
