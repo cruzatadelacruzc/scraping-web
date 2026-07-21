@@ -5,18 +5,3 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
   useAuthStore.getState().setLoading(false);
   return <>{children}</>;
 };
-
-export const useAuth = () => {
-  const { session, isLoading } = useAuthStore();
-  return {
-    session,
-    isLoading,
-    isAuthenticated: !!session,
-    login: async () => {},
-    register: async () => {},
-    logout: async () => {},
-  };
-};
-
-export const useHasPermission = (_permission: string) => false;
-export const useCurrentUser = () => useAuthStore.getState().session;
