@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 interface AuthCardProps {
@@ -14,11 +13,6 @@ export function AuthCard({ title, description, children }: AuthCardProps) {
         <h1 className="text-2xl font-semibold mb-2">{title}</h1>
         <p className="text-on-surface-variant mb-6">{description}</p>
         {children}
-        <div className="mt-4 text-center text-sm">
-          <Link to="/register" className="text-primary hover:underline">
-            ¿No tienes cuenta? Regístrate
-          </Link>
-        </div>
       </div>
     </div>
   );

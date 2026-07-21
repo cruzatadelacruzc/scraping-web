@@ -80,6 +80,11 @@ export default function LoginPage() {
         >
           {isLoading ? 'Entrando...' : 'Entrar'}
         </button>
+        <div className="text-center text-sm">
+          <Link to="/register" className="text-primary hover:underline">
+            ¿No tienes cuenta? Regístrate
+          </Link>
+        </div>
       </form>
     </AuthCard>
   );
