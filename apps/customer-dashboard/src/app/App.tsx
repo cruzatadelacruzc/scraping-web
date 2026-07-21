@@ -27,7 +27,9 @@ const App: React.FC = () => {
             </div>
           }
         >
-          <RouterProvider router={router} />
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
         </Suspense>
       </main>
     </div>
