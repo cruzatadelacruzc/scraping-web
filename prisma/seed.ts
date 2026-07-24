@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { FALLBACK_RULES } from '../src/main/scrapers/services/attribute-extractor/rule-fallbacks';
+import { seedPlans } from '../src/main/shared/seed/seed-plans';
 
 const prisma = new PrismaClient();
 
@@ -161,6 +162,10 @@ async function main(): Promise<void> {
       }
     }
   }
+
+  // ── Plans (Trial, Standard, Unlimited) ────────────────────────
+  console.log('\nSeeding plans...');
+  await seedPlans(prisma);
 
   // ── SUPER_ADMIN user ──────────────────────────────────────────
 
