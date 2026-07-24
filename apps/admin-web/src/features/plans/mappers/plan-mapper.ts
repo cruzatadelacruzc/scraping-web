@@ -5,11 +5,11 @@ export function mapPlanDTOToViewModel(dto: PlanDTO): PlanViewModel {
   return {
     id: dto.id,
     name: dto.name,
-    description: dto.description,
+    description: dto.description ?? '',
     price: dto.price,
     features: dto.features,
-    subscriberCount: dto.subscriberCount,
-    isDefault: dto.isDefault,
+    subscriberCount: dto.subscriberCount ?? 0,
+    isDefault: dto.isDefault ?? false,
     createdAt: new Date(dto.createdAt),
     updatedAt: new Date(dto.updatedAt),
   };

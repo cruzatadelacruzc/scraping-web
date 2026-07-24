@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { plansService } from '@features/plans';
 import { Dialog } from '@shared/ui/dialog';
 import { useQuery } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
+import { AlertCircle, Check, RotateCcw } from 'lucide-react';
 
 import type { PlanDTO } from '../../plans/services/plans-service';
-import { plansService } from '../../plans/services/plans-service';
 import { useAssignSubscription } from '../hooks/useAssignSubscription';
 
 interface Props {
@@ -39,7 +39,13 @@ export function PlanSelectorDialog({
   const { t } = useTranslation();
   const assignMutation = useAssignSubscription();
 
-  const { data: plansData, isLoading } = useQuery({
+  const {
+    data: plansData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['plans', 'all'],
     queryFn: async () => {
       const { data } = await plansService.list({ skip: 0, limit: 100 });
@@ -74,11 +80,29 @@ export function PlanSelectorDialog({
         </div>
       )}
 
-      {plansData && plansData.length === 0 && (
+      {isError && (
+        <div className="rounded-sm border border-danger bg-danger-container p-md text-center">
+          <AlertCircle size={20} className="mx-auto text-danger" />
+          <p className="mt-sm text-body-sm text-on-surface-variant">
+            {error instanceof Error ? error.message : t('common.error')}
+          </p>
+          <button
+            onClick={() => {
+              void refetch();
+            }}
+            className="mt-sm inline-flex items-center gap-xs text-label-sm text-danger hover:underline"
+          >
+            <RotateCcw size={14} />
+            {t('common.retry')}
+          </button>
+        </div>
+      )}
+
+      {!isError && plansData && plansData.length === 0 && (
         <p className="text-body-sm text-on-surface-variant">{t('plans.empty.title')}</p>
       )}
 
-      {plansData && plansData.length > 0 && (
+      {!isError && plansData && plansData.length > 0 && (
         <div className="space-y-sm">
           {plansData.map((plan) => {
             const isCurrent = plan.id === currentPlanId;
@@ -101,7 +125,7 @@ export function PlanSelectorDialog({
                       <span className="font-medium text-on-surface">{plan.name}</span>
                       {isCurrent && (
                         <span className="rounded-sm bg-primary px-sm py-0.5 text-label-xs font-medium text-white">
-                          {t('plans.title')} Current
+                          {t('plans.current')}
                         </span>
                       )}
                     </div>

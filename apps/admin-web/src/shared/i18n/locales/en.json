@@ -309,6 +309,7 @@
     "edit": {
       "title": "Edit Plan"
     },
+    "current": "Current",
     "duplicate": {
       "title": "Duplicate Plan"
     },
