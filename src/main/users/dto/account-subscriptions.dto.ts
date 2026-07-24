@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SubscritionStatusType } from '@prisma/client';
+import { SubscriptionStatusType } from '@prisma/client';
 import { ValidationError } from '@shared/errors/validation.error';
 
 /**
@@ -11,7 +11,7 @@ export const AccountSubscriptionSchema = z.object({
   planId: z.string().uuid(),
   periodStart: z.date().optional(),
   periodEnd: z.date().optional(),
-  status: z.nativeEnum(SubscritionStatusType),
+  status: z.nativeEnum(SubscriptionStatusType),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -37,7 +37,7 @@ export class AccountSubscriptionDTO {
   public constructor(
     public readonly accountId: string,
     public readonly planId: string,
-    public readonly status: SubscritionStatusType,
+    public readonly status: SubscriptionStatusType,
     public readonly id?: string,
     public readonly periodStart?: Date,
     public readonly periodEnd?: Date,

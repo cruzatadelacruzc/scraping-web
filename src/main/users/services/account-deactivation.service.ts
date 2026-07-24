@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import { TokenManagementService } from './token-management.service';
 import { QueueContext } from '@shared/queue/queue-context';
 import { EmailJobType, EMAIL_SEND_JOB } from '@users/queues/email.queues';
+import { AlarmRepository } from '@alarms/repositories/alarm.repository';
 
 /**
  * Manages account soft-delete (deactivation), reactivation, and periodic
@@ -18,6 +19,11 @@ import { EmailJobType, EMAIL_SEND_JOB } from '@users/queues/email.queues';
  * - A confirmation email is enqueued.
  *
  * Accounts can be reactivated within 30 days by a SUPER_ADMIN.
+ * On reactivation:
+ * - `User.deletedAt` is cleared.
+ * - All paused alarms are re-enabled (`enabled = true`).
+ * - A confirmation email is enqueued.
+ *
  * After 30 days, personal data is purged but account-level data (alarms,
  * scraping results) is preserved.
  */
@@ -30,6 +36,7 @@ export class AccountDeactivationService {
     @inject(TYPES.PrismaClient) private readonly _prisma: PrismaClient,
     @inject(TYPES.TokenManagementService) private readonly _tokenMgmt: TokenManagementService,
     @inject(QueueContext) private readonly _queue: QueueContext,
+    @inject(AlarmRepository) private readonly _alarmRepo: AlarmRepository,
   ) {
     this._log.context = AccountDeactivationService.name;
   }
@@ -114,6 +121,12 @@ export class AccountDeactivationService {
       data: { deletedAt: null },
     });
 
+    // Re-enable all alarms belonging to the user's account
+    const result = await this._alarmRepo.setEnabledForAccount(user.accountId, true);
+    if (result.count > 0) {
+      this._log.info('Re-enabled alarms for account', { accountId: user.accountId, count: result.count });
+    }
+
     // Send reactivation email
     try {
       await this._queue.enqueue(EMAIL_SEND_JOB, {
@@ -150,7 +163,7 @@ export class AccountDeactivationService {
         await tx.emailVerificationToken.deleteMany({ where: { userId: user.id } });
         await tx.refreshToken.deleteMany({ where: { userId: user.id } });
         await tx.loginAttempt.deleteMany({ where: { userId: user.id } });
-        await tx.userIdentity.deleteMany({ where: { userId: user.id } });
+        // NOTE: UserIdentity is cascade-deleted on user.delete — no manual cleanup needed
         await tx.user.delete({ where: { id: user.id } });
       });
       purged++;

@@ -11,7 +11,7 @@ function applyTheme(theme: ResolvedTheme): void {
   document.documentElement.setAttribute('data-theme', theme);
 }
 
-export const ThemeProviderInternal: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
+export const ThemeProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const { initialize } = useThemeStore();
 
   useEffect(() => {

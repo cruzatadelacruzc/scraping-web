@@ -6,6 +6,10 @@ import App from './app/App';
 import { Providers } from './app/providers';
 import './styles/globals.css';
 
+if (import.meta.env.DEV) {
+  import('@/shared/mocking/browser');
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -115,4 +115,5 @@ export const TYPES = {
   AccountManagementController: Symbol.for('AccountManagementController'),
   RedisClient: Symbol.for('RedisClient'),
   LoginAttemptRepository: Symbol.for('LoginAttemptRepository'),
+  PlanEnforcementService: Symbol.for('PlanEnforcementService'),
 };

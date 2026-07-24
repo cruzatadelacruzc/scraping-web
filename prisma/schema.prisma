@@ -28,7 +28,7 @@ enum ProviderType {
 // -----------------------------------------------------------------------------
 // Enum for status subscription
 // -----------------------------------------------------------------------------
-enum SubscritionStatusType {
+enum SubscriptionStatusType {
   TRIALING
   ACTIVE
   PAST_DUE
@@ -66,7 +66,7 @@ model Role {
 model UserIdentity {
   id         String   @id @default(uuid())
   userId     String
-  user       User     @relation("userIdentities", fields: [userId], references: [id])
+  user       User     @relation("userIdentities", fields: [userId], references: [id], onDelete: Cascade)
   provider   String
   providerId String
   createdAt  DateTime @default(now())
@@ -169,7 +169,7 @@ model Account {
 model User {
   id               String            @id @default(uuid())
   accountId        String
-  account          Account           @relation(fields: [accountId], references: [id])
+  account          Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
   username         String            @unique
   email            String            @unique
   passwordHash     String?
@@ -210,12 +210,12 @@ model Plan {
 model AccountSubscription {
   id          String                @id @default(uuid())
   accountId   String
-  account     Account               @relation("AccountSubscriptions", fields: [accountId], references: [id])
+  account     Account               @relation("AccountSubscriptions", fields: [accountId], references: [id], onDelete: Cascade)
   planId      String
   plan        Plan                  @relation("PlanSubscriptions", fields: [planId], references: [id])
   periodStart DateTime              @default(now()) @map("period_start")
   periodEnd   DateTime              @map("period_end")
-  status      SubscritionStatusType @default(TRIALING)
+  status      SubscriptionStatusType @default(TRIALING)
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
 }
@@ -245,7 +245,7 @@ enum NotificationType {
 model Alarm {
   id                 String             @id @default(uuid())
   accountId          String
-  account            Account            @relation(fields: [accountId], references: [id])
+  account            Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
   productUrl         String
   name               String
   condition          AlarmConditionType
@@ -269,7 +269,7 @@ model Alarm {
 model AlarmHistory {
   id         String   @id @default(uuid())
   alarmId    String
-  alarm      Alarm    @relation(fields: [alarmId], references: [id])
+  alarm      Alarm    @relation(fields: [alarmId], references: [id], onDelete: Cascade)
   productUrl String
   price      Decimal  @db.Decimal(12, 2)
   matchedAt  DateTime @default(now())
@@ -284,7 +284,7 @@ model AlarmHistory {
 model Notification {
   id        String           @id @default(uuid())
   accountId String
-  account   Account          @relation(fields: [accountId], references: [id])
+  account   Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
   alarmId   String?
   alarm     Alarm?           @relation(fields: [alarmId], references: [id])
   type      NotificationType @default(ALARM_TRIGGERED)
@@ -328,9 +328,9 @@ model BotLinkCode {
   id             String             @id @default(uuid())
   code           String             @unique
   userId         String
-  user           User               @relation(fields: [userId], references: [id])
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId      String
-  account        Account            @relation(fields: [accountId], references: [id])
+  account        Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
   status         BotLinkCodeStatus  @default(PENDING)
   expiresAt      DateTime
   validatedAt    DateTime?
@@ -354,9 +354,9 @@ model BotLinkCode {
 model BotLinkAudit {
   id         String         @id @default(uuid())
   accountId  String
-  account    Account        @relation(fields: [accountId], references: [id])
+  account    Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
   userId     String
-  user       User           @relation(fields: [userId], references: [id])
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   action     BotLinkAction
   code       String?
   codeId     String?
@@ -380,9 +380,9 @@ model BotLinkAudit {
 model BotConversation {
   id            String   @id @default(uuid())
   accountId     String?
-  account       Account? @relation(fields: [accountId], references: [id])
+  account       Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   userId        String? // null until linked
-  user          User?    @relation(fields: [userId], references: [id])
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   provider      String // "whatsapp" | "telegram"
   externalId    String // phone number or chatId
   preferredLang String   @default("es")

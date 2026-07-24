@@ -1,4 +1,4 @@
-import { AccountSubscription, Prisma, SubscritionStatusType } from '@prisma/client';
+import { AccountSubscription, Prisma, SubscriptionStatusType } from '@prisma/client';
 import { AccountDTO, AccountSubscriptionDTO } from '@users/dto';
 import { injectable } from 'inversify';
 
@@ -57,7 +57,7 @@ export class SubscriptionsMapper {
     const baseDto = new AccountSubscriptionDTO(
       model.accountId,
       model.planId,
-      model.status as SubscritionStatusType,
+      model.status as SubscriptionStatusType,
       model.id,
       model.periodStart,
       model.periodEnd,

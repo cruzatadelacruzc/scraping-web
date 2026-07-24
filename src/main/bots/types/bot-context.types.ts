@@ -11,7 +11,7 @@ export interface IFlowStatePayload {
   botCtx: IBotContext;
   validateAndLink?: (code: string, lang: string) => Promise<boolean>;
   aiHandler?: (body: string, lang: string) => Promise<string>;
-  alarmsProvider?: () => Promise<unknown[]>;
-  subscriptionProvider?: () => Promise<unknown>;
-  profileProvider?: () => Promise<unknown>;
+  alarmsProvider?: () => Promise<Array<{ productName?: string; currentPrice?: string }>>;
+  subscriptionProvider?: () => Promise<{ planName?: string; expiresAt?: string } | null>;
+  profileProvider?: () => Promise<{ displayName?: string; email?: string } | null>;
 }
