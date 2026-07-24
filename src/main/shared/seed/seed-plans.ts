@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import { PlanType, type PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Plan seed data — exact values from the product specification
@@ -6,7 +6,7 @@ import type { PrismaClient } from '@prisma/client';
 
 export interface IPlanSeedInput {
   name: string;
-  type: string;
+  type: PlanType;
   price: number;
   features: {
     maxAlarms: number;
@@ -84,7 +84,7 @@ export async function seedPlans(prisma: PrismaClient): Promise<void> {
     await prisma.plan.create({
       data: {
         name: plan.name,
-        type: plan.type as any, // Prisma enum type
+        type: plan.type,
         price: plan.price,
         features: plan.features,
       },
