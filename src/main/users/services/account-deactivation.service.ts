@@ -163,7 +163,7 @@ export class AccountDeactivationService {
         await tx.emailVerificationToken.deleteMany({ where: { userId: user.id } });
         await tx.refreshToken.deleteMany({ where: { userId: user.id } });
         await tx.loginAttempt.deleteMany({ where: { userId: user.id } });
-        await tx.userIdentity.deleteMany({ where: { userId: user.id } });
+        // NOTE: UserIdentity is cascade-deleted on user.delete — no manual cleanup needed
         await tx.user.delete({ where: { id: user.id } });
       });
       purged++;
