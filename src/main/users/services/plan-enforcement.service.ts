@@ -119,6 +119,6 @@ export class PlanEnforcementService {
   private findActiveSubscription(
     subscriptions: Array<{ status: string; planId: string; plan: Record<string, unknown> | null }>,
   ): { status: string; planId: string; plan: Record<string, unknown> | null } | null {
-    return (subscriptions as any[]).find((sub: any) => sub.status === 'ACTIVE' || sub.status === 'TRIALING') ?? null;
+    return subscriptions.find(sub => sub.status === 'ACTIVE' || sub.status === 'TRIALING') ?? null;
   }
 }
