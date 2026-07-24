@@ -209,6 +209,7 @@
     "searchPlaceholder": "Search accounts…",
     "table": {
       "name": "Name",
+      "plan": "Plan",
       "users": "Users",
       "subscriptions": "Subscriptions",
       "alarms": "Alarms",

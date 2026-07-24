@@ -3,6 +3,8 @@ import { Drawer } from '@shared/ui/drawer';
 
 import { useGetAccount } from '../hooks/useGetAccount';
 
+import { SubscriptionSection } from './subscription-section';
+
 interface Props {
   accountId: string | null;
   onClose: () => void;
@@ -29,48 +31,57 @@ export function AccountDetailDrawer({ accountId, onClose }: Props): JSX.Element 
       )}
 
       {data && (
-        <dl className="space-y-md">
-          <div>
-            <dt className="text-label-xs font-mono text-on-surface-variant">
-              {t('accounts.drawer.name')}
-            </dt>
-            <dd className="mt-xs text-body-md text-on-surface">{data.name}</dd>
-          </div>
-          <div>
-            <dt className="text-label-xs font-mono text-on-surface-variant">
-              {t('accounts.drawer.accountId')}
-            </dt>
-            <dd className="mt-xs font-mono text-body-sm text-on-surface-variant">{data.id}</dd>
-          </div>
-          <div className="grid grid-cols-2 gap-md">
+        <>
+          <dl className="space-y-md">
             <div>
               <dt className="text-label-xs font-mono text-on-surface-variant">
-                {t('accounts.drawer.users')}
+                {t('accounts.drawer.name')}
               </dt>
-              <dd className="mt-xs text-body-md text-on-surface">{data.userCount}</dd>
+              <dd className="mt-xs text-body-md text-on-surface">{data.name}</dd>
             </div>
             <div>
               <dt className="text-label-xs font-mono text-on-surface-variant">
-                {t('accounts.drawer.subscriptions')}
+                {t('accounts.drawer.accountId')}
               </dt>
-              <dd className="mt-xs text-body-md text-on-surface">{data.subscriptionCount}</dd>
+              <dd className="mt-xs font-mono text-body-sm text-on-surface-variant">{data.id}</dd>
             </div>
-            <div>
-              <dt className="text-label-xs font-mono text-on-surface-variant">
-                {t('accounts.drawer.alarms')}
-              </dt>
-              <dd className="mt-xs text-body-md text-on-surface">{data.alarmCount}</dd>
+            <div className="grid grid-cols-2 gap-md">
+              <div>
+                <dt className="text-label-xs font-mono text-on-surface-variant">
+                  {t('accounts.drawer.users')}
+                </dt>
+                <dd className="mt-xs text-body-md text-on-surface">{data.userCount}</dd>
+              </div>
+              <div>
+                <dt className="text-label-xs font-mono text-on-surface-variant">
+                  {t('accounts.drawer.subscriptions')}
+                </dt>
+                <dd className="mt-xs text-body-md text-on-surface">{data.subscriptionCount}</dd>
+              </div>
+              <div>
+                <dt className="text-label-xs font-mono text-on-surface-variant">
+                  {t('accounts.drawer.alarms')}
+                </dt>
+                <dd className="mt-xs text-body-md text-on-surface">{data.alarmCount}</dd>
+              </div>
+              <div>
+                <dt className="text-label-xs font-mono text-on-surface-variant">
+                  {t('accounts.drawer.created')}
+                </dt>
+                <dd className="mt-xs text-body-md text-on-surface">
+                  {data.createdAt.toLocaleDateString()}
+                </dd>
+              </div>
             </div>
-            <div>
-              <dt className="text-label-xs font-mono text-on-surface-variant">
-                {t('accounts.drawer.created')}
-              </dt>
-              <dd className="mt-xs text-body-md text-on-surface">
-                {data.createdAt.toLocaleDateString()}
-              </dd>
-            </div>
-          </div>
-        </dl>
+          </dl>
+          <hr className="my-md border-outline-variant" />
+          <section>
+            <h3 className="text-label-xs font-mono uppercase text-on-surface-variant mb-sm">
+              {t('accounts.subscription.title')}
+            </h3>
+            <SubscriptionSection accountId={data.id} />
+          </section>
+        </>
       )}
     </Drawer>
   );

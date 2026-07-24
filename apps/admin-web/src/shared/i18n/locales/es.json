@@ -209,6 +209,7 @@
     "searchPlaceholder": "Buscar cuentas…",
     "table": {
       "name": "Nombre",
+      "plan": "Plan",
       "users": "Usuarios",
       "subscriptions": "Suscripciones",
       "alarms": "Alertas",

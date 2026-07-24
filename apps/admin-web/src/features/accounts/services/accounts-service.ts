@@ -8,6 +8,8 @@ export interface AccountDTO {
   alarmCount: number;
   createdAt: string;
   updatedAt: string;
+  planName?: string;
+  subscriptionStatus?: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
 }
 
 export interface AccountListResponse {

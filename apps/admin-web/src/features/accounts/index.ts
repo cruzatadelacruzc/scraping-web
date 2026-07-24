@@ -1,10 +1,15 @@
 export { AccountDetailDrawer } from './components/account-detail-drawer';
 export { AccountsTable } from './components/accounts-table';
+export { SubscriptionSection } from './components/subscription-section';
 export { accountKeys } from './hooks/query-keys';
+export { useAssignSubscription } from './hooks/useAssignSubscription';
+export { useCancelSubscription } from './hooks/useCancelSubscription';
 export { useDeleteAccount } from './hooks/useDeleteAccount';
 export { useGetAccount } from './hooks/useGetAccount';
 export { useGetAccounts } from './hooks/useGetAccounts';
+export { useGetAccountSubscriptions } from './hooks/useGetAccountSubscriptions';
 export { mapAccountDTOToViewModel } from './mappers/account-mapper';
+export type { SubscriptionDTO } from './services/account-subscriptions-service';
 export type { AccountDTO, AccountListResponse } from './services/accounts-service';
 export { accountsService } from './services/accounts-service';
 export type { AccountViewModel } from './view-models/account-view-model';

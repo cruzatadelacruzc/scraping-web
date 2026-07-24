@@ -9,5 +9,7 @@ export function mapAccountDTOToViewModel(dto: AccountDTO): AccountViewModel {
     subscriptionCount: dto.subscriptionCount,
     alarmCount: dto.alarmCount,
     createdAt: new Date(dto.createdAt),
+    planName: dto.planName,
+    subscriptionStatus: dto.subscriptionStatus,
   };
 }
