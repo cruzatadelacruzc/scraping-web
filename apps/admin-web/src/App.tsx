@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AccountsPage } from '@pages/accounts-page';
 import { DashboardPage } from '@pages/dashboard-page';
@@ -24,6 +25,7 @@ import { ROUTES } from '@shared/config/routes';
 import { NotificationProvider } from '@shared/notifications';
 import { Permission, RequirePermission } from '@shared/permissions';
 import { AppLayout } from '@shared/ui/layout/app-layout';
+import { PageSkeleton } from '@shared/ui/skeletons/page-skeleton';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
@@ -35,6 +37,9 @@ const PRODUCTS_PERMISSIONS: Permission[] = [Permission.VIEW_PRODUCTS];
 const SCRAPERS_PERMISSIONS: Permission[] = [Permission.VIEW_SCRAPERS];
 const RULES_PERMISSIONS: Permission[] = [Permission.VIEW_RULES];
 const QUEUES_PERMISSIONS: Permission[] = [Permission.VIEW_QUEUES];
+const PLANS_PERMISSIONS: Permission[] = [Permission.VIEW_PLANS];
+
+const PlansPage = lazy(() => import('@features/plans').then((m) => ({ default: m.PlansPage })));
 const SETTINGS_PERMISSIONS: Permission[] = [Permission.VIEW_SETTINGS];
 
 const TOAST_OPTIONS = {
@@ -171,6 +176,16 @@ export function App(): JSX.Element {
                   element={
                     <RequirePermission permissions={SETTINGS_PERMISSIONS}>
                       <SettingsPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={ROUTES.PLANS}
+                  element={
+                    <RequirePermission permissions={PLANS_PERMISSIONS}>
+                      <Suspense fallback={<PageSkeleton />}>
+                        <PlansPage />
+                      </Suspense>
                     </RequirePermission>
                   }
                 />
