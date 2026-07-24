@@ -16,6 +16,7 @@
   "nav": {
     "dashboard": "Panel",
     "accounts": "Cuentas",
+    "plans": "Planes",
     "users": "Usuarios",
     "roles": "Roles",
     "products": "Productos",
@@ -249,6 +250,108 @@
       "subscriptions": "Suscripciones",
       "alarms": "Alarmas",
       "created": "Creada"
+    },
+    "subscription": {
+      "title": "Suscripción",
+      "currentPlan": "Plan Actual",
+      "status": "Estado",
+      "period": "Período",
+      "remaining": "Restante",
+      "daysLeft": "{{count}} días restantes",
+      "expiresSoon": "Próximo a vencer",
+      "noActiveSubscription": "Sin suscripción activa",
+      "history": {
+        "label": "Historial de Suscripciones",
+        "empty": "Sin suscripciones anteriores"
+      },
+      "assignPlan": "Asignar Plan",
+      "changePlan": "Cambiar Plan",
+      "cancel": {
+        "label": "Cancelar Suscripción",
+        "title": "¿Cancelar suscripción?",
+        "description": "La cuenta perderá el acceso a las funciones del plan inmediatamente.",
+        "confirm": "Cancelar suscripción",
+        "success": "Suscripción cancelada",
+        "error": "Error al cancelar la suscripción"
+      },
+      "assign": {
+        "success": "Plan asignado exitosamente",
+        "error": "Error al asignar el plan"
+      }
+    }
+  },
+  "plans": {
+    "title": "Planes",
+    "description": "Gestiona el catálogo de planes — precios, límites y configuración de funciones.",
+    "searchPlaceholder": "Buscar planes…",
+    "table": {
+      "caption": "Catálogo de planes",
+      "name": "Plan",
+      "price": "Precio",
+      "maxAlarms": "Máx. Alarmas",
+      "conditions": "Condiciones",
+      "channels": "Canales",
+      "ai": "IA",
+      "subscribers": "Suscriptores",
+      "actions": "Acciones"
+    },
+    "empty": {
+      "title": "No se encontraron planes",
+      "description": "Crea tu primer plan para definir niveles de precios y límites de funciones."
+    },
+    "create": {
+      "button": "Nuevo Plan",
+      "title": "Crear Plan",
+      "success": "Plan creado",
+      "error": "Error al crear el plan"
+    },
+    "edit": {
+      "title": "Editar Plan"
+    },
+    "duplicate": {
+      "title": "Duplicar Plan"
+    },
+    "form": {
+      "name": "Nombre del Plan",
+      "namePlaceholder": "ej. Pro",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Breve descripción de este plan",
+      "price": "Precio (USD)",
+      "features": {
+        "label": "Funcionalidades",
+        "maxAlarms": "Máximo de Alarmas",
+        "unlimited": "Ilimitado",
+        "allowedConditions": "Condiciones de Alarma Permitidas",
+        "aiAlarms": "Alarmas con IA",
+        "notificationChannels": "Canales de Notificación"
+      },
+      "editor": {
+        "visual": "Visual",
+        "json": "JSON",
+        "jsonError": "JSON inválido — corrige los errores para volver al modo visual"
+      }
+    },
+    "delete": {
+      "title": "¿Eliminar plan?",
+      "description": "Esto eliminará permanentemente el plan. Las cuentas suscritas a este plan se verán afectadas.",
+      "confirm": "Eliminar permanentemente",
+      "success": "Plan eliminado",
+      "error": "Error al eliminar el plan"
+    },
+    "update": {
+      "success": "Plan actualizado",
+      "error": "Error al actualizar el plan"
+    },
+    "subscribers": {
+      "title": "Suscriptores — {{planName}}",
+      "empty": "Ninguna cuenta está suscrita a este plan",
+      "table": {
+        "account": "Cuenta",
+        "users": "Usuarios",
+        "status": "Estado",
+        "started": "Inicio",
+        "ends": "Fin"
+      }
     }
   },
   "roles": {
