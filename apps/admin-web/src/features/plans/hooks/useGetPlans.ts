@@ -20,7 +20,7 @@ export function useGetPlans(params: Params) {
     queryFn: ({ skip, limit, signal }) =>
       plansService.list({ skip, limit, search: params.search, signal }).then((res) => ({
         items: res.data.plans.map(mapPlanDTOToPlanListViewModel),
-        total: res.data.total,
+        total: res.data.plans.length,
       })),
     placeholderData: true,
     staleTime: 30 * 60 * 1000,

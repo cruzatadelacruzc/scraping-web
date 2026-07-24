@@ -10,18 +10,18 @@ export interface PlanFeaturesDTO {
 export interface PlanDTO {
   id: string;
   name: string;
-  description: string;
+  type: string;
+  description?: string;
   price: number;
   features: PlanFeaturesDTO;
-  isDefault: boolean;
-  subscriberCount: number;
+  isDefault?: boolean;
+  subscriberCount?: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface PlanListResponseDTO {
   plans: PlanDTO[];
-  total: number;
 }
 
 export interface PlanSubscriberDTO {
