@@ -61,5 +61,11 @@ ALTER TABLE "bot_link_audit" ADD CONSTRAINT "bot_link_audit_accountId_fkey" FORE
 -- AddForeignKey
 ALTER TABLE "bot_link_audit" ADD CONSTRAINT "bot_link_audit_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- DropForeignKey
+ALTER TABLE "bot_conversations" DROP CONSTRAINT IF EXISTS "bot_conversations_userId_fkey";
+
 -- AddForeignKey
 ALTER TABLE "bot_conversations" ADD CONSTRAINT "bot_conversations_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bot_conversations" ADD CONSTRAINT "bot_conversations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
