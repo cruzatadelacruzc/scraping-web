@@ -25,12 +25,19 @@ export class SubscriptionsService {
       .filter((sub): sub is AccountSubscriptionDTO & { account: AccountDTO } => sub !== null);
   }
 
-  public async create(accountId: string, planId: string, status: SubscriptionStatusType = 'TRIALING'): Promise<AccountSubscriptionDTO> {
+  public async create(
+    accountId: string,
+    planId: string,
+    status: SubscriptionStatusType = 'TRIALING',
+    periodEndOverride?: Date,
+  ): Promise<AccountSubscriptionDTO> {
     this._log.debug('Request to create subscription', { accountId, planId, status });
 
     const periodStart = new Date();
-    const periodEnd = new Date();
-    periodEnd.setDate(periodEnd.getDate() + 30); // 30-day default period
+    const periodEnd = periodEndOverride ?? new Date(periodStart);
+    if (!periodEndOverride) {
+      periodEnd.setDate(periodEnd.getDate() + 30); // 30-day default period
+    }
 
     const created = await this._repository.create({
       account: { connect: { id: accountId } },

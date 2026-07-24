@@ -1,10 +1,21 @@
-import { PrismaClient, Plan, Prisma } from '@prisma/client';
+import { PrismaClient, Plan, Prisma, PlanType } from '@prisma/client';
 import { TYPES } from '@shared/types.container';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class PlanRepository {
   public constructor(@inject(TYPES.PrismaClient) private readonly prisma: PrismaClient) {}
+
+  /**
+   * Finds a plan by its type (e.g., TRIAL, STANDARD, UNLIMITED).
+   * @param type - The PlanType to search for.
+   * @returns A promise resolving to the first matching Plan, or null if not found.
+   */
+  public async findByType(type: PlanType): Promise<Plan | null> {
+    return this.prisma.plan.findFirst({
+      where: { type },
+    });
+  }
 
   /**
    * Finds all plans where a JSON path under "features" equals a given value.
