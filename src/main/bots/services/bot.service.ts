@@ -4,6 +4,7 @@ import { createProvider, createBot, MemoryDB, type CoreClass } from '@builderbot
 import type { ProviderClass } from '@builderbot/bot';
 import { ILogger } from '@shared/logger.interface';
 import { TYPES } from '@shared/types.container';
+import { runWithRequestContext } from '@shared/tenant-context-als';
 import { TelegramAdapter } from '@bots/adapters/telegram-adapter.service';
 import { WhatsAppAdapter } from '@bots/adapters/whatsapp-adapter.service';
 import type { IProviderAdapter } from '@bots/adapters/provider-adapter.interface';
@@ -11,6 +12,10 @@ import { resolveProviderEntry, getEnabledBotTypes } from '@bots/providers/provid
 import { TenantBotContextService } from './tenant-bot-context.service';
 import { LinkCodeService } from './link-code.service';
 import { mainFlow } from '@bots/flows';
+import { SubscriptionsService } from '@users/services/account-subscriptions.service';
+import { AlarmService } from '@alarms/services/alarm.service';
+import { UserRepository } from '@users/repositories/user.repository';
+import { PlanService } from '@users/services/plan.service';
 
 /** Base port for auto-detection — each bot type gets basePort + index. */
 const BOT_HTTP_BASE_PORT = parseInt(process.env.BOT_HTTP_PORT ?? '3001', 10);
@@ -32,6 +37,10 @@ export class BotService {
     @inject(TYPES.WhatsAppAdapter) private readonly _whatsappAdapter: WhatsAppAdapter,
     @inject(TYPES.TenantBotContextService) private readonly _tenantCtx: TenantBotContextService,
     @inject(TYPES.LinkCodeService) private readonly _linkCode: LinkCodeService,
+    @inject(TYPES.SubscriptionsService) private readonly _subscriptionsService: SubscriptionsService,
+    @inject(TYPES.AlarmService) private readonly _alarmService: AlarmService,
+    @inject(TYPES.UserRepository) private readonly _userRepository: UserRepository,
+    @inject(TYPES.PlanService) private readonly _planService: PlanService,
   ) {
     this._log.context = BotService.name;
   }
@@ -64,18 +73,117 @@ export class BotService {
         const providerAdapter = this._resolveAdapter(botType);
         const port = this._resolvePort(botType, index);
 
-        const instance = await createBot(
-          { flow: mainFlow, provider: provider!, database: adapter },
-          {
-            extensions: {
-              tenantResolver: (from: string) => this._tenantCtx.resolve(botType, from),
-              providerName: botType,
-              providerAdapter,
-              verifyAndLink: (token: string, chatId: string, provider: string) => this._linkCode.verifyAndLink(token, chatId, provider),
-              linkCodeService: this._linkCode,
-            },
+        // Build the extensions bag as a separate variable so provider closures
+        // can share state via the same object reference across flow calls.
+        const extensions: Record<string, unknown> = {
+          tenantResolver: async (from: string) => {
+            const botCtx = await this._tenantCtx.resolve(botType, from);
+            // Store on the extensions bag so provider closures can access
+            // the resolved tenant context without receiving it as a parameter.
+            extensions._currentBotCtx = botCtx;
+            return botCtx;
           },
-        );
+          providerName: botType,
+          providerAdapter,
+          verifyAndLink: (token: string, chatId: string, provider: string) => this._linkCode.verifyAndLink(token, chatId, provider),
+          linkCodeService: this._linkCode,
+
+          // -----------------------------------------------------------------------
+          // Extension providers for slash-command flows
+          // -----------------------------------------------------------------------
+
+          /**
+           * Reads the subscription for the current linked account.
+           * Returns { planName, expiresAt } or null when unsubscribed.
+           */
+          subscriptionProvider: async () => {
+            const currentBotCtx = extensions._currentBotCtx as { accountId: string | null } | undefined;
+            const accountId = currentBotCtx?.accountId;
+            if (!accountId) return null;
+
+            try {
+              const subs = await this._subscriptionsService.getByAccountId(accountId);
+              // Prefer the first active/trialing subscription
+              const active = subs.find(s => s.status === 'ACTIVE' || s.status === 'TRIALING');
+              if (!active) return null;
+
+              // Look up plan name
+              let planName: string | undefined;
+              try {
+                const plan = active.planId ? await this._planService.findById(active.planId) : null;
+                planName = plan?.name ?? undefined;
+              } catch {
+                planName = undefined;
+              }
+
+              return {
+                planName,
+                expiresAt: active.periodEnd?.toISOString() ?? undefined,
+              };
+            } catch {
+              return null;
+            }
+          },
+
+          /**
+           * Reads all alarms for the current linked account.
+           * Returns an array of { productName, currentPrice }.
+           */
+          alarmProvider: async () => {
+            const currentBotCtx = extensions._currentBotCtx as { accountId: string | null } | undefined;
+            const accountId = currentBotCtx?.accountId;
+            if (!accountId) return [];
+
+            try {
+              // Set ALS context so Prisma's tenant filter kicks in
+              const alarms = await runWithRequestContext({ tenantId: accountId }, async () => {
+                return this._alarmService.getAll();
+              });
+
+              return alarms.map(a => ({
+                productName: a.name,
+                currentPrice: a.threshold?.toString() ?? '—',
+              }));
+            } catch {
+              return [];
+            }
+          },
+
+          /**
+           * Reads profile info (displayName, email) for the current linked user.
+           * Returns { displayName, email } or null.
+           */
+          profileProvider: async () => {
+            const currentBotCtx = extensions._currentBotCtx as { userId: string | null } | undefined;
+            const userId = currentBotCtx?.userId;
+            if (!userId) return null;
+
+            try {
+              const user = await this._userRepository.findById(userId);
+              if (!user) return null;
+              return {
+                displayName: user.displayName ?? user.username,
+                email: user.email,
+              };
+            } catch {
+              return null;
+            }
+          },
+
+          /**
+           * Graceful degradation for AI-powered conversations.
+           * Returns a fixed message when AI is not available.
+           */
+          aiHandler: async (_body: string, lang: string): Promise<string> => {
+            const messages: Record<string, string> = {
+              es: 'El asistente de IA no está disponible en este momento. Usa /alarms, /subscription o /profile.',
+              en: 'AI assistant is not available right now. Use /alarms, /subscription or /profile.',
+            };
+            return messages[lang] ?? messages.es;
+          },
+        };
+
+        const instance = await createBot({ flow: mainFlow, provider: provider!, database: adapter }, { extensions });
 
         // httpServer triggers initAll → initVendor → launch().
         // If initVendor fails, clean up so the port is freed.
