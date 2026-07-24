@@ -29,6 +29,7 @@ export function PlansTable(): JSX.Element {
 
   // Drawer state
   const [drawerPlanId, setDrawerPlanId] = useState<string | null>(null);
+  const [drawerPlanName, setDrawerPlanName] = useState<string>('');
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<PlanListViewModel | null>(null);
@@ -52,7 +53,7 @@ export function PlansTable(): JSX.Element {
     search: search || undefined,
   });
 
-  const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
+  const totalPages = data ? Math.ceil((data.total || 0) / PAGE_SIZE) : 0;
 
   // Dialog openers
   const handleNewPlan = useCallback(() => {
@@ -83,12 +84,14 @@ export function PlansTable(): JSX.Element {
   }, []);
 
   // Drawer opener
-  const handleSubscribersClick = useCallback((planId: string) => {
-    setDrawerPlanId(planId);
+  const handleSubscribersClick = useCallback((plan: PlanListViewModel) => {
+    setDrawerPlanId(plan.id);
+    setDrawerPlanName(plan.name);
   }, []);
 
   const handleCloseDrawer = useCallback(() => {
     setDrawerPlanId(null);
+    setDrawerPlanName('');
   }, []);
 
   // Delete handlers
@@ -148,7 +151,7 @@ export function PlansTable(): JSX.Element {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                handleSubscribersClick(plan.id);
+                handleSubscribersClick(plan);
               }}
               className="font-mono text-primary underline underline-offset-2 hover:text-primary-hover"
               aria-label={t('plans.subscribers.title', { planName: plan.name })}
@@ -276,11 +279,10 @@ export function PlansTable(): JSX.Element {
         {/* Pagination */}
         <div className="flex items-center justify-between border-t border-outline-variant px-sm py-sm">
           <span className="text-body-sm text-on-surface-variant">
-            {t('common.pageInfo', {
-              defaultValue: 'Page {{page}} of {{totalPages}} · {{total}} total',
+            {t('plans.pagination.info', {
               page,
               totalPages,
-              total: data.total,
+              total: data.total || 0,
             })}
           </span>
           <div className="flex gap-xs">
@@ -316,7 +318,11 @@ export function PlansTable(): JSX.Element {
       />
 
       {/* Subscribers drawer */}
-      <PlanSubscribersDrawer planId={drawerPlanId} onClose={handleCloseDrawer} />
+      <PlanSubscribersDrawer
+        planId={drawerPlanId}
+        planName={drawerPlanName}
+        onClose={handleCloseDrawer}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog

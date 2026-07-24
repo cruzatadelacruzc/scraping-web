@@ -352,6 +352,9 @@
         "started": "Started",
         "ends": "Ends"
       }
+    },
+    "pagination": {
+      "info": "Page {{page}} of {{totalPages}} · {{total}} total"
     }
   },
   "roles": {
