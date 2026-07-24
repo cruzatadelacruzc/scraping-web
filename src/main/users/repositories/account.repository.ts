@@ -42,6 +42,21 @@ export class AccountRepository {
     });
   }
 
+  /**
+   * Hard-deletes an account and all related records via CASCADE.
+   *
+   * The following child records are cascade-deleted:
+   * - User (which cascades to UserIdentity, PasswordResetToken, EmailVerificationToken,
+   *   RefreshToken, BotLinkCode, BotLinkAudit)
+   * - Alarm (which cascades to AlarmHistory)
+   * - Notification, AccountSubscription, BotLinkCode, BotLinkAudit, BotConversation
+   *
+   * LoginAttempt records have onDelete: SetNull on userId.
+   * BotConversation.userId also uses SetNull.
+   *
+   * Pre-delete cleanup (JWT blacklist, token revocation) should be handled
+   * at the service layer before calling this method.
+   */
   public async delete(id: string): Promise<void> {
     await this.prisma.account.delete({ where: { id } });
   }
