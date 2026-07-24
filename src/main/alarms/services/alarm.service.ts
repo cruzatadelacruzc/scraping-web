@@ -52,8 +52,17 @@ export class AlarmService {
 
   public async update(id: string, dto: UpdateAlarmDTO): Promise<AlarmResponseDTO> {
     this._log.debug('Request to update alarm', { id, dto });
+    const tenantId = this.getTenantId();
     const existing = await this._repository.findById(id);
     if (!existing) throw new AlarmNotFoundError(id);
+
+    // Enforce condition allowed by plan, if condition is being changed
+    if (dto.condition !== undefined) {
+      const conditionAllowed = await this._planEnforcement.isConditionAllowed(tenantId, dto.condition);
+      if (!conditionAllowed) {
+        throw new ConditionNotAllowedError(dto.condition);
+      }
+    }
 
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data.name = dto.name;
