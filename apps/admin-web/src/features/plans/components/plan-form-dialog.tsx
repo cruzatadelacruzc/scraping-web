@@ -111,9 +111,16 @@ export function PlanFormDialog({
         name: existingPlan.name,
         description: existingPlan.description,
         price: existingPlan.price,
-        features: { ...existingPlan.features },
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: backend may omit features
+        features: existingPlan.features ?? {
+          maxAlarms: 0,
+          allowedConditions: [],
+          aiAlarms: false,
+          notificationChannels: [],
+        },
       });
-      setUnlimited(existingPlan.features.maxAlarms === -1);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: backend may omit features
+      setUnlimited((existingPlan.features?.maxAlarms ?? 0) === -1);
       setEditorMode('visual');
       setJsonError(null);
     }
@@ -126,9 +133,16 @@ export function PlanFormDialog({
         name: '',
         description: sourcePlan.description,
         price: sourcePlan.price,
-        features: { ...sourcePlan.features },
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: backend may omit features
+        features: sourcePlan.features ?? {
+          maxAlarms: 0,
+          allowedConditions: [],
+          aiAlarms: false,
+          notificationChannels: [],
+        },
       });
-      setUnlimited(sourcePlan.features.maxAlarms === -1);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: backend may omit features
+      setUnlimited((sourcePlan.features?.maxAlarms ?? 0) === -1);
       setEditorMode('visual');
       setJsonError(null);
     }

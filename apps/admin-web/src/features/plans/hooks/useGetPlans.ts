@@ -18,10 +18,14 @@ export function useGetPlans(params: Params) {
     },
     queryKeyBase: 'plans',
     queryFn: ({ skip, limit, signal }) =>
-      plansService.list({ skip, limit, search: params.search, signal }).then((res) => ({
-        items: res.data.plans.map(mapPlanDTOToPlanListViewModel),
-        total: res.data.plans.length,
-      })),
+      plansService.list({ skip, limit, search: params.search, signal }).then((res) => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: backend may omit fields
+        const allPlans = res.data?.plans ?? [];
+        return {
+          items: allPlans.slice(skip, skip + limit).map(mapPlanDTOToPlanListViewModel),
+          total: allPlans.length,
+        };
+      }),
     placeholderData: true,
     staleTime: 30 * 60 * 1000,
   });

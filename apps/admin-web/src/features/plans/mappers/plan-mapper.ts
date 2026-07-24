@@ -7,7 +7,13 @@ export function mapPlanDTOToViewModel(dto: PlanDTO): PlanViewModel {
     name: dto.name,
     description: dto.description ?? '',
     price: dto.price,
-    features: dto.features,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: backend may omit features
+    features: dto.features ?? {
+      maxAlarms: 0,
+      allowedConditions: [],
+      aiAlarms: false,
+      notificationChannels: [],
+    },
     subscriberCount: dto.subscriberCount ?? 0,
     isDefault: dto.isDefault ?? false,
     createdAt: new Date(dto.createdAt),
