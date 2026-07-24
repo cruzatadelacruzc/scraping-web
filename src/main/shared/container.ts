@@ -127,6 +127,7 @@ import { EmailVerificationService } from '@users/services/email-verification.ser
 import { AccountDeactivationService } from '@users/services/account-deactivation.service';
 import { LoginRateLimitService } from '@users/services/login-rate-limit.service';
 import { AccountManagementController } from '@users/controllers/account-management.controller';
+import { PlanEnforcementService } from '@users/services/plan-enforcement.service';
 import Redis from 'ioredis';
 
 export const container = new Container();
@@ -170,6 +171,7 @@ container.bind(TYPES.AccountService).to(AccountService);
 container.bind(TYPES.SubscriptionsService).to(SubscriptionsService);
 container.bind(TYPES.PlanService).to(PlanService);
 container.bind(TYPES.AlarmService).to(AlarmService);
+container.bind(TYPES.PlanEnforcementService).to(PlanEnforcementService);
 container.bind(TYPES.AlarmEngineService).to(AlarmEngineService);
 container.bind(TYPES.ConditionRegistry).to(ConditionRegistry).inSingletonScope();
 container.bind(TYPES.PriceDropsBelowCondition).to(PriceDropsBelowCondition);

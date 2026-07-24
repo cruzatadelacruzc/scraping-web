@@ -6,6 +6,8 @@ import { UpdateAlarmDTO } from '@alarms/dto/update-alarm.dto';
 import { AlarmResponseDTO } from '@alarms/dto/alarm-response.dto';
 import { AlarmRepository } from '@alarms/repositories/alarm.repository';
 import { AlarmMapper } from '@alarms/mappers/alarm.mapper';
+import { PlanEnforcementService } from '@users/services/plan-enforcement.service';
+import { ConditionNotAllowedError } from '@users/errors/condition-not-allowed.error';
 import { getRequestContext } from '@shared/tenant-context-als';
 import { AlarmNotFoundError } from '@alarms/errors/alarm-not-found.error';
 
@@ -15,6 +17,7 @@ export class AlarmService {
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(AlarmRepository) private readonly _repository: AlarmRepository,
     @inject(TYPES.AlarmMapper) private readonly _mapper: AlarmMapper,
+    @inject(PlanEnforcementService) private readonly _planEnforcement: PlanEnforcementService,
   ) {
     this._log.context = AlarmService.name;
   }
@@ -22,6 +25,14 @@ export class AlarmService {
   public async create(dto: CreateAlarmDTO): Promise<AlarmResponseDTO> {
     const tenantId = this.getTenantId();
     this._log.debug('Request to create alarm', { tenantId, dto });
+
+    // Enforce plan limits before creating the alarm
+    await this._planEnforcement.enforceAlarmLimit(tenantId);
+    const conditionAllowed = await this._planEnforcement.isConditionAllowed(tenantId, dto.condition);
+    if (!conditionAllowed) {
+      throw new ConditionNotAllowedError(dto.condition);
+    }
+
     const input = this._mapper.toCreateInput(dto, tenantId);
     const created = await this._repository.create(input);
     return this._mapper.toDTO(created)!;
