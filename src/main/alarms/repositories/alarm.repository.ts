@@ -49,6 +49,19 @@ export class AlarmRepository {
     await this.prisma.alarm.delete({ where: { id } });
   }
 
+  public async setEnabledForAccount(accountId: string, enabled: boolean): Promise<{ count: number }> {
+    return this.prisma.alarm.updateMany({
+      where: { accountId },
+      data: { enabled },
+    });
+  }
+
+  public async countByAccountId(accountId: string): Promise<number> {
+    return this.prisma.alarm.count({
+      where: { accountId },
+    });
+  }
+
   public async createHistory(data: Prisma.AlarmHistoryCreateInput): Promise<void> {
     await this.prisma.alarmHistory.create({ data });
   }
