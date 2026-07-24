@@ -17,7 +17,7 @@ export class AlarmService {
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(AlarmRepository) private readonly _repository: AlarmRepository,
     @inject(TYPES.AlarmMapper) private readonly _mapper: AlarmMapper,
-    @inject(PlanEnforcementService) private readonly _planEnforcement: PlanEnforcementService,
+    @inject(TYPES.PlanEnforcementService) private readonly _planEnforcement: PlanEnforcementService,
   ) {
     this._log.context = AlarmService.name;
   }

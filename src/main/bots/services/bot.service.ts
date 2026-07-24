@@ -39,7 +39,7 @@ export class BotService {
     @inject(TYPES.LinkCodeService) private readonly _linkCode: LinkCodeService,
     @inject(TYPES.SubscriptionsService) private readonly _subscriptionsService: SubscriptionsService,
     @inject(TYPES.AlarmService) private readonly _alarmService: AlarmService,
-    @inject(TYPES.UserRepository) private readonly _userRepository: UserRepository,
+    @inject(UserRepository) private readonly _userRepository: UserRepository,
     @inject(TYPES.PlanService) private readonly _planService: PlanService,
   ) {
     this._log.context = BotService.name;

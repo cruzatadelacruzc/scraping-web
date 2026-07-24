@@ -14,7 +14,7 @@ export class AccountService {
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(AccountRepository) private readonly _repository: AccountRepository,
     @inject(TYPES.AccountMapper) private readonly _mapper: AccountMapper,
-    @inject(SubscriptionsService) private readonly _subscriptionsService: SubscriptionsService,
+    @inject(TYPES.SubscriptionsService) private readonly _subscriptionsService: SubscriptionsService,
     @inject(PlanRepository) private readonly _planRepository: PlanRepository,
   ) {
     this._log.context = AccountService.name;
