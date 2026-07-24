@@ -182,4 +182,51 @@ SMTP env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`
 `AccountDeactivationService` at `src/main/users/services/account-deactivation.service.ts`:
 - Sets `User.deletedAt`, pauses all alarms (`enabled = false`), revokes all refresh tokens, blacklists current JWT
 - Reversible within 30 days by `SUPER_ADMIN` via `POST /api/auth/reactivate`
+- **Reactivation** re-enables all alarms that were paused during deactivation
 - `purgeExpiredAccounts()` hard-deletes personal data after 30 days (run as daily cron). Alarm/account data is preserved.
+
+### Plan & Subscription System
+
+Three plans are seeded idempotently via `prisma/seed.ts`:
+
+| Plan | Price | Max Alarms | Conditions | AI | Channels |
+|---|---|---|---|---|---|
+| Trial | $0 | 3 | Price Drops, Price Rises, Price Change % | No | In-app |
+| Standard | $9.99 | 20 | All 6 | No | In-app, Email |
+| Unlimited | $29.99 | -1 (unlimited) | All 6 | Yes | All |
+
+**Plan.features (JSONB)** — the runtime enforcement layer reads these keys:
+- `maxAlarms` — max alarms per account. `-1` = unlimited.
+- `allowedConditions` — array of `AlarmConditionType` strings the plan permits. Empty/missing = all allowed.
+- `aiAlarms` — boolean gate for AI-powered conditions.
+- `notificationChannels` — which delivery channels the plan includes.
+
+**Auto-trial**: `AccountService.register()` auto-assigns a 7-day TRIAL subscription. Fail-open — never blocks registration if the TRIAL plan is missing or creation fails.
+
+**PlanEnforcementService** — gates `AlarmService.create()` and `update()`:
+1. Counts existing alarms vs `maxAlarms`. Throws `PlanLimitReachedError` (403) if limit reached.
+2. Validates condition type against `allowedConditions`. Throws `ConditionNotAllowedError` (403) if not permitted.
+3. Injects `SubscriptionsRepository` directly (not `SubscriptionsService`) — needs raw Prisma models with nested `plan.features` JSONB that the DTO/mapper layer strips.
+
+**Subscription lifecycle**: `TRIALING` → `ACTIVE` → `PAST_DUE` / `CANCELED`. Only ACTIVE and TRIALING are considered active for enforcement.
+
+**Cascade deletes**: Account deletion cascades to Users, Subscriptions, Alarms (→ AlarmHistory), Notifications, BotLinkCodes, BotLinkAudits, BotConversations. User deletion cascades to UserIdentities, RefreshTokens, PasswordResetTokens, EmailVerificationTokens.
+
+See `src/main/users/README.md` and `src/main/alarms/README.md` for full conceptual documentation.
+
+### DI: Always Use TYPES Symbols
+
+Every `@inject()` MUST use `TYPES.SymbolName`, never a class reference. The container binds Symbols — Inversify treats class constructors and Symbols as distinct identifiers:
+
+```typescript
+// Correct — matches container.bind(TYPES.SubscriptionsService).to(SubscriptionsService)
+@inject(TYPES.SubscriptionsService) private readonly _subs: SubscriptionsService
+
+// Wrong — no matching binding (container has Symbol, not class)
+@inject(SubscriptionsService) private readonly _subs: SubscriptionsService
+
+// Exception: repositories use .toSelf() pattern, so inject by class
+@inject(UserRepository) private readonly _userRepo: UserRepository
+```
+
+The repo has a mix: **services are bound by Symbol** (`container.bind(TYPES.X).to(X)`), **repositories are bound by class** (`container.bind(RepoName).toSelf()`). Match the binding: services → `@inject(TYPES.X)`, repositories → `@inject(ClassName)`.

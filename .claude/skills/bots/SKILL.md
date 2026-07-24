@@ -25,7 +25,23 @@ BOT_ENABLED=both → getEnabledBotTypes() → for each botType:
 - **Provider registry** (`providers/provider-registry.ts`) — single source of truth. Adding a provider = adding an entry to `REGISTRY`, NOT a new DI class.
 - **Provider adapters** (`adapters/`) — `TelegramAdapter`, `WhatsAppAdapter` implement `IProviderAdapter`. Flows consume `methods.extensions.providerAdapter`, never branch on provider name.
 - **`BotMenuService`** — wraps raw Telegraf API for reply keyboards (`sendWithKeyboard`) and command menus (`applyCommands`). Needed because builderbot strips `reply_markup`. Singleton, injected into `TelegramAdapter` and `LinkCodeService`.
-- **Extensions** — `BotService.start()` injects `tenantResolver`, `providerAdapter`, `providerName`, `verifyAndLink`, `linkCodeService` into `extensions`. Flows access them via `methods.extensions.*`. To add one: service method → wire in `BotService.start()` → consume in flow.
+- **Extensions** — `BotService.start()` injects `tenantResolver`, `providerAdapter`, `providerName`, `verifyAndLink`, `linkCodeService`, `subscriptionProvider`, `alarmProvider`, `profileProvider`, and `aiHandler` into `extensions`. Flows access them via `methods.extensions.*`. To add one: service method → wire in `BotService.start()` → consume in flow.
+
+### Extension Providers Reference
+
+| Provider | Returns | Used by |
+|---|---|---|
+| `tenantResolver` | `IBotContext` (with `accountId`, `userId`, `preferredLang`) | All flows (via `resolveTenant`) |
+| `providerAdapter` | `IProviderAdapter` | Flows that send rich messages |
+| `providerName` | `'telegram' \| 'whatsapp'` | Flows that branch on provider |
+| `verifyAndLink` | `Promise<boolean>` | `linkAccountFlow` |
+| `linkCodeService` | `LinkCodeService` instance | `linkAccountFlow`, `confirmLinkFlow` |
+| `subscriptionProvider` | `{ planName?, expiresAt? } \| null` | `/subscription` flow |
+| `alarmProvider` | `Array<{ productName?, currentPrice? }>` | `/alarms` flow |
+| `profileProvider` | `{ displayName?, email? } \| null` | `/profile` flow |
+| `aiHandler` | `string` (graceful degradation message) | `fallbackFlow` |
+
+All providers are fail-safe — they catch errors internally and return safe defaults (`null`, `[]`, or a fixed message) rather than throwing.
 
 ## Adding a new flow
 
