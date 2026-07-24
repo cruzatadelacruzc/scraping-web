@@ -8,9 +8,11 @@ Read these before any UI work — they form a hierarchy:
 
 1. `@./DESIGN.md` — visual identity (brand book: palette, typography, depth, shape, component recipes)
 2. `@../../.claude/rules/admin-web-ui.md` — behavioral & code conventions (layout, tables, charts, async states, toasts, destructive actions)
-3. `@../../.claude/plans/oye-comenzamos-con-otra-wobbly-snowflake.md` — development plan (7 phases, architectural decisions, DoD per phase)
-4. `@../../.plans/super-admin-dashboard-plan.md` — mirror copy of the development plan
-5. This file — architectural constraints, patterns, and how the SPA is wired together
+3. `@../../.claude/rules/admin-web-feature-scaffold.md` — step-by-step recipe for adding a new feature module
+4. This file — architectural constraints, patterns, and how the SPA is wired together
+5. `@../../src/main/CLAUDE.md` — backend code patterns and domain model (Plan/Subscription/Alarm system)
+6. `@../../src/main/users/README.md` — Plans & Subscriptions conceptual docs
+7. `@../../src/main/alarms/README.md` — Alarm system conceptual docs
 
 ## Stack
 
@@ -208,6 +210,10 @@ enum Permission {
   VIEW_QUEUES = 'queues:view',
   VIEW_ROLES = 'roles:view',
   MANAGE_ROLES = 'roles:manage',
+  VIEW_PLANS = 'plans:view',
+  MANAGE_PLANS = 'plans:manage',
+  VIEW_SUBSCRIPTIONS = 'subscriptions:view',
+  MANAGE_SUBSCRIPTIONS = 'subscriptions:manage',
   VIEW_LOGS = 'logs:view',
   VIEW_SETTINGS = 'settings:view',
 }
@@ -291,10 +297,49 @@ npm run typecheck     # tsc --noEmit clean
 npm run build         # Compiles without errors
 ```
 
+## Backend Domain Context (Phase 1)
+
+The backend now has a full Plan → Subscription → Alarm enforcement chain. When building admin-web features for plans, subscriptions, or alarms, these backend capabilities exist:
+
+### Plans & Subscriptions API
+
+| Endpoint | Method | Purpose | Auth |
+|---|---|---|---|
+| `/api/plans` | GET | List all plans | SUPER_ADMIN |
+| `/api/plans` | POST | Create a plan | SUPER_ADMIN |
+| `/api/plans/:id` | PUT | Update a plan | SUPER_ADMIN |
+| `/api/plans/:id` | DELETE | Delete a plan | SUPER_ADMIN |
+| `/api/plans/:id/subscribers` | GET | List accounts subscribed to a plan | SUPER_ADMIN |
+| `/api/subscriptions` | POST | Assign a plan to an account | SUPER_ADMIN |
+| `/api/accounts/:id/subscriptions` | GET | List subscriptions for an account | Auth required |
+| `/api/subscriptions/:id` | DELETE | Cancel a subscription | SUPER_ADMIN |
+
+### Plan Features (JSONB)
+
+Plans carry a `features` JSONB column with these keys:
+- `maxAlarms` — max alarms per account. `-1` = unlimited
+- `allowedConditions` — array of condition type strings the plan permits
+- `aiAlarms` — boolean gating AI-powered conditions
+- `notificationChannels` — array of channel strings (`in-app`, `email`, `telegram`, `whatsapp`)
+
+### Enforcement (server-side, already implemented)
+
+- `PlanEnforcementService` gates alarm create/update. Returns 403 if limits exceeded or condition not allowed.
+- Auto-trial: new accounts get a 7-day TRIAL subscription automatically (fail-open).
+
+### Three Default Plans
+
+| Plan | Max Alarms | Conditions | AI | Channels |
+|---|---|---|---|---|
+| Trial | 3 | Price Drops, Price Rises, Price Change % | No | In-app |
+| Standard | 20 | All 6 | No | In-app, Email |
+| Unlimited | -1 | All 6 | Yes | All |
+
 ## Related
 
 - API spec: `swagger.json` at the repo root (documentation only — not a code-generation source).
 - Backend patterns: `src/main/CLAUDE.md`.
-- Design system audit & dev plan: `~/.claude/plans/oye-comenzamos-con-otra-wobbly-snowflake.md`.
+- Backend domain docs: `src/main/users/README.md`, `src/main/alarms/README.md`.
 - Project-wide compliance: `../../.claude/rules/compliance-checklist.md`.
+- Git workflow: `../../.claude/rules/git-workflow.md`.
 - Git workflow: `../../.claude/rules/git-workflow.md`.
