@@ -2,6 +2,7 @@
 // Module under test
 // ---------------------------------------------------------------------------
 import { PLAN_SEED_DATA, seedPlans } from '../../../main/shared/seed/seed-plans';
+import type { PrismaClient } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Types for mock
@@ -64,7 +65,7 @@ describe('PLAN_SEED_DATA', () => {
 });
 
 describe('seedPlans', () => {
-  let mockPrisma: MockPrisma;
+  let mockPrisma: IMockPrisma;
 
   beforeEach(() => {
     mockPrisma = createMockPrisma();
@@ -80,7 +81,7 @@ describe('seedPlans', () => {
     mockPrisma.plan.findUnique.mockResolvedValue(null);
     mockPrisma.plan.create.mockResolvedValue({});
 
-    await seedPlans(mockPrisma as any);
+    await seedPlans(mockPrisma as unknown as PrismaClient);
 
     expect(mockPrisma.plan.findUnique).toHaveBeenCalledTimes(3);
     expect(mockPrisma.plan.create).toHaveBeenCalledTimes(3);
@@ -103,7 +104,7 @@ describe('seedPlans', () => {
       return expectedPlans.find(p => p.name === name) ?? null;
     });
 
-    await seedPlans(mockPrisma as any);
+    await seedPlans(mockPrisma as unknown as PrismaClient);
 
     expect(mockPrisma.plan.findUnique).toHaveBeenCalledTimes(3);
     expect(mockPrisma.plan.create).not.toHaveBeenCalled();
@@ -116,7 +117,7 @@ describe('seedPlans', () => {
       return null;
     });
 
-    await seedPlans(mockPrisma as any);
+    await seedPlans(mockPrisma as unknown as PrismaClient);
 
     expect(mockPrisma.plan.create).toHaveBeenCalledTimes(2);
     expect(mockPrisma.plan.create).toHaveBeenCalledWith(
@@ -140,7 +141,7 @@ describe('seedPlans', () => {
     mockPrisma.plan.findUnique.mockResolvedValue(null);
     mockPrisma.plan.create.mockResolvedValue({});
 
-    await seedPlans(mockPrisma as any);
+    await seedPlans(mockPrisma as unknown as PrismaClient);
 
     // Verify the first plan's data shape
     expect(mockPrisma.plan.create).toHaveBeenCalledWith(
