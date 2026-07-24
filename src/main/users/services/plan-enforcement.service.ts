@@ -7,6 +7,17 @@ import { inject, injectable } from 'inversify';
 
 @injectable()
 export class PlanEnforcementService {
+  /**
+   * Enforces subscription plan limits (max alarms, allowed conditions) against
+   * an account's active plan features.
+   *
+   * NOTE: This service injects {@link SubscriptionsRepository} directly rather
+   * than routing through {@link SubscriptionsService}. This is intentional — the
+   * enforcement checks need raw Prisma models with nested `plan.features` JSONB
+   * which the DTO/mapper layer strips away. If the subscription DTO is ever
+   * extended to carry raw plan features, this can be refactored to use the
+   * service layer.
+   */
   public constructor(
     @inject(TYPES.Logger) private readonly _log: ILogger,
     @inject(SubscriptionsRepository) private readonly _subscriptionsRepo: SubscriptionsRepository,
