@@ -5,6 +5,7 @@ import { useGetPlanSubscribers } from '../hooks/useGetPlanSubscribers';
 
 interface PlanSubscribersDrawerProps {
   planId: string | null;
+  planName: string;
   onClose: () => void;
 }
 
@@ -16,6 +17,7 @@ interface PlanSubscribersDrawerProps {
  */
 export function PlanSubscribersDrawer({
   planId,
+  planName,
   onClose,
 }: PlanSubscribersDrawerProps): JSX.Element {
   const { t } = useTranslation();
@@ -24,7 +26,7 @@ export function PlanSubscribersDrawer({
   return (
     <Drawer
       open={planId !== null}
-      title={t('plans.subscribers.title', { planName: '' })}
+      title={t('plans.subscribers.title', { planName })}
       onClose={onClose}
     >
       {/* Loading */}
@@ -53,7 +55,7 @@ export function PlanSubscribersDrawer({
       {data && data.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full text-body-sm">
-            <caption className="sr-only">{t('plans.subscribers.title', { planName: '' })}</caption>
+            <caption className="sr-only">{t('plans.subscribers.title', { planName })}</caption>
             <thead>
               <tr className="border-b border-outline-variant text-left text-label-xs font-mono uppercase text-on-surface-variant">
                 <th className="p-sm">{t('plans.subscribers.table.account')}</th>

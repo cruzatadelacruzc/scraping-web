@@ -53,7 +53,7 @@ export function PlansTable(): JSX.Element {
     search: search || undefined,
   });
 
-  const totalPages = data ? Math.ceil((data.total || 0) / PAGE_SIZE) : 0;
+  const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
   // Dialog openers
   const handleNewPlan = useCallback(() => {
@@ -282,7 +282,7 @@ export function PlansTable(): JSX.Element {
             {t('plans.pagination.info', {
               page,
               totalPages,
-              total: data.total || 0,
+              total: data.total,
             })}
           </span>
           <div className="flex gap-xs">

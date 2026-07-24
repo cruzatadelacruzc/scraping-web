@@ -15,5 +15,6 @@ export function useGetPlanSubscribers(id: string | null) {
       return data;
     },
     enabled: id !== null,
+    staleTime: 30 * 60 * 1000,
   });
 }

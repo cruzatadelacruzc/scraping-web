@@ -22,6 +22,7 @@ export function useGetPlans(params: Params) {
         items: res.data.plans.map(mapPlanDTOToPlanListViewModel),
         total: res.data.total,
       })),
+    placeholderData: true,
     staleTime: 30 * 60 * 1000,
   });
 }

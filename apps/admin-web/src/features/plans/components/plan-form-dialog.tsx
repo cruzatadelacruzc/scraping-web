@@ -224,12 +224,36 @@ export function PlanFormDialog({
     }
   }, [mode, t]);
 
-  // Loading state for edit mode
+  // Loading state for edit mode — shape-matched skeleton
   if (mode === 'edit' && isLoadingPlan) {
     return (
       <Dialog open={open} title={dialogTitle} onClose={onClose} maxWidth="max-w-xl">
-        <div className="flex items-center justify-center py-lg">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <div className="mt-md space-y-md">
+          {/* Name field skeleton */}
+          <div className="space-y-xs">
+            <div className="h-3 w-16 animate-pulse rounded-sm bg-surface-container-high" />
+            <div className="h-9 w-full animate-pulse rounded-sm bg-surface-container-high" />
+          </div>
+          {/* Description field skeleton */}
+          <div className="space-y-xs">
+            <div className="h-3 w-20 animate-pulse rounded-sm bg-surface-container-high" />
+            <div className="h-14 w-full animate-pulse rounded-sm bg-surface-container-high" />
+          </div>
+          {/* Price field skeleton */}
+          <div className="space-y-xs">
+            <div className="h-3 w-12 animate-pulse rounded-sm bg-surface-container-high" />
+            <div className="h-9 w-full animate-pulse rounded-sm bg-surface-container-high" />
+          </div>
+          {/* Features section skeleton */}
+          <div className="space-y-xs">
+            <div className="h-3 w-16 animate-pulse rounded-sm bg-surface-container-high" />
+            <div className="h-36 w-full animate-pulse rounded-sm bg-surface-container-high" />
+          </div>
+          {/* Action buttons skeleton */}
+          <div className="flex justify-end gap-sm">
+            <div className="h-9 w-20 animate-pulse rounded-sm bg-surface-container-high" />
+            <div className="h-9 w-28 animate-pulse rounded-sm bg-surface-container-high" />
+          </div>
         </div>
       </Dialog>
     );
