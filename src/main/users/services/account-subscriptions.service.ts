@@ -4,7 +4,7 @@ import { AccountDTO, AccountSubscriptionDTO } from '@users/dto';
 import { SubscriptionsMapper } from '@users/mappers';
 import { SubscriptionsRepository } from '@users/repositories/account-subscriptions.repository';
 import { inject, injectable } from 'inversify';
-import { SubscritionStatusType } from '@prisma/client';
+import { SubscriptionStatusType } from '@prisma/client';
 
 @injectable()
 export class SubscriptionsService {
@@ -25,7 +25,7 @@ export class SubscriptionsService {
       .filter((sub): sub is AccountSubscriptionDTO & { account: AccountDTO } => sub !== null);
   }
 
-  public async create(accountId: string, planId: string, status: SubscritionStatusType = 'TRIALING'): Promise<AccountSubscriptionDTO> {
+  public async create(accountId: string, planId: string, status: SubscriptionStatusType = 'TRIALING'): Promise<AccountSubscriptionDTO> {
     this._log.debug('Request to create subscription', { accountId, planId, status });
 
     const periodStart = new Date();

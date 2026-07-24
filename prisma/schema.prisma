@@ -28,7 +28,7 @@ enum ProviderType {
 // -----------------------------------------------------------------------------
 // Enum for status subscription
 // -----------------------------------------------------------------------------
-enum SubscritionStatusType {
+enum SubscriptionStatusType {
   TRIALING
   ACTIVE
   PAST_DUE
@@ -215,7 +215,7 @@ model AccountSubscription {
   plan        Plan                  @relation("PlanSubscriptions", fields: [planId], references: [id])
   periodStart DateTime              @default(now()) @map("period_start")
   periodEnd   DateTime              @map("period_end")
-  status      SubscritionStatusType @default(TRIALING)
+  status      SubscriptionStatusType @default(TRIALING)
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
 }
