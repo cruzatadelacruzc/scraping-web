@@ -1,17 +1,30 @@
-# Task 1 Report: Extract shared/ui/code-editor/ module
+# Task 1 Report: Create ConditionMultiSelect component
 
 ## Status: DONE
 
-## Commits
-- `dae1c109c1e95c95933281e3261cefdb380e7c4c`
+## Files created
+1. **`apps/admin-web/src/features/plans/components/condition-multi-select.tsx`** — new component with:
+   - `ConditionMultiSelect` controlled component (Popover-based multi-select)
+   - `ALL_CONDITIONS` exported constant (6 item Prisma AlarmConditionType enum)
+   - Search filter with debounce-free live filtering
+   - "Select all" / "Clear all" shortcut buttons
+   - Removable chips below trigger showing selected conditions
+   - Click-outside detection via `mousedown` listener on `document`
+   - All four states handled: empty (no options), no selection (placeholder), selection (chips + count), filtered no results ("No conditions found")
+   - Full accessibility: `role="listbox"`, `aria-multiselectable`, `aria-selected`, `aria-expanded`, `aria-haspopup`, `aria-label` on icon buttons
 
-## Test Summary
-All checks pass: typecheck (tsc --noEmit), lint (0 errors, 0 warnings), and 6/6 vitest tests for the code-editor module.
+2. **`apps/admin-web/src/features/plans/index.ts`** — added barrel exports for `ConditionMultiSelect`, `ConditionMultiSelectProps` (type), and `ALL_CONDITIONS`
 
-## Self-review
-- All 6 files created exactly as specified in the task brief under `apps/admin-web/src/shared/ui/code-editor/`.
-- **editor-config.ts**: Removed unnecessary `as 'light' | 'dark'` type assertion per `@typescript-eslint/no-unnecessary-type-assertion`. The ternary expression already narrows the type correctly.
-- **editor-presets.ts**: Added `eslint-disable-next-line @typescript-eslint/no-unnecessary-condition` for the `if (!factory)` guard -- the check is always falsy for the current single-member union (`'json'`), but serves as a defensive guard for future preset additions.
-- **CodeEditor.tsx**: Extracted inline `style={{ fontSize: ... }}` object to a module-level constant `codeMirrorStyle` to satisfy `react-perf/jsx-no-new-object-as-prop`.
-- **__tests__/CodeEditor.test.tsx**: Mocks `@uiw/react-codemirror` (CodeMirror requires DOM APIs not available in jsdom). Covers 6 cases: renders with value, readOnly mode, editable mode, placeholder, onChange callback, and renders without error.
-- No files outside the code-editor directory were modified.
+## Design decisions
+- **No @radix-ui Popover dependency** — used a plain `div` with `absolute` positioning + `mousedown` click-outside detection, as specified in the brief
+- **Raw `<input type="checkbox">`** — consistent with the existing plan-form-dialog.tsx pattern (no shadcn/Checkbox exists in the project)
+- **`text-body-xs`** class used for chips and popover metadata text, matching the existing pattern in plans-table.tsx chips
+- **`text-body-sm`** for option labels and trigger, matching the form's existing typography
+
+## Verification
+- `npm run typecheck -w apps/admin-web` → PASS
+- `npm run lint -w apps/admin-web` → PASS (0 errors, 0 warnings)
+
+## Lint notes
+- Added `eslint-disable-next-line react-refresh/only-export-components` on the `ALL_CONDITIONS` export — intentional co-location per brief requirements (Task 2 reuse)
+- Cast `value.length` to `String()` in template literal to satisfy `@typescript-eslint/restrict-template-expressions` (project config disallows bare numbers in templates)

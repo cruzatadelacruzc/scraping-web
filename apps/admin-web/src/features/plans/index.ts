@@ -1,3 +1,5 @@
+export type { ConditionMultiSelectProps } from './components/condition-multi-select';
+export { ALL_CONDITIONS, ConditionMultiSelect } from './components/condition-multi-select';
 export type { PlanFormDialogMode } from './components/plan-form-dialog';
 export { PlanFormDialog } from './components/plan-form-dialog';
 export { PlanSubscribersDrawer } from './components/plan-subscribers-drawer';
