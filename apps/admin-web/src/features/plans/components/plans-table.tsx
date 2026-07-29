@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@shared/config/routes';
 import { AlertDialog } from '@shared/ui/alert-dialog';
 import type { DropdownMenuItem } from '@shared/ui/dropdown-menu';
 import { DropdownMenu } from '@shared/ui/dropdown-menu';
@@ -9,7 +11,6 @@ import { useDeletePlan } from '../hooks/useDeletePlan';
 import { useGetPlans } from '../hooks/useGetPlans';
 import type { PlanListViewModel } from '../view-models/plan-view-model';
 
-import { PlanFormDialog, type PlanFormDialogMode } from './plan-form-dialog';
 import { PlanSubscribersDrawer } from './plan-subscribers-drawer';
 import { PLAN_COLUMNS } from './plans-columns';
 
@@ -17,15 +18,10 @@ const PAGE_SIZE = 20;
 
 export function PlansTable(): JSX.Element {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-
-  // Dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<PlanFormDialogMode>('create');
-  const [dialogPlanId, setDialogPlanId] = useState<string | null>(null);
-  const [dialogSourcePlan, setDialogSourcePlan] = useState<PlanListViewModel | null>(null);
 
   // Drawer state
   const [drawerPlanId, setDrawerPlanId] = useState<string | null>(null);
@@ -55,33 +51,24 @@ export function PlansTable(): JSX.Element {
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
-  // Dialog openers
+  // Navigation to the full-page form
   const handleNewPlan = useCallback(() => {
-    setDialogMode('create');
-    setDialogPlanId(null);
-    setDialogSourcePlan(null);
-    setDialogOpen(true);
-  }, []);
+    navigate(`${ROUTES.PLANS}/new`);
+  }, [navigate]);
 
-  const handleEditPlan = useCallback((plan: PlanListViewModel) => {
-    setDialogMode('edit');
-    setDialogPlanId(plan.id);
-    setDialogSourcePlan(null);
-    setDialogOpen(true);
-  }, []);
+  const handleEditPlan = useCallback(
+    (plan: PlanListViewModel) => {
+      navigate(`${ROUTES.PLANS}/${encodeURIComponent(plan.id)}`);
+    },
+    [navigate],
+  );
 
-  const handleDuplicatePlan = useCallback((plan: PlanListViewModel) => {
-    setDialogMode('duplicate');
-    setDialogPlanId(null);
-    setDialogSourcePlan(plan);
-    setDialogOpen(true);
-  }, []);
-
-  const handleCloseDialog = useCallback(() => {
-    setDialogOpen(false);
-    setDialogPlanId(null);
-    setDialogSourcePlan(null);
-  }, []);
+  const handleDuplicatePlan = useCallback(
+    (plan: PlanListViewModel) => {
+      navigate(`${ROUTES.PLANS}/${encodeURIComponent(plan.id)}?duplicate=true`);
+    },
+    [navigate],
+  );
 
   // Drawer opener
   const handleSubscribersClick = useCallback((plan: PlanListViewModel) => {
@@ -307,15 +294,6 @@ export function PlansTable(): JSX.Element {
           </div>
         </div>
       </div>
-
-      {/* Form dialog */}
-      <PlanFormDialog
-        open={dialogOpen}
-        onClose={handleCloseDialog}
-        mode={dialogMode}
-        planId={dialogMode === 'edit' ? dialogPlanId : null}
-        sourcePlan={dialogMode === 'duplicate' ? dialogSourcePlan : null}
-      />
 
       {/* Subscribers drawer */}
       <PlanSubscribersDrawer
