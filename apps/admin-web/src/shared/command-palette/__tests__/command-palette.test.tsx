@@ -33,7 +33,6 @@ vi.mock('@shared/permissions', () => ({
     VIEW_DASHBOARD: 'dashboard:view',
     VIEW_ACCOUNTS: 'accounts:view',
     VIEW_USERS: 'users:view',
-    VIEW_ROLES: 'roles:view',
     VIEW_PRODUCTS: 'products:view',
     VIEW_SCRAPERS: 'scrapers:view',
     VIEW_RULES: 'rules:view',

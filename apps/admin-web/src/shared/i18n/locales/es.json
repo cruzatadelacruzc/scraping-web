@@ -18,7 +18,6 @@
     "accounts": "Cuentas",
     "plans": "Planes",
     "users": "Usuarios",
-    "roles": "Roles",
     "products": "Productos",
     "scrapers": "Scrapers",
     "rules": "Reglas",
@@ -354,45 +353,6 @@
         "started": "Inicio",
         "ends": "Fin"
       }
-    }
-  },
-  "roles": {
-    "table": {
-      "title": "Roles ({{count}})",
-      "caption": "Lista de roles",
-      "name": "Nombre del Rol",
-      "users": "Usuarios",
-      "actions": "Acciones"
-    },
-    "create": {
-      "button": "Nuevo Rol",
-      "placeholder": "Ingresa el nombre del rol",
-      "save": "Guardar",
-      "cancel": "Cancelar",
-      "success": "Rol creado exitosamente",
-      "error": "Error al crear el rol"
-    },
-    "cannotDeleteSelf": "No puedes eliminar un rol asignado a tu cuenta",
-    "delete": {
-      "label": "Eliminar {{role}}",
-      "title": "Eliminar rol?",
-      "description": "Estas seguro de eliminar el rol \"{{role}}\"? Esta accion no se puede deshacer.",
-      "confirm": "Eliminar permanentemente",
-      "cancel": "Cancelar",
-      "deleting": "Eliminando…",
-      "success": "Rol eliminado exitosamente",
-      "error": "Error al eliminar el rol"
-    },
-    "empty": {
-      "title": "No se encontraron roles",
-      "description": "Los roles definen los permisos de los usuarios. Crea tu primer rol para comenzar."
-    },
-    "error": {
-      "title": "Error al cargar roles",
-      "message": "Ocurrio un error al cargar los roles. Por favor intenta de nuevo."
-    },
-    "pagination": {
-      "info": "{{total}} total"
     }
   },
   "users": {

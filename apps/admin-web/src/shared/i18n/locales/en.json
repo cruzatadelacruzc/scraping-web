@@ -18,7 +18,6 @@
     "accounts": "Accounts",
     "plans": "Plans",
     "users": "Users",
-    "roles": "Roles",
     "products": "Products",
     "scrapers": "Scrapers",
     "rules": "Rules",
@@ -357,45 +356,6 @@
     },
     "pagination": {
       "info": "Page {{page}} of {{totalPages}} · {{total}} total"
-    }
-  },
-  "roles": {
-    "table": {
-      "title": "Roles ({{count}})",
-      "caption": "Roles list",
-      "name": "Role Name",
-      "users": "Users",
-      "actions": "Actions"
-    },
-    "create": {
-      "button": "New Role",
-      "placeholder": "Enter role name",
-      "save": "Save",
-      "cancel": "Cancel",
-      "success": "Role created successfully",
-      "error": "Failed to create role"
-    },
-    "cannotDeleteSelf": "Cannot delete a role assigned to your account",
-    "delete": {
-      "label": "Delete {{role}}",
-      "title": "Delete role?",
-      "description": "Are you sure you want to delete the role \"{{role}}\"? This action cannot be undone.",
-      "confirm": "Delete permanently",
-      "cancel": "Cancel",
-      "deleting": "Deleting…",
-      "success": "Role deleted successfully",
-      "error": "Failed to delete role"
-    },
-    "empty": {
-      "title": "No roles found",
-      "description": "Roles define what permissions users have. Create your first role to get started."
-    },
-    "error": {
-      "title": "Failed to load roles",
-      "message": "An error occurred while loading roles. Please try again."
-    },
-    "pagination": {
-      "info": "{{total}} total"
     }
   },
   "users": {
