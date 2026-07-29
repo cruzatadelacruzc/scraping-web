@@ -40,6 +40,9 @@ const QUEUES_PERMISSIONS: Permission[] = [Permission.VIEW_QUEUES];
 const PLANS_PERMISSIONS: Permission[] = [Permission.VIEW_PLANS];
 
 const PlansPage = lazy(() => import('@features/plans').then((m) => ({ default: m.PlansPage })));
+const PlanFormPage = lazy(() =>
+  import('@features/plans').then((m) => ({ default: m.PlanFormPage })),
+);
 const SETTINGS_PERMISSIONS: Permission[] = [Permission.VIEW_SETTINGS];
 
 const TOAST_OPTIONS = {
@@ -185,6 +188,16 @@ export function App(): JSX.Element {
                     <RequirePermission permissions={PLANS_PERMISSIONS}>
                       <Suspense fallback={<PageSkeleton />}>
                         <PlansPage />
+                      </Suspense>
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path={`${ROUTES.PLANS}/:id`}
+                  element={
+                    <RequirePermission permissions={PLANS_PERMISSIONS}>
+                      <Suspense fallback={<PageSkeleton />}>
+                        <PlanFormPage />
                       </Suspense>
                     </RequirePermission>
                   }

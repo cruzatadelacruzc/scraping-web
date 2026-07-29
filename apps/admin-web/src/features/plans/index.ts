@@ -1,10 +1,12 @@
 export type { ConditionMultiSelectProps } from './components/condition-multi-select';
 export { ALL_CONDITIONS, ConditionMultiSelect } from './components/condition-multi-select';
+export { PlanForm, type PlanFormMode } from './components/plan-form';
 export type { PlanFormDialogMode } from './components/plan-form-dialog';
 export { PlanFormDialog } from './components/plan-form-dialog';
 export { PlanSubscribersDrawer } from './components/plan-subscribers-drawer';
 export type { PlanColumn } from './components/plans-columns';
 export { PLAN_COLUMNS } from './components/plans-columns';
 export { PlansTable } from './components/plans-table';
+export { PlanFormPage } from './pages/plan-form-page';
 export { plansService } from './services/plans-service';
 export { PlansPage } from '@pages/plans-page';
