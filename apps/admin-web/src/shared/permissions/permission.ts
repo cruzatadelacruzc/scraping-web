@@ -19,6 +19,10 @@ export enum Permission {
   MANAGE_ROLES = 'roles:manage',
   VIEW_LOGS = 'logs:view',
   VIEW_SETTINGS = 'settings:view',
+  VIEW_PLANS = 'plans:view',
+  MANAGE_PLANS = 'plans:manage',
+  VIEW_SUBSCRIPTIONS = 'subscriptions:view',
+  MANAGE_SUBSCRIPTIONS = 'subscriptions:manage',
 }
 
 /** Maps each RoleType to the set of atomic permissions it grants. */

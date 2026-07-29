@@ -29,7 +29,9 @@ export function AccountsTable(): JSX.Element {
       setSearch(searchInput);
       setPage(1);
     }, 300);
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, [searchInput]);
 
   const { data, isLoading, isError, error, isFetching } = useGetAccounts({
@@ -135,7 +137,9 @@ export function AccountsTable(): JSX.Element {
         <input
           type="text"
           value={searchInput}
-          onChange={(e) => { setSearchInput(e.target.value); }}
+          onChange={(e) => {
+            setSearchInput(e.target.value);
+          }}
           placeholder={t('accounts.searchPlaceholder')}
           aria-label={t('accounts.searchPlaceholder')}
           className="w-full rounded-sm border border-outline-variant bg-surface py-2 pl-9 pr-3 text-body-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -161,9 +165,7 @@ export function AccountsTable(): JSX.Element {
 
       <div className="rounded-md border border-outline-variant">
         {/* Background refetch progress */}
-        {isFetching && (
-          <div className="h-0.5 w-full animate-pulse bg-primary/20" />
-        )}
+        {isFetching && <div className="h-0.5 w-full animate-pulse bg-primary/20" />}
 
         <div className="overflow-x-auto">
           <table className="w-full text-body-sm">
@@ -180,6 +182,7 @@ export function AccountsTable(): JSX.Element {
                   />
                 </th>
                 <th className="p-sm">{t('accounts.table.name')}</th>
+                <th className="p-sm">{t('accounts.table.plan')}</th>
                 <th className="p-sm">{t('accounts.table.users')}</th>
                 <th className="p-sm">{t('accounts.table.subscriptions')}</th>
                 <th className="p-sm">{t('accounts.table.alarms')}</th>
@@ -192,18 +195,51 @@ export function AccountsTable(): JSX.Element {
                 <tr
                   key={account.id}
                   className="cursor-pointer border-b border-outline-variant transition-colors hover:bg-surface-container-high"
-                  onClick={() => { setSelectedId(account.id); }}
+                  onClick={() => {
+                    setSelectedId(account.id);
+                  }}
                 >
-                  <td className="p-sm" onClick={(e) => { e.stopPropagation(); }}>
+                  <td
+                    className="p-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedIds.has(account.id)}
-                      onChange={() => { handleRowCheckbox(account.id); }}
+                      onChange={() => {
+                        handleRowCheckbox(account.id);
+                      }}
                       aria-label={`Select ${account.name}`}
                       className="h-4 w-4 rounded border-outline-variant bg-surface text-primary focus:ring-1 focus:ring-primary"
                     />
                   </td>
                   <td className="p-sm font-medium text-on-surface">{account.name}</td>
+                  <td className="p-sm">
+                    {account.planName ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-body-sm text-on-surface">{account.planName}</span>
+                        {account.subscriptionStatus && (
+                          <span
+                            className={`inline-block rounded-full px-1.5 py-0.5 text-label-xs font-medium ${
+                              account.subscriptionStatus === 'TRIALING'
+                                ? 'bg-blue-100 text-blue-800'
+                                : account.subscriptionStatus === 'ACTIVE'
+                                  ? 'bg-green-100 text-green-800'
+                                  : account.subscriptionStatus === 'PAST_DUE'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {account.subscriptionStatus}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-body-sm text-on-surface-variant">—</span>
+                    )}
+                  </td>
                   <td className="p-sm font-mono text-on-surface-variant">{account.userCount}</td>
                   <td className="p-sm font-mono text-on-surface-variant">
                     {account.subscriptionCount}
@@ -212,7 +248,12 @@ export function AccountsTable(): JSX.Element {
                   <td className="p-sm font-mono text-on-surface-variant">
                     {account.createdAt.toLocaleDateString()}
                   </td>
-                  <td className="p-sm" onClick={(e) => { e.stopPropagation(); }}>
+                  <td
+                    className="p-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
                     {currentUser?.accountId === account.id ? (
                       <button
                         disabled
@@ -224,7 +265,9 @@ export function AccountsTable(): JSX.Element {
                       </button>
                     ) : (
                       <button
-                        onClick={() => { setDeleteTarget(account.id); }}
+                        onClick={() => {
+                          setDeleteTarget(account.id);
+                        }}
                         className="rounded-sm p-1 text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-danger"
                         aria-label={t('accounts.delete.title')}
                       >
@@ -249,14 +292,18 @@ export function AccountsTable(): JSX.Element {
           </span>
           <div className="flex gap-xs">
             <button
-              onClick={() => { setPage((p) => Math.max(1, p - 1)); }}
+              onClick={() => {
+                setPage((p) => Math.max(1, p - 1));
+              }}
               disabled={page <= 1}
               className="rounded-sm px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:opacity-30"
             >
               {t('accounts.pagination.prev')}
             </button>
             <button
-              onClick={() => { setPage((p) => p + 1); }}
+              onClick={() => {
+                setPage((p) => p + 1);
+              }}
               disabled={page >= totalPages}
               className="rounded-sm px-sm py-xs text-body-sm text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:opacity-30"
             >

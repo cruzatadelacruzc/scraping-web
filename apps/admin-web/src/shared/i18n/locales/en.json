@@ -16,6 +16,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "accounts": "Accounts",
+    "plans": "Plans",
     "users": "Users",
     "roles": "Roles",
     "products": "Products",
@@ -208,6 +209,7 @@
     "searchPlaceholder": "Search accounts…",
     "table": {
       "name": "Name",
+      "plan": "Plan",
       "users": "Users",
       "subscriptions": "Subscriptions",
       "alarms": "Alarms",
@@ -249,6 +251,112 @@
       "subscriptions": "Subscriptions",
       "alarms": "Alarms",
       "created": "Created"
+    },
+    "subscription": {
+      "title": "Subscription",
+      "currentPlan": "Current Plan",
+      "status": "Status",
+      "period": "Period",
+      "remaining": "Remaining",
+      "daysLeft": "{{count}} days left",
+      "expiresSoon": "Expires soon",
+      "noActiveSubscription": "No active subscription",
+      "history": {
+        "label": "Subscription History",
+        "empty": "No previous subscriptions"
+      },
+      "assignPlan": "Assign Plan",
+      "changePlan": "Change Plan",
+      "cancel": {
+        "label": "Cancel Subscription",
+        "title": "Cancel subscription?",
+        "description": "The account will lose access to its plan features immediately.",
+        "confirm": "Cancel subscription",
+        "success": "Subscription cancelled",
+        "error": "Failed to cancel subscription"
+      },
+      "assign": {
+        "success": "Plan assigned successfully",
+        "error": "Failed to assign plan"
+      }
+    }
+  },
+  "plans": {
+    "title": "Plans",
+    "description": "Manage plan catalog — pricing, limits, and feature configuration.",
+    "searchPlaceholder": "Search plans…",
+    "table": {
+      "caption": "Plan catalog",
+      "name": "Plan",
+      "price": "Price",
+      "maxAlarms": "Max Alarms",
+      "conditions": "Conditions",
+      "channels": "Channels",
+      "ai": "AI",
+      "subscribers": "Subscribers",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "No plans found",
+      "description": "Create your first plan to define pricing tiers and feature limits."
+    },
+    "create": {
+      "button": "New Plan",
+      "title": "Create Plan",
+      "success": "Plan created",
+      "error": "Failed to create plan"
+    },
+    "edit": {
+      "title": "Edit Plan"
+    },
+    "current": "Current",
+    "duplicate": {
+      "title": "Duplicate Plan"
+    },
+    "form": {
+      "name": "Plan Name",
+      "namePlaceholder": "e.g. Pro",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description of this plan",
+      "price": "Price (USD)",
+      "features": {
+        "label": "Features",
+        "maxAlarms": "Maximum Alarms",
+        "unlimited": "Unlimited",
+        "allowedConditions": "Allowed Alarm Conditions",
+        "aiAlarms": "AI-Powered Alarms",
+        "notificationChannels": "Notification Channels"
+      },
+      "editor": {
+        "visual": "Visual",
+        "json": "JSON",
+        "jsonError": "Invalid JSON — fix errors to switch back to visual mode"
+      }
+    },
+    "delete": {
+      "title": "Delete plan?",
+      "description": "This will permanently delete the plan. Accounts currently subscribed to this plan will be affected.",
+      "confirm": "Delete permanently",
+      "success": "Plan deleted",
+      "error": "Failed to delete plan"
+    },
+    "update": {
+      "success": "Plan updated",
+      "error": "Failed to update plan"
+    },
+    "subscribers": {
+      "title": "Subscribers — {{planName}}",
+      "empty": "No accounts are subscribed to this plan",
+      "table": {
+        "account": "Account",
+        "users": "Users",
+        "status": "Status",
+        "started": "Started",
+        "ends": "Ends"
+      }
+    },
+    "pagination": {
+      "info": "Page {{page}} of {{totalPages}} · {{total}} total"
     }
   },
   "roles": {

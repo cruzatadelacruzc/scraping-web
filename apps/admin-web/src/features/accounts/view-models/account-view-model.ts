@@ -5,4 +5,6 @@ export interface AccountViewModel {
   subscriptionCount: number;
   alarmCount: number;
   createdAt: Date;
+  planName?: string;
+  subscriptionStatus?: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
 }

@@ -7,6 +7,7 @@ export const ROUTES = {
   ROLES: '/roles',
   PRODUCTS: '/products',
   PRODUCTS_STATS: '/products/stats',
+  PLANS: '/plans',
   PRODUCT_DETAIL: '/products/:id',
   SCRAPERS: '/scrapers',
   RULES: '/rules',
