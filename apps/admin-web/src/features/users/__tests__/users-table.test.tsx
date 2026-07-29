@@ -330,4 +330,38 @@ describe('UsersTable', () => {
       expect(mockDelete).toHaveBeenCalledWith('1');
     });
   });
+
+  it('offers only active unassigned roles in the assign dropdown', async () => {
+    mockRolesList.mockResolvedValue({
+      data: {
+        roles: [
+          { id: 'role-2', name: 'MEMBER', accountId: null, deletedAt: null, userCount: 1 },
+          {
+            id: 'role-3',
+            name: 'AUDITOR',
+            accountId: null,
+            deletedAt: '2026-07-01T00:00:00.000Z',
+            userCount: 0,
+          },
+        ],
+      },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+    renderWithProviders(<UsersTable />);
+    await waitForData();
+
+    fireEvent.click(screen.getByText('User One'));
+    await waitFor(() => {
+      expect(screen.getByText('users.detailTitle')).toBeInTheDocument();
+    });
+
+    // Wait for drawer data to load and role select to become available
+    const select = await screen.findByLabelText('users.selectRole', {}, { timeout: 2000 });
+    const optionTexts = Array.from(select.querySelectorAll('option')).map((o) => o.textContent);
+    expect(optionTexts).toContain('MEMBER');
+    expect(optionTexts).not.toContain('AUDITOR');
+  });
 });

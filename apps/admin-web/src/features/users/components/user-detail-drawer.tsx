@@ -66,8 +66,8 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
     }
   }
 
-  // Roles that are not assigned to this user (filter out duplicates)
-  const availableRoles = roles?.filter((r) => !data?.roles.includes(r.name)) ?? [];
+  // Active roles not yet assigned to this user (backend rejects inactive roles with 409)
+  const availableRoles = roles?.filter((r) => r.active && !data?.roles.includes(r.name)) ?? [];
 
   return (
     <>
