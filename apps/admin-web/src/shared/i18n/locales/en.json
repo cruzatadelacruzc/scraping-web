@@ -561,5 +561,23 @@
     "enable": "Enable",
     "disable": "Disable",
     "toggled": "Rule toggled"
+  },
+  "roles": {
+    "manageButton": "Manage roles",
+    "dialogTitle": "Manage roles",
+    "active": "Active",
+    "inactive": "Inactive",
+    "userCount": "{{count}} users",
+    "protected": "Protected system role",
+    "toggleOn": "Activate {{role}}",
+    "toggleOff": "Deactivate {{role}}",
+    "deactivateTitle": "Deactivate role?",
+    "deactivateDescription": "Deactivating \"{{role}}\" will block new assignments of this role. Users who already have it keep it. You can reactivate it at any time.",
+    "deactivateConfirm": "Deactivate",
+    "cancel": "Cancel",
+    "toggleSuccess": "Role updated",
+    "toggleError": "Failed to update role",
+    "loadError": "Failed to load roles",
+    "retry": "Retry"
   }
 }

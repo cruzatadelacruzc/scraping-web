@@ -558,5 +558,23 @@
     "enable": "Activar",
     "disable": "Desactivar",
     "toggled": "Regla alternada"
+  },
+  "roles": {
+    "manageButton": "Gestionar roles",
+    "dialogTitle": "Gestionar roles",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "userCount": "{{count}} usuarios",
+    "protected": "Rol de sistema protegido",
+    "toggleOn": "Activar {{role}}",
+    "toggleOff": "Desactivar {{role}}",
+    "deactivateTitle": "¿Desactivar rol?",
+    "deactivateDescription": "Desactivar \"{{role}}\" bloqueará nuevas asignaciones de este rol. Los usuarios que ya lo tienen lo conservan. Puedes reactivarlo en cualquier momento.",
+    "deactivateConfirm": "Desactivar",
+    "cancel": "Cancelar",
+    "toggleSuccess": "Rol actualizado",
+    "toggleError": "Error al actualizar el rol",
+    "loadError": "Error al cargar los roles",
+    "retry": "Reintentar"
   }
 }
