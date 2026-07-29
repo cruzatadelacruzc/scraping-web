@@ -47,7 +47,9 @@ export default defineConfig(({ mode }) => {
           ],
         },
         devOptions: {
-          enabled: true,
+          // Disable the PWA dev service worker when MSW is active — two SWs
+          // competing for control makes API mocking flaky in dev.
+          enabled: env.VITE_MSW_ENABLED !== 'true',
         },
       }),
     ],

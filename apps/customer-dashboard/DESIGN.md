@@ -165,4 +165,43 @@ Avoid pill-shaped elements (except for specific toggle switches) to maintain the
 - **Dashboard Cards:** High-density headers. Headers should have a bottom border of `1px solid #262626` and a height of exactly `40px` to align perfectly with the sidebar items.
 - **Status Chips:** Small, condensed labels with a low-opacity background of the semantic color and a high-opacity text/icon of the same color (e.g., Emerald text on 10% Emerald background).
 - **Data Tables:** No vertical borders. Horizontal borders only (`1px solid #1A1A1A`). Rows use a subtle hover state highlight (`#171717`). Use Geist Mono for numerical columns.
+
+---
+
+## Phase 1 — Auth & Landing (built surfaces)
+
+> Documented after implementation (impeccable-first). These patterns extend the brand book above; where they differ, they win for these surfaces.
+
+### Design tokens (implementation)
+
+Tokens are Material-named CSS variables in `src/styles/theme.css` (dark `:root`, light `[data-theme="light"]`), registered in the Tailwind v4 `@theme` in `src/styles/globals.css`. The shadcn form kit expects shadcn-named tokens, so `globals.css` also **aliases** them to Material tokens (do not remove — the kit renders unstyled without these):
+
+| shadcn token | → Material token | Use |
+|---|---|---|
+| `primary` / `primary-foreground` | `#FFFFFF` / `on-primary` | Solid white primary buttons |
+| `background` / `foreground` | `surface` / `on-surface` | Base surfaces/text |
+| `muted-foreground` | `on-surface-variant` | Secondary text |
+| `border` / `input` | `outline-variant` | Fine borders |
+| `ring` | `secondary` (Geist Blue) | Focus rings |
+| `destructive` | `error` | Errors |
+| `accent` / `popover` | `surface-container-high` | Hover/overlay surfaces |
+
+Emerald (`--color-success` `#10b981`) is the **data-signal** color: price drops (−% chips = emerald text on ~15% emerald), sparklines, the live "updated" dot, and the #1 leaderboard highlight.
+
+### The Living Front Door (pre-auth landing)
+
+Zero-scroll, viewport-locked on desktop; reflows on mobile. Three zones:
+1. **Left preview tray** — slim icon rail (desktop) / bottom tab bar (mobile) of the app's sections, each with a **lock badge** (guest tease, not access; click → sign up).
+2. **Center "doodle"** — a rotating teaser (`Top 5 bajadas` / `Más vendidos` / `En observación`) fed by the public `GET /api/public/highlights`. The **leaderboard is the hero**: rank (mono), product, −% emerald chip, strikethrough old → emerald new price, inline SVG sparkline, plus a faint inline emerald magnitude bar (width = drop %). Auto-rotates with slide dots. Vertically centered.
+3. **Value bridge** — one-line value prop + primary CTA (`Crea tu alarma gratis`).
+
+`Entrar` / `Regístrate` (top-right) open auth in a **modal over the landing** (routes `/login`, `/register`). Forgot/reset/verify are focused routes (email deep-links). After login → `/dashboard`.
+
+### Conventions
+
+- **Loading = shape-matched `Skeleton`** (`src/shared/ui/skeleton.tsx`), never spinners or "Loading…" text.
+- **Forms** = React Hook Form + Zod + the shadcn form kit; validation messages are **i18n keys** translated at render by `FormMessage`.
+- **Feedback** = `sonner` toasts on mutations (success + error); never toast field validation (inline via `FormMessage`).
+- **i18n** = every string via `t()` (`react-i18next`, EN + ES, browser-detected, Spanish fallback). A compact `LanguageSwitcher` sits in the landing header, the auth shell, and the app sidebar.
+- **Auth tokens are in-memory only** (Zustand, non-persisted) — reload is unauthenticated by design until the backend issues an httpOnly refresh cookie.
 - **Metric Cards:** Large technical-weight numbers (Geist Mono) with a small trend indicator (Arrow + Percentage) positioned in the top right.

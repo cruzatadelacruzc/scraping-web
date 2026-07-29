@@ -1,0 +1,32 @@
+{
+  "title": "Account security",
+  "subtitle": "Manage your password, email and sign-in methods.",
+  "changePassword": {
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm password",
+    "submit": "Update password",
+    "success": "Password updated"
+  },
+  "changeEmail": {
+    "title": "Change email",
+    "new": "New email",
+    "password": "Password",
+    "submit": "Update email",
+    "success": "Check your new email to verify it"
+  },
+  "verification": {
+    "title": "Email verification",
+    "verified": "Email verified",
+    "unverified": "Your email is not verified yet",
+    "resend": "Resend verification",
+    "resent": "Verification link resent"
+  },
+  "providers": {
+    "title": "Linked providers",
+    "unlink": "Unlink",
+    "linkSoon": "Link (coming soon)",
+    "none": "No linked providers"
+  }
+}

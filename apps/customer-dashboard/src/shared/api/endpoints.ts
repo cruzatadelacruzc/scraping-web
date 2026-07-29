@@ -15,6 +15,12 @@ export const ENDPOINTS = {
     REACTIVATE: '/api/auth/reactivate',
     LINK_PROVIDER: '/api/auth/link-provider',
   },
+  ACCOUNTS: {
+    CREATE: '/api/accounts',
+  },
+  PUBLIC: {
+    HIGHLIGHTS: '/api/public/highlights',
+  },
   ALARMS: {
     LIST: '/api/alarms',
     CREATE: '/api/alarms',

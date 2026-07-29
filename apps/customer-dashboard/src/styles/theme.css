@@ -63,7 +63,7 @@
   --spacing-sidebar-collapsed: 64px;
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   /* Light theme - inverted from dark for consistency */
   --color-surface: #fafafa;
   --color-surface-dim: #f4f4f5;
@@ -182,7 +182,7 @@
     border: 1px solid #262626;
   }
 
-  [data-theme="light"] .bg-card {
+  [data-theme='light'] .bg-card {
     background-color: #ffffff;
     border: 1px solid #e4e4e7;
   }

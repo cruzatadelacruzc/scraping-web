@@ -1,2 +1,2 @@
 export { server } from './server';
-export { handlers } from './handlers';
+export { handlers } from '@/shared/mocking/handlers';

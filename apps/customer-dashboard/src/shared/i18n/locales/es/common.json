@@ -1,0 +1,39 @@
+{
+  "appName": "BazaarSentinel",
+  "actions": {
+    "enter": "Entrar",
+    "register": "Regístrate",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "retry": "Reintentar",
+    "close": "Cerrar",
+    "back": "Volver"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "alarms": "Alarmas",
+    "notifications": "Notificaciones",
+    "bots": "Bots",
+    "account": "Cuenta",
+    "profile": "Perfil"
+  },
+  "language": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "states": {
+    "loading": "Cargando…",
+    "empty": "Sin datos",
+    "error": "Algo salió mal"
+  },
+  "validation": {
+    "email": "Correo electrónico no válido",
+    "required": "Este campo es obligatorio",
+    "min8": "Debe tener al menos 8 caracteres",
+    "passwordStrength": "Debe incluir mayúscula, minúscula y número",
+    "passwordsNoMatch": "Las contraseñas no coinciden",
+    "username": "3-30 caracteres: minúsculas, números, guion y guion bajo",
+    "tokenInvalid": "El enlace no es válido o expiró"
+  }
+}

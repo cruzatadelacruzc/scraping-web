@@ -1,17 +1,19 @@
-import { AuthCard } from '../components/AuthCard';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ForgotPasswordForm } from '../components/ForgotPasswordForm';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation('auth');
   return (
-    <AuthCard title="Recuperar contraseña" description="Te enviaremos un enlace de recuperación">
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input type="email" placeholder="tu@email.com" className="w-full px-3 py-2 rounded-md border bg-surface-container" />
-        </div>
-        <button className="w-full py-2 rounded-md bg-primary text-on-primary font-medium hover:opacity-90">
-          Enviar enlace
-        </button>
-      </form>
-    </AuthCard>
+    <div className="space-y-5">
+      <h1 className="text-lg font-semibold text-on-surface">{t('forgot.title')}</h1>
+      <ForgotPasswordForm />
+      <Link
+        to="/login"
+        className="block text-center text-sm text-on-surface-variant transition-colors hover:text-on-surface"
+      >
+        {t('forgot.backToLogin')}
+      </Link>
+    </div>
   );
 }
