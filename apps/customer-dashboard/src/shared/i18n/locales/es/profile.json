@@ -1,0 +1,32 @@
+{
+  "title": "Seguridad de la cuenta",
+  "subtitle": "Gestiona tu contraseña, correo y accesos.",
+  "changePassword": {
+    "title": "Cambiar contraseña",
+    "current": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar contraseña",
+    "submit": "Actualizar contraseña",
+    "success": "Contraseña actualizada"
+  },
+  "changeEmail": {
+    "title": "Cambiar correo",
+    "new": "Nuevo correo",
+    "password": "Contraseña",
+    "submit": "Actualizar correo",
+    "success": "Revisa tu nuevo correo para verificarlo"
+  },
+  "verification": {
+    "title": "Verificación de correo",
+    "verified": "Correo verificado",
+    "unverified": "Tu correo aún no está verificado",
+    "resend": "Reenviar verificación",
+    "resent": "Enlace de verificación reenviado"
+  },
+  "providers": {
+    "title": "Proveedores vinculados",
+    "unlink": "Desvincular",
+    "linkSoon": "Vincular (próximamente)",
+    "none": "Sin proveedores vinculados"
+  }
+}

@@ -1,21 +1,21 @@
-import { AuthCard } from '../components/AuthCard';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ResetPasswordForm } from '../components/ResetPasswordForm';
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation('auth');
+  const { token } = useParams();
+  const [searchParams] = useSearchParams();
+  const resolvedToken = token ?? searchParams.get('token') ?? '';
+
   return (
-    <AuthCard title="Nueva contraseña" description="Establece tu nueva contraseña">
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <label className="block text-sm font-medium mb-1">Nueva contraseña</label>
-          <input type="password" placeholder="••••••••" className="w-full px-3 py-2 rounded-md border bg-surface-container" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Confirmar contraseña</label>
-          <input type="password" placeholder="••••••••" className="w-full px-3 py-2 rounded-md border bg-surface-container" />
-        </div>
-        <button className="w-full py-2 rounded-md bg-primary text-on-primary font-medium hover:opacity-90">
-          Guardar
-        </button>
-      </form>
-    </AuthCard>
+    <div className="space-y-5">
+      <h1 className="text-lg font-semibold text-on-surface">{t('reset.title')}</h1>
+      {resolvedToken ? (
+        <ResetPasswordForm token={resolvedToken} />
+      ) : (
+        <p className="text-sm text-destructive">{t('reset.invalidToken')}</p>
+      )}
+    </div>
   );
 }

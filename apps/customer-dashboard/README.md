@@ -104,7 +104,7 @@ src/
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | **Phase 0** | Infraestructura: Vite, PWA, rutas, placeholders | ✅ Completada |
-| **Phase 1** | Auth real: login, register, forgot/reset, verify | 🔄 En progreso |
+| **Phase 1** | Auth real + landing: login, register, forgot/reset, verify, self-management | ✅ Completada |
 | **Phase 2** | Alarmas: CRUD, filtros, detalle | Pendiente |
 | **Phase 3** | Notificaciones: lista, push, realtime | Pendiente |
 | **Phase 4** | Bots: integración WhatsApp/Telegram | Pendiente |

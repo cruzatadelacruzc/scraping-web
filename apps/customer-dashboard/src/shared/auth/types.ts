@@ -1,12 +1,3 @@
-export interface AuthSession {
-  userId: string;
-  accountId: string;
-  roles: string[];
-  permissions: string[];
-  expiresAt: number;
-  accessToken: string;
-}
-
 export interface UserViewModel {
   id: string;
   accountId: string;
@@ -18,6 +9,18 @@ export interface UserViewModel {
   roles: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AuthSession {
+  userId: string;
+  accountId: string;
+  roles: string[];
+  permissions: string[];
+  /** Epoch ms when the access token expires (decoded from the JWT `exp`). */
+  expiresAt: number;
+  accessToken: string;
+  refreshToken: string;
+  user: UserViewModel;
 }
 
 export enum Permission {

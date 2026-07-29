@@ -1,36 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import App from './app/App';
 import { Providers } from './app/providers';
+import { queryClient } from '@/shared/api/query-client';
 import './styles/globals.css';
 
-if (import.meta.env.DEV) {
-  import('@/shared/mocking/browser');
-}
+async function bootstrap() {
+  // In dev, start the MSW worker (if enabled) and AWAIT it before rendering so
+  // the first API requests are intercepted.
+  if (import.meta.env.DEV) {
+    const { startMockWorker } = await import('@/shared/mocking/browser');
+    await startMockWorker();
+  }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-      retry: (failureCount, error) => {
-        if (error instanceof Error && error.message.includes('401')) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-    },
-    mutations: {
-      retry: false,
-    },
-  },
-});
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
+  ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <Providers>
@@ -49,3 +34,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       </QueryClientProvider>
     </React.StrictMode>
   );
+}
+
+void bootstrap();

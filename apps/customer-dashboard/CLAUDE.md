@@ -1,7 +1,7 @@
 # Customer Dashboard - React 19 + Vite + PWA
 
-> **Fase completada:** Phase 0 - Infraestructura (Vite, PWA, rutas, placeholders)  
-> **Fase en progreso:** Phase 1 - Auth real con MSW handlers
+> **Fase completada:** Phase 1 - Auth real + landing (login/register/forgot/reset/verify, self-management, i18n EN/ES, MSW real-contract)  
+> **Fase en progreso:** Phase 2 - Alarmas (CRUD, filtros, detalle)
 
 ## Stack
 

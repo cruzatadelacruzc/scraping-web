@@ -1,0 +1,13 @@
+{
+  "tagline": "We watch prices for you, and alert you the moment they drop.",
+  "cta": "Create your free alarm",
+  "teaser": {
+    "priceDrops": "Top 5 price drops",
+    "bestSellers": "Best sellers",
+    "watched": "On watch",
+    "updatedToday": "Updated · today",
+    "was": "Was",
+    "now": "Now"
+  },
+  "locked": "Sign in to access"
+}
