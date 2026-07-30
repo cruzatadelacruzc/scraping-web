@@ -10,7 +10,7 @@ export function useGetAccountSubscriptions(accountId: string | null) {
         throw new Error('useGetAccountSubscriptions called with null accountId');
       }
       const { data } = await accountSubscriptionsService.listByAccount(accountId);
-      return data;
+      return data.subscriptions;
     },
     enabled: accountId !== null,
     staleTime: 5 * 60 * 1000,

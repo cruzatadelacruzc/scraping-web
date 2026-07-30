@@ -101,7 +101,7 @@ describe('SubscriptionSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockListByAccount.mockResolvedValue({
-      data: [activeSubscription],
+      data: { subscriptions: [activeSubscription] },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -157,7 +157,7 @@ describe('SubscriptionSection', () => {
   describe('no active subscription', () => {
     it('renders empty state with Assign Plan button', async () => {
       mockListByAccount.mockResolvedValue({
-        data: [],
+        data: { subscriptions: [] },
         status: 200,
         statusText: 'OK',
         headers: {},
