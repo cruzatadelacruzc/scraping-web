@@ -109,7 +109,7 @@ Local State   → useState/useReducer (forms via React Hook Form, filters, dialo
 - Create (201) → invalidate list → refetch
 - Update (200) → invalidate list + detail. Toggle → optimistic update + rollback on error
 - Delete (204) → wait for 204 → invalidate. AlertDialog required. Never optimistic
-- Error toast on mutation failure → use `showRetryToast(error, onRetry)` (from `features/marketplace/hooks/mutation-toast.ts`) for a sticky toast with a Retry button that re-fires the mutation with the same variables — never a bare `toast.error()` that lacks a retry action
+- Error toast on mutation failure → use `showRetryToast(error, onRetry)` (from `@shared/ui/mutation-toast`) for a sticky toast with a Retry button that re-fires the mutation with the same variables — never a bare `toast.error()` that lacks a retry action
 - Background refetch → 2px progress bar, atomic replacement (never clear existing data)
 - Prefetch → detail on row hover (onMouseEnter)
 

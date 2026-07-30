@@ -1,11 +1,11 @@
 import { useRef } from 'react';
+import { showRetryToast } from '@shared/ui/mutation-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import type { UpdateScraperConfigPayload } from '../services/revolico-service';
 import { revolicoService } from '../services/revolico-service';
 
-import { showRetryToast } from './mutation-toast';
 import { marketplaceKeys } from './query-keys';
 
 /**
