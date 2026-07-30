@@ -27,11 +27,12 @@ vi.mock('sonner', () => ({
 }));
 
 // Hoisted mock variables
-const { mockList, mockGetById, mockDelete, mockRolesList } = vi.hoisted(() => ({
+const { mockList, mockGetById, mockDelete, mockRolesList, mockRemoveRole } = vi.hoisted(() => ({
   mockList: vi.fn(),
   mockGetById: vi.fn(),
   mockDelete: vi.fn(),
   mockRolesList: vi.fn(),
+  mockRemoveRole: vi.fn(),
 }));
 
 // Mock the service layer
@@ -66,7 +67,8 @@ vi.mock('../services/users-service', () => ({
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     getRoles: (...args: unknown[]) => mockRolesList(...args),
     assignRole: vi.fn(),
-    removeRole: vi.fn(),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    removeRole: (...args: unknown[]) => mockRemoveRole(...args),
   },
 }));
 
@@ -378,5 +380,96 @@ describe('UsersTable', () => {
 
     fireEvent.click(screen.getByText('roles.manageButton'));
     expect(await screen.findByText('roles.dialogTitle')).toBeInTheDocument();
+  });
+
+  // ============ Role removal ============
+
+  it('asks for confirmation before removing a role and mutates on confirm', async () => {
+    mockRolesList.mockResolvedValue({
+      data: {
+        roles: [
+          { id: 'role-1', name: 'ACCOUNT_OWNER', accountId: null, deletedAt: null, userCount: 1 },
+        ],
+      },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+    mockRemoveRole.mockResolvedValue({
+      data: {},
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+    renderWithProviders(<UsersTable />);
+    await waitForData();
+
+    fireEvent.click(screen.getByText('User One'));
+    await screen.findByText('users.detailTitle');
+
+    // findByLabelText (not getByLabelText): the drawer title renders unconditionally
+    // (visibility is CSS/aria-hidden driven, not conditional mount), so it resolves
+    // before the user/roles queries settle — the remove button needs a poll, not a
+    // synchronous lookup, to wait for `data` to arrive.
+    fireEvent.click(await screen.findByLabelText('users.removeRole'));
+    expect(mockRemoveRole).not.toHaveBeenCalled();
+    expect(screen.getByText('users.removeRoleTitle')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('users.removeRoleConfirm'));
+    await waitFor(() => {
+      expect(mockRemoveRole).toHaveBeenCalledWith('1', 'role-1');
+    });
+  });
+
+  it('blocks removing your own SUPER_ADMIN role', async () => {
+    const selfSuperAdmin = {
+      id: 'user-1',
+      email: 'admin@test.dev',
+      username: 'admin',
+      displayName: 'Admin Self',
+      roles: [{ id: 'role-sa', name: 'SUPER_ADMIN' }],
+      emailVerified: true,
+      createdAt: '2025-01-01T00:00:00.000Z',
+    };
+    mockList.mockResolvedValue({
+      data: { users: [selfSuperAdmin], total: 1 },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+    mockGetById.mockResolvedValue({
+      data: selfSuperAdmin,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+    mockRolesList.mockResolvedValue({
+      data: {
+        roles: [
+          { id: 'role-sa', name: 'SUPER_ADMIN', accountId: null, deletedAt: null, userCount: 1 },
+        ],
+      },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    });
+    renderWithProviders(<UsersTable />);
+    await screen.findByText('Admin Self');
+
+    fireEvent.click(screen.getByText('Admin Self'));
+    await screen.findByText('users.detailTitle');
+
+    // findByLabelText: see comment in the previous test — poll until the drawer's
+    // data has loaded and the guarded remove button is rendered.
+    const removeButton = await screen.findByLabelText('users.cannotRemoveOwnSuperAdmin');
+    expect(removeButton).toBeDisabled();
+    fireEvent.click(removeButton);
+    expect(screen.queryByText('users.removeRoleTitle')).not.toBeInTheDocument();
+    expect(mockRemoveRole).not.toHaveBeenCalled();
   });
 });

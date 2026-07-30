@@ -388,7 +388,12 @@
     "assignRoleSuccess": "Rol asignado exitosamente",
     "assignRoleError": "Error al asignar el rol",
     "removeRoleSuccess": "Rol removido exitosamente",
-    "removeRoleError": "Error al remover el rol"
+    "removeRoleError": "Error al remover el rol",
+    "removeRoleTitle": "¿Quitar rol?",
+    "removeRoleDescription": "¿Quitar el rol \"{{role}}\" de este usuario? Perderá inmediatamente los permisos que otorga.",
+    "removeRoleConfirm": "Quitar",
+    "removeRoleCancel": "Cancelar",
+    "cannotRemoveOwnSuperAdmin": "No puedes quitarte tu propio rol SUPER_ADMIN"
   },
   "products": {
     "searchPlaceholder": "Buscar productos…",

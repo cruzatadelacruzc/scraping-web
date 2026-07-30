@@ -29,6 +29,9 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
 
   const [selectedRoleId, setSelectedRoleId] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<{ roleId: string; roleName: string } | null>(
+    null,
+  );
 
   const handleAssignRole = useCallback(() => {
     if (!selectedRoleId || !userId) return;
@@ -36,13 +39,25 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
     setSelectedRoleId('');
   }, [selectedRoleId, userId, assignRole]);
 
-  const handleRemoveRole = useCallback(
-    (roleId: string) => {
-      if (!userId) return;
-      removeRole.mutate({ userId, roleId });
-    },
-    [userId, removeRole],
-  );
+  const handleRequestRemoveRole = useCallback((roleId: string, roleName: string) => {
+    setConfirmRemove({ roleId, roleName });
+  }, []);
+
+  const handleConfirmRemoveRole = useCallback(() => {
+    if (!userId || !confirmRemove) return;
+    removeRole.mutate(
+      { userId, roleId: confirmRemove.roleId },
+      {
+        onSuccess: () => {
+          setConfirmRemove(null);
+        },
+      },
+    );
+  }, [userId, confirmRemove, removeRole]);
+
+  const handleCancelRemoveRole = useCallback(() => {
+    setConfirmRemove(null);
+  }, []);
 
   const handleDeleteConfirm = useCallback(() => {
     if (!userId) return;
@@ -153,17 +168,31 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
                           className="inline-flex items-center gap-xs rounded-sm bg-primary/10 px-xs py-0.5 text-label-xs font-mono text-primary"
                         >
                           {roleName}
-                          {roleId && (
-                            <button
-                              onClick={() => {
-                                handleRemoveRole(roleId);
-                              }}
-                              className="rounded-sm p-[1px] text-primary/60 hover:bg-primary/20 hover:text-primary"
-                              aria-label={t('users.removeRole', { role: roleName })}
-                            >
-                              <X size={12} />
-                            </button>
-                          )}
+                          {roleId &&
+                            (() => {
+                              const isOwnSuperAdmin = isSelf && roleName === 'SUPER_ADMIN';
+                              return (
+                                <button
+                                  onClick={() => {
+                                    handleRequestRemoveRole(roleId, roleName);
+                                  }}
+                                  disabled={isOwnSuperAdmin}
+                                  title={
+                                    isOwnSuperAdmin
+                                      ? t('users.cannotRemoveOwnSuperAdmin')
+                                      : undefined
+                                  }
+                                  className="rounded-sm p-[1px] text-primary/60 hover:bg-primary/20 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                                  aria-label={
+                                    isOwnSuperAdmin
+                                      ? t('users.cannotRemoveOwnSuperAdmin')
+                                      : t('users.removeRole', { role: roleName })
+                                  }
+                                >
+                                  <X size={12} />
+                                </button>
+                              );
+                            })()}
                         </span>
                       );
                     })}
@@ -233,6 +262,19 @@ export function UserDetailDrawer({ userId, onClose }: Props): JSX.Element {
         isLoading={deleteUser.isPending}
         onConfirm={handleDeleteConfirm}
         onCancel={handleCancelDelete}
+      />
+
+      {/* Role removal confirmation (rule 5.1: destructive actions need AlertDialog) */}
+      <AlertDialog
+        open={confirmRemove !== null}
+        title={t('users.removeRoleTitle')}
+        description={t('users.removeRoleDescription', { role: confirmRemove?.roleName ?? '' })}
+        confirmLabel={t('users.removeRoleConfirm')}
+        cancelLabel={t('users.removeRoleCancel')}
+        destructive
+        isLoading={removeRole.isPending}
+        onConfirm={handleConfirmRemoveRole}
+        onCancel={handleCancelRemoveRole}
       />
     </>
   );

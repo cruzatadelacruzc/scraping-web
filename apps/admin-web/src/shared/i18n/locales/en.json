@@ -391,7 +391,12 @@
     "assignRoleSuccess": "Role assigned successfully",
     "assignRoleError": "Failed to assign role",
     "removeRoleSuccess": "Role removed successfully",
-    "removeRoleError": "Failed to remove role"
+    "removeRoleError": "Failed to remove role",
+    "removeRoleTitle": "Remove role?",
+    "removeRoleDescription": "Remove the role \"{{role}}\" from this user? They will lose the permissions it grants immediately.",
+    "removeRoleConfirm": "Remove",
+    "removeRoleCancel": "Cancel",
+    "cannotRemoveOwnSuperAdmin": "You cannot remove your own SUPER_ADMIN role"
   },
   "products": {
     "searchPlaceholder": "Search products…",
