@@ -14,6 +14,7 @@ export function useRemoveRole() {
       usersService.removeRole(userId, roleId),
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.userId) });
+      await queryClient.invalidateQueries({ queryKey: userKeys.roles });
       toast.success(i18n.t('users.removeRoleSuccess'));
     },
     onError: () => {
