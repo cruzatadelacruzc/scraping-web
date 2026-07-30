@@ -18,12 +18,13 @@ export interface UserListResponse {
 export interface RoleDTO {
   id: string;
   name: string;
-  _count: { users: number };
+  accountId: string | null;
+  deletedAt: string | null;
+  userCount?: number;
 }
 
 export interface RoleListResponse {
   roles: RoleDTO[];
-  total: number;
 }
 
 export const usersService = {
@@ -47,11 +48,15 @@ export const usersService = {
     return apiClient.get<RoleListResponse>('/admin/roles');
   },
 
+  toggleRole(roleId: string) {
+    return apiClient.patch<{ role: RoleDTO }>(`/admin/roles/${roleId}/toggle`);
+  },
+
   assignRole(userId: string, roleId: string) {
-    return apiClient.post(`/users/${userId}/roles/${roleId}`);
+    return apiClient.post(`/admin/users/${userId}/roles/${roleId}`);
   },
 
   removeRole(userId: string, roleId: string) {
-    return apiClient.delete(`/users/${userId}/roles/${roleId}`);
+    return apiClient.delete(`/admin/users/${userId}/roles/${roleId}`);
   },
 };

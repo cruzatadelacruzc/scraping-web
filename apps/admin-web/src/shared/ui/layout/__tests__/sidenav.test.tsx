@@ -48,7 +48,6 @@ describe('SideNav', () => {
     // Items the MEMBER lacks
     expect(screen.queryByText('nav.accounts')).not.toBeInTheDocument();
     expect(screen.queryByText('nav.users')).not.toBeInTheDocument();
-    expect(screen.queryByText('nav.roles')).not.toBeInTheDocument();
     expect(screen.queryByText('nav.products')).not.toBeInTheDocument();
     expect(screen.queryByText('nav.scrapers')).not.toBeInTheDocument();
     expect(screen.queryByText('nav.rules')).not.toBeInTheDocument();
@@ -75,7 +74,6 @@ describe('SideNav', () => {
     expect(screen.getByText('nav.dashboard')).toBeInTheDocument();
     expect(screen.getByText('nav.accounts')).toBeInTheDocument();
     expect(screen.getByText('nav.users')).toBeInTheDocument();
-    expect(screen.getByText('nav.roles')).toBeInTheDocument();
     expect(screen.getByText('nav.products')).toBeInTheDocument();
     expect(screen.getByText('nav.scrapers')).toBeInTheDocument();
     expect(screen.getByText('nav.rules')).toBeInTheDocument();

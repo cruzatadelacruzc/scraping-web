@@ -122,8 +122,7 @@ export function Dialog({
         aria-labelledby="dialog-title"
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md border border-outline-variant bg-surface p-lg shadow-lg focus-visible:outline-none"
-        style={{ maxWidth }}
+        className={`fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-full ${maxWidth} -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md border border-outline-variant bg-surface p-lg shadow-lg focus-visible:outline-none`}
       >
         <h2 id="dialog-title" className="text-lg font-semibold text-on-surface">
           {title}

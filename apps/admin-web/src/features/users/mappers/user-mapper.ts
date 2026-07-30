@@ -1,5 +1,5 @@
-import type { RoleDTO,UserDTO } from '../services/users-service';
-import type { RoleViewModel,UserViewModel } from '../view-models/user-view-model';
+import type { RoleDTO, UserDTO } from '../services/users-service';
+import type { RoleViewModel, UserViewModel } from '../view-models/user-view-model';
 
 export function mapUserDTOToViewModel(dto: UserDTO): UserViewModel {
   return {
@@ -17,6 +17,7 @@ export function mapRoleDTOToViewModel(dto: RoleDTO): RoleViewModel {
   return {
     id: dto.id,
     name: dto.name,
-    userCount: dto._count.users,
+    userCount: dto.userCount ?? 0,
+    active: dto.deletedAt === null,
   };
 }

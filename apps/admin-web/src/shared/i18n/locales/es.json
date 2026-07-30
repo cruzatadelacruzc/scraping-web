@@ -18,7 +18,6 @@
     "accounts": "Cuentas",
     "plans": "Planes",
     "users": "Usuarios",
-    "roles": "Roles",
     "products": "Productos",
     "scrapers": "Scrapers",
     "rules": "Reglas",
@@ -356,45 +355,6 @@
       }
     }
   },
-  "roles": {
-    "table": {
-      "title": "Roles ({{count}})",
-      "caption": "Lista de roles",
-      "name": "Nombre del Rol",
-      "users": "Usuarios",
-      "actions": "Acciones"
-    },
-    "create": {
-      "button": "Nuevo Rol",
-      "placeholder": "Ingresa el nombre del rol",
-      "save": "Guardar",
-      "cancel": "Cancelar",
-      "success": "Rol creado exitosamente",
-      "error": "Error al crear el rol"
-    },
-    "cannotDeleteSelf": "No puedes eliminar un rol asignado a tu cuenta",
-    "delete": {
-      "label": "Eliminar {{role}}",
-      "title": "Eliminar rol?",
-      "description": "Estas seguro de eliminar el rol \"{{role}}\"? Esta accion no se puede deshacer.",
-      "confirm": "Eliminar permanentemente",
-      "cancel": "Cancelar",
-      "deleting": "Eliminando…",
-      "success": "Rol eliminado exitosamente",
-      "error": "Error al eliminar el rol"
-    },
-    "empty": {
-      "title": "No se encontraron roles",
-      "description": "Los roles definen los permisos de los usuarios. Crea tu primer rol para comenzar."
-    },
-    "error": {
-      "title": "Error al cargar roles",
-      "message": "Ocurrio un error al cargar los roles. Por favor intenta de nuevo."
-    },
-    "pagination": {
-      "info": "{{total}} total"
-    }
-  },
   "users": {
     "searchPlaceholder": "Buscar por correo o usuario…",
     "noUsers": "No se encontraron usuarios",
@@ -428,7 +388,12 @@
     "assignRoleSuccess": "Rol asignado exitosamente",
     "assignRoleError": "Error al asignar el rol",
     "removeRoleSuccess": "Rol removido exitosamente",
-    "removeRoleError": "Error al remover el rol"
+    "removeRoleError": "Error al remover el rol",
+    "removeRoleTitle": "¿Quitar rol?",
+    "removeRoleDescription": "¿Quitar el rol \"{{role}}\" de este usuario? Perderá inmediatamente los permisos que otorga.",
+    "removeRoleConfirm": "Quitar",
+    "removeRoleCancel": "Cancelar",
+    "cannotRemoveOwnSuperAdmin": "No puedes quitarte tu propio rol SUPER_ADMIN"
   },
   "products": {
     "searchPlaceholder": "Buscar productos…",
@@ -598,5 +563,22 @@
     "enable": "Activar",
     "disable": "Desactivar",
     "toggled": "Regla alternada"
+  },
+  "roles": {
+    "manageButton": "Gestionar roles",
+    "dialogTitle": "Gestionar roles",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "userCount": "{{count}} usuarios",
+    "protected": "Rol de sistema protegido",
+    "toggleOn": "Activar {{role}}",
+    "toggleOff": "Desactivar {{role}}",
+    "deactivateTitle": "¿Desactivar rol?",
+    "deactivateDescription": "Desactivar \"{{role}}\" bloqueará nuevas asignaciones de este rol. Los usuarios que ya lo tienen lo conservan. Puedes reactivarlo en cualquier momento.",
+    "deactivateConfirm": "Desactivar",
+    "cancel": "Cancelar",
+    "toggleSuccess": "Rol actualizado",
+    "loadError": "Error al cargar los roles",
+    "retry": "Reintentar"
   }
 }

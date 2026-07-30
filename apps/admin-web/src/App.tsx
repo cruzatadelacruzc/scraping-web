@@ -8,7 +8,6 @@ import { ProductDetailPage } from '@pages/product-detail-page';
 import { ProductsPage } from '@pages/products-page';
 import { ProductsStatsPage } from '@pages/products-stats-page';
 import { QueuesPage } from '@pages/queues-page';
-import { RolesPage } from '@pages/roles-page';
 import { RulesPage } from '@pages/rules-page';
 import { ScrapersPage } from '@pages/scrapers-page';
 import { SettingsPage } from '@pages/settings-page';
@@ -32,7 +31,6 @@ import { Toaster } from 'sonner';
 const DASHBOARD_PERMISSIONS: Permission[] = [Permission.VIEW_DASHBOARD];
 const ACCOUNTS_PERMISSIONS: Permission[] = [Permission.VIEW_ACCOUNTS];
 const USERS_PERMISSIONS: Permission[] = [Permission.VIEW_USERS];
-const ROLES_PERMISSIONS: Permission[] = [Permission.VIEW_ROLES];
 const PRODUCTS_PERMISSIONS: Permission[] = [Permission.VIEW_PRODUCTS];
 const SCRAPERS_PERMISSIONS: Permission[] = [Permission.VIEW_SCRAPERS];
 const RULES_PERMISSIONS: Permission[] = [Permission.VIEW_RULES];
@@ -115,14 +113,6 @@ export function App(): JSX.Element {
                   element={
                     <RequirePermission permissions={USERS_PERMISSIONS}>
                       <UsersPage />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path={ROUTES.ROLES}
-                  element={
-                    <RequirePermission permissions={ROLES_PERMISSIONS}>
-                      <RolesPage />
                     </RequirePermission>
                   }
                 />

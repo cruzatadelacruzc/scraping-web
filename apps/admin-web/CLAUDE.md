@@ -70,7 +70,7 @@ features/<module>/
 
 Do NOT create empty subfolders. Add `hooks/`, `services/`, `mappers/`, `schemas/`, or `view-models/` only when the first file of that type exists.
 
-Existing modules (`auth`, `dashboard`, `accounts`, `users`, `roles`, `products`, `marketplace`) follow this structure — use them as reference when creating new features.
+Existing modules (`auth`, `dashboard`, `accounts`, `users`, `products`, `marketplace`) follow this structure — use them as reference when creating new features.
 
 ### Adding a New Feature Module
 
@@ -208,7 +208,6 @@ enum Permission {
   VIEW_RULES = 'rules:view',
   MANAGE_RULES = 'rules:manage',
   VIEW_QUEUES = 'queues:view',
-  VIEW_ROLES = 'roles:view',
   MANAGE_ROLES = 'roles:manage',
   VIEW_PLANS = 'plans:view',
   MANAGE_PLANS = 'plans:manage',

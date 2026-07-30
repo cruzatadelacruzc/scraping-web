@@ -1,7 +1,7 @@
 import { ROUTES } from '@shared/config/routes';
 import { Permission } from '@shared/permissions';
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, Bell, Cog, Database, Layers, Search, Shield, Tag, Users } from 'lucide-react';
+import { BarChart3, Bell, Cog, Database, Layers, Search, Tag, Users } from 'lucide-react';
 
 export interface NavItem {
   labelKey: string;
@@ -31,7 +31,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     permissions: [Permission.VIEW_PLANS],
   },
   { labelKey: 'nav.users', path: ROUTES.USERS, icon: Users, permissions: [Permission.VIEW_USERS] },
-  { labelKey: 'nav.roles', path: ROUTES.ROLES, icon: Shield, permissions: [Permission.VIEW_ROLES] },
   {
     labelKey: 'nav.products',
     path: ROUTES.PRODUCTS,

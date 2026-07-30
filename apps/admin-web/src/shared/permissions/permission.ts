@@ -15,7 +15,6 @@ export enum Permission {
   VIEW_RULES = 'rules:view',
   MANAGE_RULES = 'rules:manage',
   VIEW_QUEUES = 'queues:view',
-  VIEW_ROLES = 'roles:view',
   MANAGE_ROLES = 'roles:manage',
   VIEW_LOGS = 'logs:view',
   VIEW_SETTINGS = 'settings:view',
