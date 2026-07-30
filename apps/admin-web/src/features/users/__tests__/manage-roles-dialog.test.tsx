@@ -99,6 +99,13 @@ describe('ManageRolesDialog', () => {
     vi.restoreAllMocks();
   });
 
+  it('applies the maxWidth prop as a class on the dialog panel', async () => {
+    renderDialog();
+    await screen.findByText('SUPER_ADMIN');
+
+    expect(screen.getByRole('dialog')).toHaveClass('max-w-md');
+  });
+
   it('renders the three roles with status and user count', async () => {
     renderDialog();
 
