@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock i18n - return keys for predictable test matching
@@ -152,5 +153,68 @@ describe('ManageRolesDialog', () => {
     await waitFor(() => {
       expect(mockToggleRole).toHaveBeenCalledWith('r-member');
     });
+  });
+
+  it('shows the error state with a Retry button that refetches the roles', async () => {
+    mockGetRoles.mockRejectedValueOnce(new Error('boom'));
+    renderDialog();
+
+    expect(await screen.findByText('roles.loadError')).toBeInTheDocument();
+
+    // Retry refetches — the beforeEach mock resolves on the second call
+    fireEvent.click(screen.getByText('roles.retry'));
+    expect(await screen.findByText('SUPER_ADMIN')).toBeInTheDocument();
+    expect(mockGetRoles).toHaveBeenCalledTimes(2);
+  });
+
+  it('disables every switch while a toggle mutation is pending', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    mockToggleRole.mockReturnValue(new Promise(() => {}));
+    renderDialog();
+    await screen.findByText('MEMBER');
+
+    fireEvent.click(screen.getAllByRole('switch')[2]); // MEMBER — direct toggle, hangs
+
+    await waitFor(() => {
+      for (const sw of screen.getAllByRole('switch')) {
+        expect(sw).toBeDisabled();
+      }
+    });
+  });
+
+  it('keeps the confirmation dialog open with disabled buttons while deactivation is pending', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    mockToggleRole.mockReturnValue(new Promise(() => {}));
+    renderDialog();
+    await screen.findByText('ACCOUNT_OWNER');
+
+    fireEvent.click(screen.getAllByRole('switch')[1]); // ACCOUNT_OWNER — active → confirm
+    fireEvent.click(screen.getByText('roles.deactivateConfirm'));
+
+    // In-flight: dialog stays open, both buttons disabled (rule 5.3 in admin-web-ui.md)
+    await waitFor(() => {
+      expect(screen.getByText('roles.deactivateConfirm')).toBeDisabled();
+    });
+    expect(screen.getByText('roles.deactivateTitle')).toBeInTheDocument();
+    expect(screen.getByText('roles.cancel')).toBeDisabled();
+  });
+
+  it('toggles a role with the keyboard (Space on a focused switch)', async () => {
+    // Hang the mutation so no post-assertion state updates leak outside act()
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    mockToggleRole.mockReturnValue(new Promise(() => {}));
+    const user = userEvent.setup();
+    renderDialog();
+    await screen.findByText('MEMBER');
+
+    const memberSwitch = screen.getAllByRole('switch')[2];
+    memberSwitch.focus();
+    // act(): TanStack Query flushes the isPending update on a microtask
+    // that lands between user-event's internal awaits
+    await act(async () => {
+      await user.keyboard(' ');
+    });
+
+    expect(mockToggleRole).toHaveBeenCalledWith('r-member');
   });
 });

@@ -1,7 +1,7 @@
+import { showRetryToast } from '@shared/ui/mutation-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { showRetryToast } from '../../marketplace/hooks/mutation-toast';
 import { rulesService } from '../services/rules-service';
 
 import { ruleKeys } from './query-keys';

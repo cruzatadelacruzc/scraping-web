@@ -27,20 +27,23 @@ vi.mock('sonner', () => ({
 }));
 
 // Hoisted mock variables
-const { mockList, mockGetById, mockDelete, mockRolesList, mockRemoveRole } = vi.hoisted(() => ({
-  mockList: vi.fn(),
-  mockGetById: vi.fn(),
-  mockDelete: vi.fn(),
-  mockRolesList: vi.fn(),
-  mockRemoveRole: vi.fn(),
-}));
+const { mockList, mockGetById, mockDelete, mockRolesList, mockRemoveRole, mockSessionRoles } =
+  vi.hoisted(() => ({
+    mockList: vi.fn(),
+    mockGetById: vi.fn(),
+    mockDelete: vi.fn(),
+    mockRolesList: vi.fn(),
+    mockRemoveRole: vi.fn(),
+    // Mutable so individual tests can downgrade the session's roles
+    mockSessionRoles: { current: ['SUPER_ADMIN'] },
+  }));
 
 // Mock the service layer
 vi.mock('@shared/auth', () => ({
   useCurrentUser: () => ({
     userId: 'user-1',
     accountId: 'acc-1',
-    roles: ['SUPER_ADMIN'],
+    roles: mockSessionRoles.current,
     username: 'admin',
     email: 'admin@test.dev',
     expiresAt: Date.now() + 86400000,
@@ -118,6 +121,7 @@ async function waitForData() {
 describe('UsersTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSessionRoles.current = ['SUPER_ADMIN'];
     mockList.mockResolvedValue({
       data: mockListResponse,
       status: 200,
@@ -382,6 +386,16 @@ describe('UsersTable', () => {
     expect(await screen.findByText('roles.dialogTitle')).toBeInTheDocument();
   });
 
+  it('hides the manage-roles button when the user lacks MANAGE_ROLES', async () => {
+    mockSessionRoles.current = ['ACCOUNT_OWNER']; // no roles:manage permission
+    renderWithProviders(<UsersTable />);
+    await waitForData();
+
+    // The rest of the header still renders — only the roles button is gone
+    expect(screen.getByPlaceholderText('users.searchPlaceholder')).toBeInTheDocument();
+    expect(screen.queryByText('roles.manageButton')).not.toBeInTheDocument();
+  });
+
   // ============ Role removal ============
 
   it('asks for confirmation before removing a role and mutates on confirm', async () => {
@@ -484,6 +498,17 @@ describe('UsersTable', () => {
     expect(row).toHaveAttribute('tabindex', '0');
 
     fireEvent.keyDown(row as HTMLElement, { key: 'Enter' });
+    expect(await screen.findByText('users.detailTitle')).toBeInTheDocument();
+  });
+
+  it('opens the drawer with the keyboard (Space on a focused row)', async () => {
+    renderWithProviders(<UsersTable />);
+    await waitForData();
+
+    const row = screen.getByText('User One').closest('tr');
+    expect(row).not.toBeNull();
+
+    fireEvent.keyDown(row as HTMLElement, { key: ' ' });
     expect(await screen.findByText('users.detailTitle')).toBeInTheDocument();
   });
 });

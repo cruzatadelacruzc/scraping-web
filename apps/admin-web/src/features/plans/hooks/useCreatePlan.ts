@@ -1,9 +1,9 @@
 import { useRef } from 'react';
 import i18n from '@shared/i18n/i18n';
+import { showRetryToast } from '@shared/ui/mutation-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { showRetryToast } from '../../marketplace/hooks/mutation-toast';
 import type { PlanFormValues } from '../schemas/plan-schemas';
 import { plansService } from '../services/plans-service';
 

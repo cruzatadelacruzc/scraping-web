@@ -1,10 +1,10 @@
 import { useRef } from 'react';
+import { showRetryToast } from '@shared/ui/mutation-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { schedulesService } from '../services/schedules-service';
 import type { ScheduleListViewModel } from '../view-models/schedule-view-model';
 
-import { showRetryToast } from './mutation-toast';
 import { marketplaceKeys } from './query-keys';
 
 /**
