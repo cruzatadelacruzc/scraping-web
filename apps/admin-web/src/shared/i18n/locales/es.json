@@ -578,7 +578,6 @@
     "deactivateConfirm": "Desactivar",
     "cancel": "Cancelar",
     "toggleSuccess": "Rol actualizado",
-    "toggleError": "Error al actualizar el rol",
     "loadError": "Error al cargar los roles",
     "retry": "Reintentar"
   }

@@ -581,7 +581,6 @@
     "deactivateConfirm": "Deactivate",
     "cancel": "Cancel",
     "toggleSuccess": "Role updated",
-    "toggleError": "Failed to update role",
     "loadError": "Failed to load roles",
     "retry": "Retry"
   }
