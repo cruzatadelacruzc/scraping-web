@@ -48,6 +48,11 @@ vi.mock('@shared/auth', () => ({
   useLogin: () => vi.fn(),
   useLogout: () => vi.fn(),
   useAuthLoading: () => false,
+  RoleType: {
+    SUPER_ADMIN: 'SUPER_ADMIN',
+    ACCOUNT_OWNER: 'ACCOUNT_OWNER',
+    MEMBER: 'MEMBER',
+  },
 }));
 
 vi.mock('../services/users-service', () => ({
@@ -363,5 +368,15 @@ describe('UsersTable', () => {
     const optionTexts = Array.from(select.querySelectorAll('option')).map((o) => o.textContent);
     expect(optionTexts).toContain('MEMBER');
     expect(optionTexts).not.toContain('AUDITOR');
+  });
+
+  // ============ Manage Roles ============
+
+  it('shows the manage-roles button and opens the dialog', async () => {
+    renderWithProviders(<UsersTable />);
+    await waitForData();
+
+    fireEvent.click(screen.getByText('roles.manageButton'));
+    expect(await screen.findByText('roles.dialogTitle')).toBeInTheDocument();
   });
 });
