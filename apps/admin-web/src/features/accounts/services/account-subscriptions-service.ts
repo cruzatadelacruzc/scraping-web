@@ -16,12 +16,20 @@ export interface AssignSubscriptionDTO {
   planId: string;
 }
 
+export interface SubscriptionListResponseDTO {
+  subscriptions: SubscriptionDTO[];
+}
+
+export interface SubscriptionResponseDTO {
+  subscription: SubscriptionDTO;
+}
+
 export const accountSubscriptionsService = {
   listByAccount(accountId: string) {
-    return apiClient.get<SubscriptionDTO[]>(`/accounts/${accountId}/subscriptions`);
+    return apiClient.get<SubscriptionListResponseDTO>(`/accounts/${accountId}/subscriptions`);
   },
   assign(data: AssignSubscriptionDTO) {
-    return apiClient.post<SubscriptionDTO>('/subscriptions', data);
+    return apiClient.post<SubscriptionResponseDTO>('/subscriptions', data);
   },
   cancel(subscriptionId: string) {
     return apiClient.delete(`/subscriptions/${subscriptionId}`);
