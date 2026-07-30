@@ -472,4 +472,18 @@ describe('UsersTable', () => {
     expect(screen.queryByText('users.removeRoleTitle')).not.toBeInTheDocument();
     expect(mockRemoveRole).not.toHaveBeenCalled();
   });
+
+  // ============ Keyboard accessibility ============
+
+  it('opens the drawer with the keyboard (Enter on a focused row)', async () => {
+    renderWithProviders(<UsersTable />);
+    await waitForData();
+
+    const row = screen.getByText('User One').closest('tr');
+    expect(row).not.toBeNull();
+    expect(row).toHaveAttribute('tabindex', '0');
+
+    fireEvent.keyDown(row as HTMLElement, { key: 'Enter' });
+    expect(await screen.findByText('users.detailTitle')).toBeInTheDocument();
+  });
 });

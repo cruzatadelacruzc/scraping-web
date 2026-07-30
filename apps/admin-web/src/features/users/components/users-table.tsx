@@ -137,7 +137,14 @@ export function UsersTable(): JSX.Element {
               {data.items.map((user) => (
                 <tr
                   key={user.id}
-                  className="cursor-pointer border-b border-outline-variant transition-colors hover:bg-surface-container-high"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedId(user.id);
+                    }
+                  }}
+                  className="cursor-pointer border-b border-outline-variant transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
                   onClick={() => {
                     setSelectedId(user.id);
                   }}
