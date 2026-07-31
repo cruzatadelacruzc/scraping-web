@@ -278,18 +278,6 @@ export class UserService {
 
       this._log.debug('User registered successfully', { userId: createdUser.id, email });
 
-      const token = this._tokenService.generateToken(
-        createdUser.id,
-        createdUser.accountId,
-        (createdUser.roles || []).map((r: any) => r.name),
-      );
-
-      // Issue refresh token
-      let refreshToken: string | undefined;
-      if (this._tokenMgmt) {
-        refreshToken = await this._tokenMgmt.issueRefreshToken(createdUser.id);
-      }
-
       // Enqueue email verification
       if (this._emailVerify) {
         try {
@@ -299,7 +287,7 @@ export class UserService {
         }
       }
 
-      return { user: this._userMapper.toDTO(createdUser)!, token, refreshToken };
+      return this.buildAuthResponse(createdUser);
     } catch (err: any) {
       if (isPrismaUniqueConstraintError(err)) {
         // Handle race condition: email/username created concurrently
