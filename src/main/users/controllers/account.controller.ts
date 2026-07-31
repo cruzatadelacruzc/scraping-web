@@ -74,6 +74,7 @@ export class AccountController {
       ResponseHandler.created(res, 'http:created', {
         user: authResponse.user,
         token: authResponse.token,
+        refreshToken: authResponse.refreshToken,
       });
     } catch (err: unknown) {
       const errorName = err instanceof Error ? err.name : 'Unknown';
@@ -109,6 +110,7 @@ export class AccountController {
       ResponseHandler.created(res, 'http:created', {
         user: authResponse.user,
         token: authResponse.token,
+        refreshToken: authResponse.refreshToken,
       });
     } catch (err: unknown) {
       const errorName = err instanceof Error ? err.name : 'Unknown';

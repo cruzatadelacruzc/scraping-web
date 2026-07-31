@@ -28,6 +28,7 @@ describe('UserService.registerWithProvider', () => {
   let passwordHasher: any;
   let providerVerifier: any;
   let accountRepo: any;
+  let tokenMgmt: { issueRefreshToken: jest.Mock };
   const loggerMock = { debug: jest.fn(), error: jest.fn(), context: '' } as any;
 
   const sampleDTO = (overrides = {}): ProviderRegistrationDTO => {
@@ -66,6 +67,7 @@ describe('UserService.registerWithProvider', () => {
       verifyProvider: jest.fn().mockResolvedValue({ providerId: 'prov-1', email: 'alice@example.com', email_verified: true }),
     };
     accountRepo = { exists: jest.fn().mockResolvedValue(true) };
+    tokenMgmt = { issueRefreshToken: jest.fn().mockResolvedValue('fake-refresh-token') };
 
     userMapper = {
       toDTO: jest.fn(),
@@ -91,6 +93,8 @@ describe('UserService.registerWithProvider', () => {
       providerVerifier as any,
       accountRepo as any,
       mockPrisma,
+      undefined, // emailVerify — not exercised here
+      tokenMgmt as any,
     );
   });
 
@@ -109,7 +113,8 @@ describe('UserService.registerWithProvider', () => {
     expect(userIdentityRepo.findByProvider).toHaveBeenCalledWith(dto.provider, dto.providerId);
     expect(userRepo.findByIdWithRoles).toHaveBeenCalledWith(existingIdentity.userId);
     expect(tokenService.generateToken).toHaveBeenCalled();
-    expect(result).toEqual({ user: userDTO, token: 'fake-token' });
+    expect(result).toEqual({ user: userDTO, token: 'fake-token', refreshToken: 'fake-refresh-token' });
+    expect(tokenMgmt.issueRefreshToken).toHaveBeenCalledWith('u1');
   });
 
   it('should link identity when user exists by email (happy path)', async () => {
@@ -129,7 +134,7 @@ describe('UserService.registerWithProvider', () => {
     expect(userRepo.findByEmail).toHaveBeenCalledWith(dto.email.trim().toLowerCase());
     expect(userIdentityRepo.create).toHaveBeenCalledWith(userByEmail.id, dto.provider, dto.providerId);
     expect(tokenService.generateToken).toHaveBeenCalled();
-    expect(result).toEqual({ user: userDTO, token: 'fake-token' });
+    expect(result).toEqual({ user: userDTO, token: 'fake-token', refreshToken: 'fake-refresh-token' });
   });
 
   it('should handle race when linking identity: create throws unique constraint -> load created identity and login', async () => {
@@ -154,6 +159,8 @@ describe('UserService.registerWithProvider', () => {
     expect(userRepo.findByIdWithRoles).toHaveBeenCalledWith(identityNow.userId);
     expect(tokenService.generateToken).toHaveBeenCalled();
     expect(result.token).toBe('fake-token');
+    expect(tokenMgmt.issueRefreshToken).toHaveBeenCalledTimes(1);
+    expect(result.refreshToken).toBe('fake-refresh-token');
   });
 
   it('should create user + identity when neither exists (transactional create)', async () => {
@@ -170,7 +177,38 @@ describe('UserService.registerWithProvider', () => {
 
     expect(userRepo.createWithIdentity).toHaveBeenCalled();
     expect(tokenService.generateToken).toHaveBeenCalled();
-    expect(result).toEqual({ user: userDTO, token: 'fake-token' });
+    expect(result).toEqual({ user: userDTO, token: 'fake-token', refreshToken: 'fake-refresh-token' });
+  });
+
+  it('should return undefined refreshToken when TokenManagementService is unavailable', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { UserService: UserServiceClass } = require('@users/services/user.service');
+    const mockPrisma = {
+      role: { findFirst: jest.fn().mockResolvedValue({ id: 'role-admin', name: 'ACCOUNT_OWNER' }) },
+    } as any;
+    const serviceWithoutTokenMgmt = new UserServiceClass(
+      loggerMock,
+      userRepo as any,
+      userMapper as any,
+      tokenService as any,
+      userIdentityRepo as any,
+      passwordHasher as any,
+      providerVerifier as any,
+      accountRepo as any,
+      mockPrisma,
+    );
+
+    const dto = sampleDTO();
+    const existingIdentity = { id: 'id-1', userId: 'u1', provider: dto.provider, providerId: dto.providerId } as any;
+    const dbUser = { id: 'u1', accountId: 'a1', roles: [{ id: 'r1', name: 'ADMIN' }] } as any;
+    userIdentityRepo.findByProvider.mockResolvedValue(existingIdentity as any);
+    userRepo.findByIdWithRoles.mockResolvedValue(dbUser);
+    userMapper.toDTO.mockReturnValue({ id: 'u1' } as any);
+
+    const result = await serviceWithoutTokenMgmt.registerWithProvider(dto, 'a1');
+
+    expect(result.refreshToken).toBeUndefined();
+    expect(result.token).toBe('fake-token');
   });
 
   it('should reject linking when provider email is unverified', async () => {
