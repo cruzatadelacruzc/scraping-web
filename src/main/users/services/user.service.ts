@@ -6,7 +6,7 @@ import { ConflictError } from '@users/errors/conflict.error';
 import { UserNotFoundError } from '@users/errors/user-not-found.error';
 import { UserMapper } from '@users/mappers';
 import { isPrismaUniqueConstraintError } from '@users/custom-prisma-client';
-import { UserRepository } from '@users/repositories';
+import { UserRepository, UserWithRoles } from '@users/repositories';
 import { UserIdentityRepository } from '@users/repositories/user-identity.repository';
 import { inject, injectable } from 'inversify';
 import { PasswordHasher } from '@shared/security/password-hasher.serice';
@@ -49,6 +49,28 @@ export class UserService {
     });
 
     return defaultRole ? [defaultRole.id] : [];
+  }
+
+  /**
+   * Builds the auth response for a successfully authenticated user: generates
+   * the JWT access token and, when TokenManagementService is available, issues
+   * an opaque refresh token (30-day expiry).
+   *
+   * @param user - User with roles, as returned by the repository.
+   * @param provider - Optional OAuth provider name embedded in the JWT.
+   * @param providerId - Optional provider-specific user id embedded in the JWT.
+   * @returns Auth response with user DTO, JWT, and refresh token (if issued).
+   */
+  private async buildAuthResponse(user: UserWithRoles, provider?: string, providerId?: string): Promise<AuthResponseDTO> {
+    const token = this._tokenService.generateToken(
+      user.id,
+      user.accountId,
+      (user.roles || []).map(r => r.name),
+      provider,
+      providerId,
+    );
+    const refreshToken = this._tokenMgmt ? await this._tokenMgmt.issueRefreshToken(user.id) : undefined;
+    return { user: this._userMapper.toDTO(user)!, token, refreshToken };
   }
 
   /**
@@ -100,14 +122,7 @@ export class UserService {
     if (existingIdentity) {
       const user = await this._userRepository.findByIdWithRoles(existingIdentity.userId);
       if (!user) throw new UserNotFoundError('Linked user not found');
-      const token = this._tokenService.generateToken(
-        user.id,
-        user.accountId,
-        (user.roles || []).map(r => r.name),
-        data.provider,
-        providerId,
-      );
-      return { user: this._userMapper.toDTO(user)!, token };
+      return this.buildAuthResponse(user, data.provider, providerId);
     }
 
     // 2) Try to find user by email (link identity if exists)
@@ -129,14 +144,7 @@ export class UserService {
           if (identityNow) {
             const user = await this._userRepository.findByIdWithRoles(identityNow.userId);
             if (!user) throw new UserNotFoundError('Linked user not found');
-            const token = this._tokenService.generateToken(
-              user.id,
-              user.accountId,
-              (user.roles || []).map(r => r.name),
-              data.provider,
-              providerId,
-            );
-            return { user: this._userMapper.toDTO(user)!, token };
+            return this.buildAuthResponse(user, data.provider, providerId);
           }
         }
         throw err;
@@ -154,14 +162,7 @@ export class UserService {
 
       const user = await this._userRepository.findByIdWithRoles(userByEmail.id);
       if (!user) throw new UserNotFoundError('Linked user not found');
-      const token = this._tokenService.generateToken(
-        user.id,
-        user.accountId,
-        (user.roles || []).map(r => r.name),
-        data.provider,
-        providerId,
-      );
-      return { user: this._userMapper.toDTO(user)!, token };
+      return this.buildAuthResponse(user, data.provider, providerId);
     }
 
     // 3) No user by email -> create user + identity atomically
@@ -186,16 +187,7 @@ export class UserService {
       }
 
       // Optionally persist profile fields (displayName, picture) if your mapper/repo supports it.
-      const userDTO = this._userMapper.toDTO(createdUser)!;
-      const token = this._tokenService.generateToken(
-        createdUser.id,
-        createdUser.accountId,
-        (createdUser.roles || []).map(r => r.name),
-        data.provider,
-        providerId,
-      );
-
-      return { user: userDTO, token };
+      return this.buildAuthResponse(createdUser, data.provider, providerId);
     } catch (err: any) {
       if (isPrismaUniqueConstraintError(err)) {
         // Could be username/email concurrently created. Translate to Conflict for controller.
