@@ -68,6 +68,11 @@ export interface ProductCatalogItem {
   updatedAt: string;
 }
 
+/**
+ * Normalized product page produced by productsService.search().
+ * NOT the wire shape: the API returns `{ data, meta: { total, skip, limit, hasMore } }`
+ * and the service flattens it into this view-friendly form.
+ */
 export interface ProductPage {
   items: ProductCatalogItem[];
   total: number;
@@ -106,7 +111,7 @@ export interface PlanDTO {
   id?: string;
   name: string;
   type: string;
-  price: number;
+  price?: number;
   features: Record<string, unknown>;
 }
 
