@@ -19,6 +19,11 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.stories.tsx'],
     },
+    server: {
+      deps: {
+        inline: [/@tanstack/, /zustand/, /use-sync-external-store/, /jose/],
+      },
+    },
   },
   esbuild: { jsx: 'automatic' },
   resolve: {

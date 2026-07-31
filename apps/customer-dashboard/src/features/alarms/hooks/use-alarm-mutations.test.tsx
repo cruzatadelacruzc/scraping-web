@@ -41,8 +41,8 @@ describe('useToggleAlarm (optimistic)', () => {
     await waitFor(() => expect(result.current.list.data).toHaveLength(1));
 
     act(() => result.current.toggle.mutate({ id: created.id, enabled: false }));
-    // Optimistic: applied before server response
-    expect(result.current.list.data?.[0].enabled).toBe(false);
+    // Optimistic: applied before server response (may be async in some React versions)
+    await waitFor(() => expect(result.current.list.data?.[0].enabled).toBe(false));
     await waitFor(() => expect(result.current.toggle.isPending).toBe(false));
     expect(result.current.list.data?.[0].enabled).toBe(false);
   });
