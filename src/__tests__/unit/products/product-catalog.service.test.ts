@@ -98,6 +98,13 @@ describe('ProductCatalogService', () => {
       expect(() => ProductCatalogQueryDTO.from({ sort: 'seller.phone' })).toThrow();
       expect(() => ProductCatalogQueryDTO.from({ limit: 500 })).toThrow();
     });
+
+    it('propagates repository find failures', async () => {
+      repo.find.mockRejectedValue(new Error('mongo down'));
+      repo.count.mockResolvedValue(0);
+
+      await expect(service.list(ProductCatalogQueryDTO.from({}))).rejects.toThrow('mongo down');
+    });
   });
 
   describe('categories', () => {
@@ -117,6 +124,12 @@ describe('ProductCatalogService', () => {
         { category: 'compra-venta', subcategories: ['celulares', 'electrodomesticos'] },
         { category: 'empleo', subcategories: ['ofertas'] },
       ]);
+    });
+
+    it('propagates aggregation failures', async () => {
+      repo.aggregate.mockRejectedValue(new Error('agg failed'));
+
+      await expect(service.categories()).rejects.toThrow('agg failed');
     });
   });
 });
