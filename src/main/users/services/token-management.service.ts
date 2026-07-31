@@ -63,11 +63,13 @@ export class TokenManagementService {
     const stored = await this._tokenRepo.findRefreshTokenByHash(tokenHash);
 
     if (!stored) {
-      this._log.warn('Refresh token not found or expired');
+      this._log.warn('Refresh token not found');
       return null;
     }
 
-    // Theft detection: if this token was already replaced, revoke the whole family
+    // Theft detection: if this token was already replaced, revoke the whole family.
+    // Checked before the revoked/expired guards — a replaced token is also revoked,
+    // and reuse must trigger family revocation, not a generic rejection.
     if (stored.replacedBy) {
       this._log.warn('Refresh token reuse detected — revoking entire family', {
         userId: stored.userId,
@@ -77,6 +79,16 @@ export class TokenManagementService {
       if (stored.family) {
         await this._tokenRepo.revokeRefreshTokenFamily(stored.family);
       }
+      return null;
+    }
+
+    if (stored.revokedAt) {
+      this._log.warn('Refresh token is revoked', { userId: stored.userId, tokenId: stored.id });
+      return null;
+    }
+
+    if (stored.expiresAt <= new Date()) {
+      this._log.warn('Refresh token is expired', { userId: stored.userId, tokenId: stored.id });
       return null;
     }
 
@@ -129,7 +141,7 @@ export class TokenManagementService {
   public async revokeRefreshToken(rawToken: string): Promise<void> {
     const tokenHash = this._hashToken(rawToken);
     const stored = await this._tokenRepo.findRefreshTokenByHash(tokenHash);
-    if (stored) {
+    if (stored && !stored.revokedAt) {
       await this._tokenRepo.revokeRefreshToken(stored.id);
     }
   }
