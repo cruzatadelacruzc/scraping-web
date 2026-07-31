@@ -4,11 +4,6 @@ import { endpoint } from '../helpers/path-builder';
 import { TAG } from '../tags';
 import { Schemas } from '../schema-registry';
 
-const TokenResponse = z.object({
-  user: z.unknown(),
-  token: z.string(),
-});
-
 export function registerAccountsPaths(registry: OpenAPIRegistry): void {
   endpoint('post', '/api/accounts')
     .tag(TAG.ACCOUNTS)
@@ -65,7 +60,7 @@ export function registerAccountsPaths(registry: OpenAPIRegistry): void {
     .description('Creates a user account with email/password authentication within an existing account.')
     .operationId('registerLocal')
     .requestBody(Schemas.UserRegisterDTO)
-    .response(200, 'User registered successfully', TokenResponse)
+    .response(201, 'User registered successfully', Schemas.AuthResponseWithRefreshDTO)
     .errors(400)
     .register(registry);
 
@@ -75,7 +70,7 @@ export function registerAccountsPaths(registry: OpenAPIRegistry): void {
     .description('Authenticates a user via OAuth provider (google, facebook). Creates the user if they do not exist.')
     .operationId('registerProvider')
     .requestBody(Schemas.ProviderRegistrationDTO)
-    .response(200, 'User authenticated via provider', TokenResponse)
+    .response(201, 'User authenticated via provider', Schemas.AuthResponseWithRefreshDTO)
     .errors(400, 401)
     .register(registry);
 }

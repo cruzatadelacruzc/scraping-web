@@ -33,6 +33,7 @@ describe('UserService.registerLocal', () => {
   let userMapper: jest.Mocked<UserMapper>;
   let passwordHasher: jest.Mocked<PasswordHasher>;
   let accountRepo: jest.Mocked<AccountRepository>;
+  let tokenMgmt: { issueRefreshToken: jest.Mock };
   const loggerMock = { debug: jest.fn(), warn: jest.fn(), error: jest.fn(), context: '' } as any;
 
   const sampleDTO = (overrides = {}): UserRegisterDTO => {
@@ -81,6 +82,8 @@ describe('UserService.registerLocal', () => {
       toDTOs: jest.fn(),
     } as unknown as jest.Mocked<UserMapper>;
 
+    tokenMgmt = { issueRefreshToken: jest.fn().mockResolvedValue('fake-refresh-token') };
+
     userService = new UserService(
       loggerMock,
       userRepo as any,
@@ -91,6 +94,8 @@ describe('UserService.registerLocal', () => {
       {} as any, // providerVerifier (not used in registerLocal)
       accountRepo as any,
       { role: { findFirst: jest.fn().mockResolvedValue({ id: 'role-admin', name: 'ACCOUNT_OWNER' }) } } as any, // prisma
+      undefined, // emailVerify — not exercised here
+      tokenMgmt as any,
     );
   });
 
@@ -120,6 +125,7 @@ describe('UserService.registerLocal', () => {
       expect(result).toEqual({
         user: userDTO,
         token: 'fake-jwt-token',
+        refreshToken: 'fake-refresh-token',
       });
 
       expect(accountRepo.exists).toHaveBeenCalledWith('acc-1');
@@ -127,7 +133,7 @@ describe('UserService.registerLocal', () => {
       expect(userRepo.findByUsername).toHaveBeenCalledWith('john_doe');
       expect(passwordHasher.hash).toHaveBeenCalledWith('SecurePass123');
       expect(userRepo.create).toHaveBeenCalled();
-      expect(tokenService.generateToken).toHaveBeenCalledWith('user-123', 'acc-1', ['USER']);
+      expect(tokenService.generateToken).toHaveBeenCalledWith('user-123', 'acc-1', ['USER'], undefined, undefined);
       expect(loggerMock.debug).toHaveBeenCalledWith('User registered successfully', { userId: 'user-123', email: 'john@example.com' });
     });
 
@@ -197,6 +203,26 @@ describe('UserService.registerLocal', () => {
           accountId: 'acc-1',
         }),
       );
+    });
+
+    it('should include the issued refresh token in the auth response', async () => {
+      const dto = sampleDTO();
+      const createdUser = {
+        id: 'user-123',
+        email: 'john@example.com',
+        username: 'john_doe',
+        accountId: 'acc-1',
+        roles: [{ id: 'r1', name: 'USER' }],
+      } as any;
+      userRepo.findByEmail.mockResolvedValue(null);
+      userRepo.findByUsername.mockResolvedValue(null);
+      userRepo.create.mockResolvedValue(createdUser);
+      userMapper.toDTO.mockReturnValue({ id: 'user-123' } as any);
+
+      const result = await userService.registerLocal(dto, 'acc-1');
+
+      expect(tokenMgmt.issueRefreshToken).toHaveBeenCalledWith('user-123');
+      expect(result.refreshToken).toBe('fake-refresh-token');
     });
   });
 
@@ -315,7 +341,7 @@ describe('UserService.registerLocal', () => {
 
       await userService.registerLocal(dto, 'acc-1');
 
-      expect(tokenService.generateToken).toHaveBeenCalledWith('user-123', 'acc-1', ['USER', 'ADMIN']);
+      expect(tokenService.generateToken).toHaveBeenCalledWith('user-123', 'acc-1', ['USER', 'ADMIN'], undefined, undefined);
     });
   });
 });
