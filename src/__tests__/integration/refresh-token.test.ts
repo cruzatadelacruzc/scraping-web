@@ -134,4 +134,30 @@ describe('POST /api/auth/refresh', () => {
     const secondUse = await request(app).post('/api/auth/refresh').send({ refreshToken: freshToken });
     expect(secondUse.status).toBe(400);
   });
+
+  it('should revoke the entire family when a consumed token is replayed (theft detection)', async () => {
+    const freshToken = await tokenMgmt.issueRefreshToken(testUserId);
+
+    // Rotate: freshToken is consumed, rotatedToken is the active descendant
+    const firstUse = await request(app).post('/api/auth/refresh').send({ refreshToken: freshToken });
+    expect(firstUse.status).toBe(200);
+    const rotatedToken = firstUse.body.data.refreshToken as string;
+
+    // Replay the consumed token — theft detected
+    const replay = await request(app).post('/api/auth/refresh').send({ refreshToken: freshToken });
+    expect(replay.status).toBe(400);
+
+    // The whole family must be dead: the rotated descendant is rejected too
+    const useDescendant = await request(app).post('/api/auth/refresh').send({ refreshToken: rotatedToken });
+    expect(useDescendant.status).toBe(400);
+  });
+
+  it('should return 400 when reusing a token revoked by revokeRefreshToken (logout)', async () => {
+    const freshToken = await tokenMgmt.issueRefreshToken(testUserId);
+
+    await tokenMgmt.revokeRefreshToken(freshToken);
+
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: freshToken });
+    expect(res.status).toBe(400);
+  });
 });

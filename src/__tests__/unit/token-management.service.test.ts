@@ -78,6 +78,7 @@ describe('TokenManagementService', () => {
       tokenRepo.findRefreshTokenByHash.mockResolvedValue({
         ...storedToken,
         replacedBy: 'token-2',
+        revokedAt: now,
       });
       tokenRepo.revokeRefreshTokenFamily.mockResolvedValue();
 
@@ -85,6 +86,31 @@ describe('TokenManagementService', () => {
 
       expect(result).toBeNull();
       expect(tokenRepo.revokeRefreshTokenFamily).toHaveBeenCalledWith('family-1');
+    });
+
+    it('should return null without revoking the family when token is revoked but not replaced', async () => {
+      tokenRepo.findRefreshTokenByHash.mockResolvedValue({
+        ...storedToken,
+        revokedAt: now,
+      });
+
+      const result = await svc.rotateRefreshToken('revoked-token');
+
+      expect(result).toBeNull();
+      expect(tokenRepo.revokeRefreshTokenFamily).not.toHaveBeenCalled();
+      expect(tokenRepo.createRefreshToken).not.toHaveBeenCalled();
+    });
+
+    it('should return null when token is expired', async () => {
+      tokenRepo.findRefreshTokenByHash.mockResolvedValue({
+        ...storedToken,
+        expiresAt: new Date(now.getTime() - 1000),
+      });
+
+      const result = await svc.rotateRefreshToken('expired-token');
+
+      expect(result).toBeNull();
+      expect(tokenRepo.createRefreshToken).not.toHaveBeenCalled();
     });
 
     it('should return user context alongside the new token on success', async () => {
@@ -161,6 +187,53 @@ describe('TokenManagementService', () => {
       const r = result as IRefreshTokenResult;
       expect(r.roles).toContain('ACCOUNT_OWNER');
       expect(r.roles).toContain('SUPER_ADMIN');
+    });
+  });
+
+  describe('revokeRefreshToken', () => {
+    const now = new Date();
+    const future = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    it('should revoke an active token by its raw value', async () => {
+      tokenRepo.findRefreshTokenByHash.mockResolvedValue({
+        id: 'token-1',
+        userId: 'user-1',
+        tokenHash: 'hash-1',
+        family: 'family-1',
+        replacedBy: null,
+        revokedAt: null,
+        expiresAt: future,
+        createdAt: now,
+      });
+
+      await svc.revokeRefreshToken('active-token');
+
+      expect(tokenRepo.revokeRefreshToken).toHaveBeenCalledWith('token-1');
+    });
+
+    it('should not re-revoke an already-revoked token', async () => {
+      tokenRepo.findRefreshTokenByHash.mockResolvedValue({
+        id: 'token-1',
+        userId: 'user-1',
+        tokenHash: 'hash-1',
+        family: 'family-1',
+        replacedBy: null,
+        revokedAt: now,
+        expiresAt: future,
+        createdAt: now,
+      });
+
+      await svc.revokeRefreshToken('already-revoked-token');
+
+      expect(tokenRepo.revokeRefreshToken).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when the token does not exist', async () => {
+      tokenRepo.findRefreshTokenByHash.mockResolvedValue(null);
+
+      await svc.revokeRefreshToken('unknown-token');
+
+      expect(tokenRepo.revokeRefreshToken).not.toHaveBeenCalled();
     });
   });
 });
