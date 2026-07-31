@@ -7,6 +7,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+      },
+    },
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     coverage: {
@@ -15,6 +20,7 @@ export default defineConfig({
       exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.stories.tsx'],
     },
   },
+  esbuild: { jsx: 'automatic' },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
