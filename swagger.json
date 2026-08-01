@@ -2374,23 +2374,6 @@
           "userId"
         ]
       },
-      "AuthResponseDTO": {
-        "type": "object",
-        "properties": {
-          "user": {
-            "nullable": true,
-            "description": "Authenticated user object"
-          },
-          "token": {
-            "type": "string",
-            "description": "JWT access token",
-            "example": "eyJhbGciOiJIUzI1NiIs..."
-          }
-        },
-        "required": [
-          "token"
-        ]
-      },
       "BotsOkResponse": {
         "type": "object",
         "properties": {
@@ -2436,11 +2419,11 @@
         },
         "responses": {
           "200": {
-            "description": "Successful login with JWT token",
+            "description": "Successful login with JWT and refresh tokens",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthResponseDTO"
+                  "$ref": "#/components/schemas/AuthResponseWithRefresh"
                 }
               }
             }
@@ -3276,23 +3259,12 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "User registered successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "nullable": true
-                    },
-                    "token": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "token"
-                  ]
+                  "$ref": "#/components/schemas/AuthResponseWithRefresh"
                 }
               }
             }
@@ -3370,23 +3342,12 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "User authenticated via provider",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "nullable": true
-                    },
-                    "token": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "token"
-                  ]
+                  "$ref": "#/components/schemas/AuthResponseWithRefresh"
                 }
               }
             }

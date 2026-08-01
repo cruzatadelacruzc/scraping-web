@@ -70,9 +70,14 @@ export class TokenRepository {
     return this._prisma.refreshToken.create({ data });
   }
 
+  /**
+   * Finds a refresh token by hash regardless of state (revoked, replaced, expired).
+   * State interpretation belongs to the caller — theft detection needs to see
+   * already-replaced tokens, which a `revokedAt: null` filter would hide.
+   */
   public async findRefreshTokenByHash(tokenHash: string): Promise<RefreshToken | null> {
     return this._prisma.refreshToken.findFirst({
-      where: { tokenHash, revokedAt: null, expiresAt: { gt: new Date() } },
+      where: { tokenHash },
     });
   }
 
