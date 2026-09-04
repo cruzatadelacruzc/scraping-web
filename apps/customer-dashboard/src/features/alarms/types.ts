@@ -124,3 +124,15 @@ export interface NotificationDTO {
   readAt: string | null;
   createdAt: string;
 }
+
+export type AlarmConditionField = 'threshold' | 'percentage' | 'none';
+
+/** Which numeric input a condition needs, per the backend's condition evaluators (src/main/alarms/conditions/*.condition.ts). */
+export const CONDITION_FIELD: Record<AlarmCondition, AlarmConditionField> = {
+  PRICE_DROPS_BELOW: 'threshold',
+  PRICE_RISES_ABOVE: 'threshold',
+  VIEWS_EXCEED: 'threshold',
+  PRICE_CHANGES_BY_PERCENT: 'percentage',
+  IS_OUTSTANDING: 'none',
+  SELLER_CHANGED: 'none',
+};
