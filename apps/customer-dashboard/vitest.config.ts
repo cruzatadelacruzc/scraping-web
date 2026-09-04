@@ -36,6 +36,5 @@ export default defineConfig({
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       'react-dom/client': path.resolve(__dirname, 'node_modules/react-dom/client'),
     },
-    dedupe: ['react', 'react-dom', 'react-dom/client'],
   },
 });
