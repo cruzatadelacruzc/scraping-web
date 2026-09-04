@@ -33,7 +33,7 @@ export function usePlanLimits(): PlanLimits {
     queryFn: async ({ signal }) => {
       const subs = await planService.subscriptions(accountId, signal);
       const active =
-        subs.find((s) => s.status === 'ACTIVE' || s.status === 'TRIALING') ?? subs[0] ?? null;
+        subs.find((s) => s.status === 'ACTIVE' || s.status === 'TRIALING') ?? null;
       if (!active) return null;
       return planService.plan(active.planId, signal);
     },
