@@ -9,6 +9,7 @@ import ResetPasswordPage from '@features/auth/pages/ResetPasswordPage';
 import VerifyEmailPage from '@features/auth/pages/VerifyEmailPage';
 import SecuritySettingsPage from '@features/auth/pages/SecuritySettingsPage';
 import AlarmsPage from '@features/alarms/pages/AlarmsPage';
+import AlarmFormPage from '@features/alarms/pages/AlarmFormPage';
 import { Placeholder } from './components/Placeholder';
 import { NotFound } from './components/NotFound';
 
@@ -52,6 +53,8 @@ export const router = createBrowserRouter([
               },
               { path: 'profile', element: <SecuritySettingsPage /> },
               { path: 'alarms', element: <AlarmsPage /> },
+              { path: 'alarms/new', element: <AlarmFormPage /> },
+              { path: 'alarms/:id/edit', element: <AlarmFormPage /> },
               {
                 path: 'notifications',
                 element: <Placeholder titleKey="nav.notifications" note="Phase 3" />,
