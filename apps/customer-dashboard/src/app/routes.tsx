@@ -8,6 +8,7 @@ import ForgotPasswordPage from '@features/auth/pages/ForgotPasswordPage';
 import ResetPasswordPage from '@features/auth/pages/ResetPasswordPage';
 import VerifyEmailPage from '@features/auth/pages/VerifyEmailPage';
 import SecuritySettingsPage from '@features/auth/pages/SecuritySettingsPage';
+import AlarmsPage from '@features/alarms/pages/AlarmsPage';
 import { Placeholder } from './components/Placeholder';
 import { NotFound } from './components/NotFound';
 
@@ -50,7 +51,7 @@ export const router = createBrowserRouter([
                 element: <Placeholder titleKey="nav.dashboard" note="Phase 2" />,
               },
               { path: 'profile', element: <SecuritySettingsPage /> },
-              { path: 'alarms', element: <Placeholder titleKey="nav.alarms" note="Phase 2" /> },
+              { path: 'alarms', element: <AlarmsPage /> },
               {
                 path: 'notifications',
                 element: <Placeholder titleKey="nav.notifications" note="Phase 3" />,
