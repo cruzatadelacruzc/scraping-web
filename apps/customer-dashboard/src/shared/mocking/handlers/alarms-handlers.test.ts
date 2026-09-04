@@ -37,7 +37,7 @@ describe('alarms MSW handlers (real-contract)', () => {
     const updated = await apiClient.put<{ alarm: { enabled: boolean } }>(
       `/api/alarms/${id}`,
       { enabled: false },
-      h,
+      h
     );
     expect(updated.data.alarm.enabled).toBe(false);
 
@@ -60,13 +60,13 @@ describe('alarms MSW handlers (real-contract)', () => {
     const h = { headers: authHeader() };
     const subs = await apiClient.get<{ subscriptions: { planId: string; status: string }[] }>(
       `/api/accounts/${demo.accountId}/subscriptions`,
-      h,
+      h
     );
     expect(subs.data.subscriptions[0].status).toBe('TRIALING');
 
     const plan = await apiClient.get<{ plan: { features: { maxAlarms: number } } }>(
       `/api/plans/${subs.data.subscriptions[0].planId}`,
-      h,
+      h
     );
     expect(plan.data.plan.features.maxAlarms).toBe(3);
   });
@@ -82,7 +82,7 @@ describe('alarms MSW handlers (real-contract)', () => {
 
     const cats = await apiClient.get<{ category: string; subcategories: string[] }[]>(
       '/api/products/categories',
-      h,
+      h
     );
     expect(cats.data.find((c) => c.category === 'compra-venta')).toBeTruthy();
   });

@@ -6,7 +6,7 @@ export const notificationsService = {
   async list(signal?: AbortSignal): Promise<NotificationDTO[]> {
     const res = await apiClient.get<{ notifications: NotificationDTO[] }>(
       ENDPOINTS.NOTIFICATIONS.LIST,
-      { signal },
+      { signal }
     );
     return res.data.notifications;
   },

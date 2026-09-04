@@ -34,7 +34,7 @@ export const alarmsHandlers = [
       // Real backend: 403, message-only (errorCode never travels in the body).
       return fail(
         'Your current plan does not allow creating more alarms. Please upgrade your plan.',
-        403,
+        403
       );
     }
     const body = (await request.json()) as Record<string, unknown>;

@@ -9,7 +9,11 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { useAlarms } from '../hooks/use-alarms';
 import { useToggleAlarm } from '../hooks/use-alarm-mutations';
 import { usePlanLimits } from '../hooks/use-plan-limits';
-import { AlarmsFilters, type AlarmConditionFilter, type AlarmStateFilter } from '../components/AlarmsFilters';
+import {
+  AlarmsFilters,
+  type AlarmConditionFilter,
+  type AlarmStateFilter,
+} from '../components/AlarmsFilters';
 import { AlarmsTable } from '../components/AlarmsTable';
 
 export default function AlarmsPage() {
@@ -37,10 +41,7 @@ export default function AlarmsPage() {
   }, [alarmsQuery.data, search, condition, state]);
 
   const onToggle = (id: string, enabled: boolean) => {
-    toggle.mutate(
-      { id, enabled },
-      { onError: (e) => toast.error(normalizeError(e).message) },
-    );
+    toggle.mutate({ id, enabled }, { onError: (e) => toast.error(normalizeError(e).message) });
   };
 
   return (
@@ -75,7 +76,9 @@ export default function AlarmsPage() {
         </div>
       ) : alarmsQuery.isError ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-outline-variant p-8 text-center">
-          <p className="text-sm text-on-surface-variant">{t('common:states.error', { ns: 'common' })}</p>
+          <p className="text-sm text-on-surface-variant">
+            {t('common:states.error', { ns: 'common' })}
+          </p>
           <Button variant="outline" onClick={() => alarmsQuery.refetch()}>
             {t('actions.retry', { ns: 'common' })}
           </Button>

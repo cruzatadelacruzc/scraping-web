@@ -46,7 +46,7 @@ describe('alarmsService (against MSW)', () => {
         name: 'overflow',
         condition: 'PRICE_DROPS_BELOW',
         threshold: 1,
-      }),
+      })
     ).rejects.toMatchObject({ status: 403 });
   });
 });

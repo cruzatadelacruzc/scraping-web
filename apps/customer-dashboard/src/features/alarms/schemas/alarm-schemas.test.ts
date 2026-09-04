@@ -10,7 +10,11 @@ describe('alarmFormSchema', () => {
   });
 
   it('accepts a valid price alarm', () => {
-    const r = alarmFormSchema.safeParse({ ...base, condition: 'PRICE_DROPS_BELOW', threshold: 300 });
+    const r = alarmFormSchema.safeParse({
+      ...base,
+      condition: 'PRICE_DROPS_BELOW',
+      threshold: 300,
+    });
     expect(r.success).toBe(true);
   });
 
@@ -21,11 +25,11 @@ describe('alarmFormSchema', () => {
 
   it('requires a percentage for PRICE_CHANGES_BY_PERCENT', () => {
     expect(
-      alarmFormSchema.safeParse({ ...base, condition: 'PRICE_CHANGES_BY_PERCENT' }).success,
+      alarmFormSchema.safeParse({ ...base, condition: 'PRICE_CHANGES_BY_PERCENT' }).success
     ).toBe(false);
     expect(
       alarmFormSchema.safeParse({ ...base, condition: 'PRICE_CHANGES_BY_PERCENT', percentage: 20 })
-        .success,
+        .success
     ).toBe(true);
   });
 

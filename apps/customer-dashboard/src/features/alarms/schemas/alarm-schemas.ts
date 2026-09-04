@@ -35,7 +35,11 @@ export const alarmFormSchema = z
     }
     if (field === 'percentage') {
       if (v.percentage == null) {
-        ctx.addIssue({ code: 'custom', path: ['percentage'], message: 'common:validation.required' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['percentage'],
+          message: 'common:validation.required',
+        });
       } else if (v.percentage < 0 || v.percentage > 100) {
         ctx.addIssue({ code: 'custom', path: ['percentage'], message: 'alarms:form.percentRange' });
       }

@@ -39,7 +39,7 @@ export const productsHandlers = [
     return ok(
       [...grouped.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([category, subs]) => ({ category, subcategories: [...subs].sort() })),
+        .map(([category, subs]) => ({ category, subcategories: [...subs].sort() }))
     );
   }),
 ];

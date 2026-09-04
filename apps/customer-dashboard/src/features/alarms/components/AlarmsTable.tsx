@@ -38,7 +38,9 @@ export function AlarmsTable({ alarms, onToggle, togglingId }: AlarmsTableProps) 
               className="border-b border-outline-variant last:border-b-0 hover:bg-surface-container-high"
             >
               <td className="px-3 py-2 text-on-surface">{a.name}</td>
-              <td className="px-3 py-2 text-on-surface-variant">{t(`conditions.${a.condition}`)}</td>
+              <td className="px-3 py-2 text-on-surface-variant">
+                {t(`conditions.${a.condition}`)}
+              </td>
               <td className="px-3 py-2 font-mono text-on-surface">{formatAlarmValue(a)}</td>
               <td className="px-3 py-2">
                 <span

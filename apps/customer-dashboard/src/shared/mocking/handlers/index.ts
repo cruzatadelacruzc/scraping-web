@@ -15,4 +15,11 @@ export const handlers = [
   ...miscHandlers,
 ];
 
-export { authHandlers, teaserHandlers, miscHandlers, alarmsHandlers, productsHandlers, plansHandlers };
+export {
+  authHandlers,
+  teaserHandlers,
+  miscHandlers,
+  alarmsHandlers,
+  productsHandlers,
+  plansHandlers,
+};

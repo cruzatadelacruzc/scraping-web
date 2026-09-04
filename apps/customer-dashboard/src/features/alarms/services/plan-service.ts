@@ -6,7 +6,7 @@ export const planService = {
   async subscriptions(accountId: string, signal?: AbortSignal): Promise<SubscriptionDTO[]> {
     const res = await apiClient.get<{ subscriptions: SubscriptionDTO[] }>(
       ENDPOINTS.SUBSCRIPTION.BY_ACCOUNT(accountId),
-      { signal },
+      { signal }
     );
     return res.data.subscriptions;
   },

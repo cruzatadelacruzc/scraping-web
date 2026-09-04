@@ -32,8 +32,7 @@ export function usePlanLimits(): PlanLimits {
     staleTime: 10 * 60 * 1000,
     queryFn: async ({ signal }) => {
       const subs = await planService.subscriptions(accountId, signal);
-      const active =
-        subs.find((s) => s.status === 'ACTIVE' || s.status === 'TRIALING') ?? null;
+      const active = subs.find((s) => s.status === 'ACTIVE' || s.status === 'TRIALING') ?? null;
       if (!active) return null;
       return planService.plan(active.planId, signal);
     },
@@ -47,7 +46,7 @@ export function usePlanLimits(): PlanLimits {
   const allowed =
     Array.isArray(features.allowedConditions) && features.allowedConditions.length > 0
       ? (features.allowedConditions.filter((c) =>
-          (ALL_CONDITIONS as readonly string[]).includes(c),
+          (ALL_CONDITIONS as readonly string[]).includes(c)
         ) as AlarmCondition[])
       : null;
 

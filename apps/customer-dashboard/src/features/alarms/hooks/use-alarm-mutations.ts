@@ -72,7 +72,7 @@ export function useToggleAlarm() {
       await queryClient.cancelQueries({ queryKey: alarmKeys.list() });
       const previous = queryClient.getQueryData<AlarmViewModel[]>(alarmKeys.list());
       queryClient.setQueryData<AlarmViewModel[]>(alarmKeys.list(), (old) =>
-        old?.map((a) => (a.id === id ? { ...a, enabled } : a)),
+        old?.map((a) => (a.id === id ? { ...a, enabled } : a))
       );
       return { previous };
     },
