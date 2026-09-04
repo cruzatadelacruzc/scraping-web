@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '@shared/config/routes';
+import { Button } from '@/shared/ui/forms';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useAlarm } from '../hooks/use-alarms';
 import { useCreateAlarm, useUpdateAlarm } from '../hooks/use-alarm-mutations';
@@ -34,6 +35,19 @@ export default function AlarmFormPage() {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (isEdit && alarmQuery.isError) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
+        <p className="text-sm text-on-surface-variant">
+          {t('common:states.error', { ns: 'common' })}
+        </p>
+        <Button variant="outline" onClick={() => alarmQuery.refetch()}>
+          {t('actions.retry', { ns: 'common' })}
+        </Button>
       </div>
     );
   }

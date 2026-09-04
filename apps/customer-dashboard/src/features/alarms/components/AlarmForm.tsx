@@ -38,6 +38,9 @@ function NumberField({
             <span className="ml-1 text-destructive">*</span>
           </FormLabel>
           <FormControl>
+            {/* value override after the spread is intentional: field.value starts
+                undefined (this field is only required for some conditions), and an
+                undefined input value would make the input start uncontrolled. */}
             <Input type="number" inputMode="decimal" {...field} value={field.value ?? ''} />
           </FormControl>
           <FormMessage />
