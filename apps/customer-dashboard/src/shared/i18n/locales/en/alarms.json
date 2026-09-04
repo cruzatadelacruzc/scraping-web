@@ -1,0 +1,87 @@
+{
+  "title": "Alarms",
+  "subtitle": "Watch listings and we'll alert you when your condition is met.",
+  "create": "Create alarm",
+  "usage": "{{used}} / {{max}} alarms",
+  "usageUnlimited": "{{used}} alarms · unlimited",
+  "atLimit": "You've reached your plan's alarm limit",
+  "search": "Search by name or URL",
+  "filters": {
+    "condition": "Condition",
+    "allConditions": "All conditions",
+    "state": "State",
+    "allStates": "All",
+    "enabled": "Active",
+    "disabled": "Paused"
+  },
+  "columns": {
+    "name": "Name",
+    "condition": "Condition",
+    "value": "Value",
+    "state": "State",
+    "lastMatch": "Last match"
+  },
+  "state": { "enabled": "Active", "disabled": "Paused" },
+  "empty": {
+    "title": "No alarms yet",
+    "description": "Create your first alarm to watch a listing.",
+    "cta": "Create your first alarm"
+  },
+  "noResults": "No alarms match the filters.",
+  "conditions": {
+    "PRICE_DROPS_BELOW": "Price drops below",
+    "PRICE_RISES_ABOVE": "Price rises above",
+    "PRICE_CHANGES_BY_PERCENT": "Price changes by %",
+    "VIEWS_EXCEED": "Views exceed",
+    "IS_OUTSTANDING": "Is featured",
+    "SELLER_CHANGED": "Seller changes"
+  },
+  "form": {
+    "createTitle": "Create alarm",
+    "editTitle": "Edit alarm",
+    "productUrl": "Product URL",
+    "productUrlHelp": "Paste the URL of a listing (e.g. from Revolico) we're already watching.",
+    "productUrlLocked": "The URL can't be changed after creating the alarm.",
+    "name": "Alarm name",
+    "namePlaceholder": "e.g. Cheap iPhone 13",
+    "condition": "Condition",
+    "searchCondition": "Search conditions…",
+    "conditionLocked": "Available on a higher plan",
+    "price": "Price threshold",
+    "views": "View count",
+    "percentage": "Change percentage",
+    "urlInvalid": "Enter a valid URL",
+    "percentRange": "Must be between 0 and 100",
+    "enabled": "Enable the alarm",
+    "submitCreate": "Create alarm",
+    "submitEdit": "Save changes"
+  },
+  "detail": {
+    "back": "Back to alarms",
+    "config": "Configuration",
+    "status": "Status",
+    "lastEvaluated": "Last evaluation",
+    "lastEvaluatedPrice": "Last evaluated price",
+    "lastMatched": "Last match",
+    "lastNotified": "Last notification",
+    "never": "Never",
+    "notFound": "Alarm not found"
+  },
+  "actions": { "edit": "Edit", "view": "View detail", "enable": "Enable", "disable": "Pause" },
+  "toggle": { "enabled": "Alarm enabled", "disabled": "Alarm paused" },
+  "delete": {
+    "title": "Delete alarm?",
+    "description": "This action is permanent and cannot be undone.",
+    "confirm": "Delete permanently"
+  },
+  "toasts": {
+    "created": "Alarm created",
+    "updated": "Alarm updated",
+    "deleted": "Alarm deleted"
+  },
+  "plan": {
+    "limitReached": "You've reached your plan's alarm limit",
+    "upgradeHint": "Upgrade your plan to create more alarms."
+  },
+  "errors": { "generic": "We couldn't complete the action. Please try again." }
+}
