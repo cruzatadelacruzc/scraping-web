@@ -5,7 +5,7 @@ import { AlarmConditionType } from '@prisma/client';
 export const UpdateAlarmSchema = z.object({
   name: z.string().min(1).optional(),
   condition: z.nativeEnum(AlarmConditionType).optional(),
-  threshold: z.number().positive().optional(),
+  threshold: z.number().min(0).optional(),
   percentage: z.number().min(0).max(100).optional(),
   params: z.record(z.unknown()).optional(),
   enabled: z.boolean().optional(),

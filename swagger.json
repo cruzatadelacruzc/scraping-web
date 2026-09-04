@@ -506,8 +506,7 @@
           },
           "threshold": {
             "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
+            "minimum": 0
           },
           "percentage": {
             "type": "number",
@@ -551,8 +550,7 @@
           },
           "threshold": {
             "type": "number",
-            "minimum": 0,
-            "exclusiveMinimum": true
+            "minimum": 0
           },
           "percentage": {
             "type": "number",
