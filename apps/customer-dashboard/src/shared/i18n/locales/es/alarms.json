@@ -95,7 +95,14 @@
     "empty": "Ningún anuncio coincide con los filtros.",
     "error": "No pudimos cargar el catálogo."
   },
-  "actions": { "edit": "Editar", "view": "Ver detalle", "enable": "Activar", "disable": "Pausar" },
+  "actions": {
+    "edit": "Editar",
+    "editNamed": "Editar alarma {{name}}",
+    "rowActions": "Acciones de la alarma",
+    "view": "Ver detalle",
+    "enable": "Activar",
+    "disable": "Pausar"
+  },
   "toggle": { "enabled": "Alarma activada", "disabled": "Alarma pausada" },
   "delete": {
     "title": "¿Borrar alarma?",

@@ -10,13 +10,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormSelectField,
   Input,
 } from '@/shared/ui/forms';
 import { alarmFormSchema, type AlarmFormValues } from '../schemas/alarm-schemas';
-import { ALL_CONDITIONS, CONDITION_FIELD, type AlarmViewModel } from '../types';
+import { CONDITION_FIELD, type AlarmViewModel } from '../types';
 import { usePlanLimits } from '../hooks/use-plan-limits';
 import { alarmToFormValues } from './alarm-form-values';
+import { ConditionPicker } from './ConditionPicker';
 
 function NumberField({
   form,
@@ -79,14 +79,6 @@ export function AlarmForm({
   const condition = form.watch('condition');
   const field = CONDITION_FIELD[condition];
 
-  const conditionOptions = ALL_CONDITIONS.map((c) => ({
-    value: c,
-    label:
-      planLimits.allowedConditions && !planLimits.allowedConditions.includes(c)
-        ? `${t(`conditions.${c}`)} (${t('form.conditionLocked')})`
-        : t(`conditions.${c}`),
-  }));
-
   return (
     <Form form={form} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
       {isEdit ? (
@@ -116,16 +108,31 @@ export function AlarmForm({
         required
       />
 
-      <FormSelectField
-        form={form}
+      <FormField
+        control={form.control}
         name="condition"
-        label={t('form.condition')}
-        options={conditionOptions}
-        required
+        render={({ field: f }) => (
+          <FormItem>
+            <FormLabel>
+              {t('form.condition')}
+              <span className="ml-1 text-destructive">*</span>
+            </FormLabel>
+            <ConditionPicker
+              value={f.value}
+              onChange={f.onChange}
+              allowedConditions={planLimits.allowedConditions}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
       />
 
       {field === 'threshold' && (
-        <NumberField form={form} name="threshold" label={t('form.price')} />
+        <NumberField
+          form={form}
+          name="threshold"
+          label={condition === 'VIEWS_EXCEED' ? t('form.views') : t('form.price')}
+        />
       )}
       {field === 'percentage' && (
         <NumberField form={form} name="percentage" label={t('form.percentage')} />

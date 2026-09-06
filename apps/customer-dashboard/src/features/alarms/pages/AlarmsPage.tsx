@@ -54,11 +54,11 @@ export default function AlarmsPage() {
           <p className="text-sm text-on-surface-variant">{t('subtitle')}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <Button asChild disabled={planLimits.atLimit}>
-            <Link to={ROUTES.ALARM_NEW} aria-disabled={planLimits.atLimit}>
-              {t('create')}
-            </Link>
-          </Button>
+          {!planLimits.atLimit && (
+            <Button asChild>
+              <Link to={ROUTES.ALARM_NEW}>{t('create')}</Link>
+            </Button>
+          )}
           {!planLimits.isLoading && (
             <span className="font-mono text-xs text-on-surface-variant">
               {planLimits.isUnlimited
@@ -66,7 +66,7 @@ export default function AlarmsPage() {
                 : t('usage', { used: planLimits.used, max: planLimits.maxAlarms ?? 0 })}
             </span>
           )}
-          {planLimits.atLimit && <span className="text-xs text-destructive">{t('atLimit')}</span>}
+          {planLimits.atLimit && <span className="text-xs text-warning">{t('atLimit')}</span>}
         </div>
       </header>
 

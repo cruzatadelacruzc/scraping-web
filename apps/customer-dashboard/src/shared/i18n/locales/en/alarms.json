@@ -95,7 +95,14 @@
     "empty": "No listings match your filters.",
     "error": "We couldn't load the catalog."
   },
-  "actions": { "edit": "Edit", "view": "View detail", "enable": "Enable", "disable": "Pause" },
+  "actions": {
+    "edit": "Edit",
+    "editNamed": "Edit alarm {{name}}",
+    "rowActions": "Alarm actions",
+    "view": "View detail",
+    "enable": "Enable",
+    "disable": "Pause"
+  },
   "toggle": { "enabled": "Alarm enabled", "disabled": "Alarm paused" },
   "delete": {
     "title": "Delete alarm?",
