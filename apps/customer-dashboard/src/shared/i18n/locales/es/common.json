@@ -27,6 +27,9 @@
     "empty": "Sin datos",
     "error": "Algo salió mal"
   },
+  "offline": {
+    "banner": "Sin conexión — mostrando los últimos datos guardados."
+  },
   "validation": {
     "email": "Correo electrónico no válido",
     "required": "Este campo es obligatorio",

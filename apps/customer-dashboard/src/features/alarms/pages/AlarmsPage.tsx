@@ -15,6 +15,7 @@ import {
   type AlarmStateFilter,
 } from '../components/AlarmsFilters';
 import { AlarmsTable } from '../components/AlarmsTable';
+import { OfflineBanner } from '../components/alarm-list/offline-banner';
 
 export default function AlarmsPage() {
   const { t } = useTranslation('alarms');
@@ -46,6 +47,7 @@ export default function AlarmsPage() {
 
   return (
     <div className="space-y-4">
+      <OfflineBanner />
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-on-surface">{t('title')}</h1>

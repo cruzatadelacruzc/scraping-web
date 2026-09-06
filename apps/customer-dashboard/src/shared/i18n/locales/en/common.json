@@ -27,6 +27,9 @@
     "empty": "No data",
     "error": "Something went wrong"
   },
+  "offline": {
+    "banner": "You're offline — showing the last saved data."
+  },
   "validation": {
     "email": "Invalid email address",
     "required": "This field is required",

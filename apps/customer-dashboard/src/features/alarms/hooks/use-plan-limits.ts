@@ -1,10 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/shared/auth';
-import type { AlarmCondition } from '../types';
+import { createQueryPersister } from '@/shared/offline/query-persister';
+import type { AlarmCondition, PlanDTO } from '../types';
 import { ALL_CONDITIONS } from '../types';
 import { planService } from '../services/plan-service';
 import { planKeys } from './query-keys';
 import { useAlarms } from './use-alarms';
+
+/** Plan limits are read-only and small — worth keeping across an offline reload. */
+const persister = createQueryPersister();
 
 interface PlanFeatures {
   maxAlarms?: number;
@@ -26,11 +30,15 @@ export function usePlanLimits(): PlanLimits {
   const accountId = session?.accountId ?? '';
   const alarmsQuery = useAlarms();
 
-  const planQuery = useQuery({
+  // Explicit generic: the experimental per-query `persister` breaks queryFn
+  // result inference for this hook (union return + early null) and widens
+  // `planQuery.data` to `{}` without it.
+  const planQuery = useQuery<PlanDTO | null>({
     queryKey: planKeys.limits(accountId),
     enabled: !!accountId,
     staleTime: 10 * 60 * 1000,
-    queryFn: async ({ signal }) => {
+    persister,
+    queryFn: async ({ signal }): Promise<PlanDTO | null> => {
       const subs = await planService.subscriptions(accountId, signal);
       const active = subs.find((s) => s.status === 'ACTIVE' || s.status === 'TRIALING') ?? null;
       if (!active) return null;
