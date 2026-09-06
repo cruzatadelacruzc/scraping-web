@@ -67,4 +67,33 @@ describe('CodeEditor', () => {
     const { container } = render(<CodeEditor preset="json" value="[]" onChange={vi.fn()} />);
     expect(container.querySelector('[data-testid="code-editor"]')).toBeInTheDocument();
   });
+
+  it('renders with the jsonata preset', () => {
+    render(<CodeEditor preset="jsonata" value="$sum(items.price)" onChange={vi.fn()} />);
+    expect(screen.getByTestId('code-editor')).toHaveValue('$sum(items.price)');
+  });
+
+  it('renders with the markdown preset', () => {
+    render(<CodeEditor preset="markdown" value="# Prompt" onChange={vi.fn()} />);
+    expect(screen.getByTestId('code-editor')).toHaveValue('# Prompt');
+  });
+
+  it('exposes a vertical resize affordance when resizable is set', () => {
+    const { container } = render(
+      <CodeEditor preset="jsonata" value="" onChange={vi.fn()} resizable />,
+    );
+    expect(container.querySelector('.resize-y')).not.toBeNull();
+  });
+
+  it('does not expose a resize affordance by default', () => {
+    const { container } = render(<CodeEditor preset="json" value="" onChange={vi.fn()} />);
+    expect(container.querySelector('.resize-y')).toBeNull();
+  });
+
+  it('builds the extension set without error when given an ariaLabel', () => {
+    render(
+      <CodeEditor preset="jsonata" value="" onChange={vi.fn()} ariaLabel="JSONata expression" />,
+    );
+    expect(screen.getByTestId('code-editor')).toBeInTheDocument();
+  });
 });
