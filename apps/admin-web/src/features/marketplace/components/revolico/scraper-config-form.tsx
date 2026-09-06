@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertDialog } from '@shared/ui/alert-dialog';
+import { CodeEditor } from '@shared/ui/code-editor';
 import { Save } from 'lucide-react';
 
 import { useCreateScraperConfig } from '../../hooks/useCreateScraperConfig';
@@ -17,7 +18,8 @@ import {
  * Revolico scraper config editor.
  *
  * Provides a storeKey selector (populated from existing configs) and a
- * font-mono textarea for the JSONata expression. Save triggers a confirmation
+ * resizable CodeMirror editor for the config body — JSONata highlighting for
+ * scraper keys, Markdown for `llm:*` prompt keys. Save triggers a confirmation
  * dialog (sensitive action — changes live scraping behavior + invalidates cache).
  * Auto-detects create (POST) vs update (PUT) based on config existence.
  */
@@ -51,10 +53,10 @@ export function ScraperConfigEditor(): JSX.Element {
   const isNewConfig = singleConfig === null && selectedStoreKey.length > 0;
 
   const {
-    register,
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<ConfigExpressionFormValues>({
     resolver: zodResolver(configExpressionSchema),
@@ -67,6 +69,13 @@ export function ScraperConfigEditor(): JSX.Element {
   }, [currentExpression, reset]);
 
   const expressionValue = watch('expression');
+
+  const handleExpressionChange = useCallback(
+    (next: string) => {
+      setValue('expression', next, { shouldDirty: true, shouldValidate: true });
+    },
+    [setValue],
+  );
 
   // --- Confirmation dialog ---
   const [showConfirm, setShowConfirm] = useState(false);
@@ -104,6 +113,14 @@ export function ScraperConfigEditor(): JSX.Element {
   }, []);
 
   const expressionChanged = expressionValue !== currentExpression;
+
+  // `llm:*` config keys store a natural-language prompt (Markdown), every other
+  // key stores a JSONata expression. The editor grammar follows the key.
+  const isPromptKey = selectedStoreKey.startsWith('llm:');
+  const editorPreset = isPromptKey ? 'markdown' : 'jsonata';
+  const editorLabel = isPromptKey
+    ? t('scrapers.revolico.config.promptExpression')
+    : t('scrapers.revolico.config.expression');
 
   // --- 1. Loading ---
   if (isLoading) {
@@ -205,30 +222,40 @@ export function ScraperConfigEditor(): JSX.Element {
                 </span>
               </div>
 
-              {/* Expression textarea */}
+              {/* Expression / prompt editor */}
               <div>
-                <label
-                  htmlFor="config-expression"
-                  className="block text-body-sm font-medium text-on-surface"
-                >
-                  {t('scrapers.revolico.config.expression')}
-                </label>
-                <textarea
-                  id="config-expression"
-                  {...register('expression')}
-                  rows={8}
-                  className={`mt-1 w-full rounded-sm border bg-surface px-3 py-2 font-mono text-body-sm text-on-surface placeholder:text-on-surface-variant focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-void-black ${
-                    errors.expression ? 'border-danger' : 'border-outline-variant'
-                  }`}
-                  spellCheck={false}
-                  placeholder="// JSONata expression..."
-                />
+                <span className="block text-body-sm font-medium text-on-surface">
+                  {editorLabel}
+                </span>
+                <div className="mt-1">
+                  <CodeEditor
+                    preset={editorPreset}
+                    value={expressionValue}
+                    onChange={handleExpressionChange}
+                    ariaLabel={editorLabel}
+                    resizable
+                    height="220px"
+                    minHeight="160px"
+                    placeholder={
+                      isPromptKey
+                        ? t('scrapers.revolico.config.promptPlaceholder')
+                        : t('scrapers.revolico.config.expressionPlaceholder')
+                    }
+                  />
+                </div>
                 {errors.expression && (
                   <p className="mt-0.5 text-body-xs text-danger">{errors.expression.message}</p>
                 )}
-                <p className="mt-0.5 text-right text-body-xs text-on-surface-variant">
-                  {expressionValue.length} chars
-                </p>
+                <div className="mt-0.5 flex items-start justify-between gap-md text-body-xs text-on-surface-variant">
+                  <span>
+                    {isPromptKey
+                      ? t('scrapers.revolico.config.promptHint')
+                      : t('scrapers.revolico.config.expressionHint')}
+                  </span>
+                  <span className="shrink-0 font-mono">
+                    {t('scrapers.revolico.config.charCount', { count: expressionValue.length })}
+                  </span>
+                </div>
               </div>
 
               {/* Save */}

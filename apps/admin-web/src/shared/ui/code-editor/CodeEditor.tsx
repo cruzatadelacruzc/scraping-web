@@ -1,5 +1,7 @@
+import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
 import type { Extension } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 import CodeMirror from '@uiw/react-codemirror';
 
 import { BASIC_SETUP, EDITOR_CONFIG, getLineWrappingExtension } from './editor-config';
@@ -14,6 +16,9 @@ export function CodeEditor({
   onChange,
   readOnly = false,
   height = '200px',
+  minHeight = '140px',
+  resizable = false,
+  ariaLabel,
   extensions = [],
   placeholder,
 }: CodeEditorProps): JSX.Element {
@@ -21,17 +26,27 @@ export function CodeEditor({
     const ext: Extension[] = [resolvePresetExtension(preset)];
     const lineWrap = getLineWrappingExtension();
     if (lineWrap) ext.push(lineWrap);
+    if (ariaLabel) ext.push(EditorView.contentAttributes.of({ 'aria-label': ariaLabel }));
     ext.push(...extensions);
     return ext;
-  }, [preset, extensions]);
+  }, [preset, ariaLabel, extensions]);
+
+  // Dynamic pixel dimensions for a user-draggable container — not expressible as a utility class.
+  const wrapperStyle: CSSProperties | undefined = resizable ? { height, minHeight } : undefined;
 
   return (
-    <div className="overflow-hidden rounded-sm border border-outline-variant">
+    <div
+      className={`overflow-hidden rounded-sm border border-outline-variant${
+        resizable ? ' resize-y' : ''
+      }`}
+      style={wrapperStyle}
+    >
       <CodeMirror
         value={value}
         onChange={onChange}
         theme={EDITOR_CONFIG.theme}
-        height={height}
+        height={resizable ? '100%' : height}
+        className={resizable ? 'h-full' : undefined}
         basicSetup={BASIC_SETUP}
         style={codeMirrorStyle}
         extensions={resolvedExtensions}
