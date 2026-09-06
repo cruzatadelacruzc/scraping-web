@@ -65,7 +65,11 @@
     "lastMatched": "Última coincidencia",
     "lastNotified": "Última notificación",
     "never": "Nunca",
-    "notFound": "Alarma no encontrada"
+    "notFound": "Alarma no encontrada",
+    "loadError": "No pudimos cargar esta alarma.",
+    "timeline": "Historial de disparos",
+    "timelineEmptyTitle": "Aún no hay disparos",
+    "timelineEmptyDescription": "Cuando esta alarma coincida, sus notificaciones aparecerán aquí."
   },
   "actions": { "edit": "Editar", "view": "Ver detalle", "enable": "Activar", "disable": "Pausar" },
   "toggle": { "enabled": "Alarma activada", "disabled": "Alarma pausada" },

@@ -37,7 +37,14 @@ export function AlarmsTable({ alarms, onToggle, togglingId }: AlarmsTableProps) 
               key={a.id}
               className="border-b border-outline-variant last:border-b-0 hover:bg-surface-container-high"
             >
-              <td className="px-3 py-2 text-on-surface">{a.name}</td>
+              <td className="px-3 py-2">
+                <Link
+                  to={ROUTES.ALARM_DETAIL(a.id)}
+                  className="text-on-surface underline-offset-2 hover:underline"
+                >
+                  {a.name}
+                </Link>
+              </td>
               <td className="px-3 py-2 text-on-surface-variant">
                 {t(`conditions.${a.condition}`)}
               </td>
