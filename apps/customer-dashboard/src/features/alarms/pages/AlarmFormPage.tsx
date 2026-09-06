@@ -4,32 +4,27 @@ import { ROUTES } from '@shared/config/routes';
 import { Button } from '@/shared/ui/forms';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useAlarm } from '../hooks/use-alarms';
-import { useCreateAlarm, useUpdateAlarm } from '../hooks/use-alarm-mutations';
+import { useUpdateAlarm } from '../hooks/use-alarm-mutations';
 import { AlarmForm } from '../components/AlarmForm';
 import { formValuesToInput } from '../components/alarm-form-values';
 import type { AlarmFormValues } from '../schemas/alarm-schemas';
 
+/** Edit an existing alarm. Creation lives in `AlarmCreatePage` (catalog picker wizard). */
 export default function AlarmFormPage() {
   const { t } = useTranslation('alarms');
-  const { id } = useParams<{ id: string }>();
+  const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isEdit = Boolean(id);
-  const alarmQuery = useAlarm(id ?? '');
-  const create = useCreateAlarm();
+  const alarmQuery = useAlarm(id);
   const update = useUpdateAlarm();
 
-  const submitting = create.isPending || update.isPending;
-
   const onSubmit = (values: AlarmFormValues) => {
-    const input = formValuesToInput(values);
-    if (isEdit && id) {
-      update.mutate({ id, input }, { onSuccess: () => navigate(ROUTES.ALARMS) });
-    } else {
-      create.mutate(input, { onSuccess: () => navigate(ROUTES.ALARMS) });
-    }
+    update.mutate(
+      { id, input: formValuesToInput(values) },
+      { onSuccess: () => navigate(ROUTES.ALARMS) }
+    );
   };
 
-  if (isEdit && alarmQuery.isLoading) {
+  if (alarmQuery.isLoading) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -39,7 +34,7 @@ export default function AlarmFormPage() {
     );
   }
 
-  if (isEdit && alarmQuery.isError) {
+  if (alarmQuery.isError) {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
         <p className="text-sm text-on-surface-variant">
@@ -52,7 +47,7 @@ export default function AlarmFormPage() {
     );
   }
 
-  if (isEdit && !alarmQuery.data) {
+  if (!alarmQuery.data) {
     return (
       <div className="mx-auto max-w-lg text-center">
         <p className="text-sm text-on-surface-variant">{t('detail.notFound')}</p>
@@ -62,13 +57,11 @@ export default function AlarmFormPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
-      <h1 className="text-xl font-semibold text-on-surface">
-        {t(isEdit ? 'form.editTitle' : 'form.createTitle')}
-      </h1>
+      <h1 className="text-xl font-semibold text-on-surface">{t('form.editTitle')}</h1>
       <AlarmForm
-        alarm={isEdit ? alarmQuery.data : null}
+        alarm={alarmQuery.data}
         onSubmit={onSubmit}
-        submitting={submitting}
+        submitting={update.isPending}
         onCancel={() => navigate(ROUTES.ALARMS)}
       />
     </div>

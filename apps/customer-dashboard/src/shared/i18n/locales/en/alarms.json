@@ -71,6 +71,30 @@
     "timelineEmptyTitle": "No triggers yet",
     "timelineEmptyDescription": "When this alarm matches, its notifications show up here."
   },
+  "wizard": {
+    "titleCreate": "New alarm",
+    "step1": "1. Choose a listing",
+    "step2": "2. Configure the alarm",
+    "selectedProduct": "Selected listing",
+    "changeProduct": "Change listing"
+  },
+  "picker": {
+    "searchPlaceholder": "Search listings…",
+    "category": "Category",
+    "allCategories": "All categories",
+    "subcategory": "Subcategory",
+    "allSubcategories": "All",
+    "priceFrom": "Min price",
+    "priceTo": "Max price",
+    "select": "Select",
+    "featured": "Featured",
+    "views": "{{count}} views",
+    "resultsCount": "{{count}} listings",
+    "prev": "Previous",
+    "next": "Next",
+    "empty": "No listings match your filters.",
+    "error": "We couldn't load the catalog."
+  },
   "actions": { "edit": "Edit", "view": "View detail", "enable": "Enable", "disable": "Pause" },
   "toggle": { "enabled": "Alarm enabled", "disabled": "Alarm paused" },
   "delete": {

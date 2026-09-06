@@ -52,12 +52,20 @@ function NumberField({
 
 interface AlarmFormProps {
   alarm?: AlarmViewModel | null;
+  /** Create flow only: URL chosen in the catalog picker. Hides the manual URL field. */
+  lockedProductUrl?: string;
   onSubmit: (values: AlarmFormValues) => void;
   submitting?: boolean;
   onCancel: () => void;
 }
 
-export function AlarmForm({ alarm, onSubmit, submitting, onCancel }: AlarmFormProps) {
+export function AlarmForm({
+  alarm,
+  lockedProductUrl,
+  onSubmit,
+  submitting,
+  onCancel,
+}: AlarmFormProps) {
   const { t } = useTranslation(['alarms', 'common']);
   const isEdit = Boolean(alarm);
   const planLimits = usePlanLimits();
@@ -65,7 +73,7 @@ export function AlarmForm({ alarm, onSubmit, submitting, onCancel }: AlarmFormPr
   const form = useForm<AlarmFormValues>({
     resolver: zodResolver(alarmFormSchema),
     mode: 'onBlur',
-    defaultValues: alarmToFormValues(alarm),
+    defaultValues: alarmToFormValues(alarm, lockedProductUrl),
   });
 
   const condition = form.watch('condition');
@@ -89,7 +97,7 @@ export function AlarmForm({ alarm, onSubmit, submitting, onCancel }: AlarmFormPr
           </p>
           <p className="mt-1 text-xs text-on-surface-variant">{t('form.productUrlLocked')}</p>
         </div>
-      ) : (
+      ) : lockedProductUrl ? null : (
         <FormInputField
           form={form}
           name="productUrl"

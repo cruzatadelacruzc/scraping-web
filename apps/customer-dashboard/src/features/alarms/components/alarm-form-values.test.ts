@@ -35,6 +35,20 @@ describe('alarmToFormValues', () => {
     });
   });
 
+  it('seeds productUrl from lockedProductUrl in create mode', () => {
+    expect(alarmToFormValues(undefined, 'https://www.revolico.com/item/mock-3').productUrl).toBe(
+      'https://www.revolico.com/item/mock-3'
+    );
+  });
+
+  it('ignores lockedProductUrl when editing an existing alarm', () => {
+    const v = alarmToFormValues(
+      makeAlarm({ productUrl: 'https://revolico.com/item/a' }),
+      'https://www.revolico.com/item/mock-3'
+    );
+    expect(v.productUrl).toBe('https://revolico.com/item/a');
+  });
+
   it('copies threshold for a threshold-field condition, leaves percentage unset', () => {
     const v = alarmToFormValues(makeAlarm({ condition: 'PRICE_DROPS_BELOW', threshold: 300 }));
     expect(v.threshold).toBe(300);

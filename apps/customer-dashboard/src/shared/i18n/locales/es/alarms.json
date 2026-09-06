@@ -71,6 +71,30 @@
     "timelineEmptyTitle": "Aún no hay disparos",
     "timelineEmptyDescription": "Cuando esta alarma coincida, sus notificaciones aparecerán aquí."
   },
+  "wizard": {
+    "titleCreate": "Nueva alarma",
+    "step1": "1. Elige un anuncio",
+    "step2": "2. Configura la alarma",
+    "selectedProduct": "Anuncio seleccionado",
+    "changeProduct": "Cambiar anuncio"
+  },
+  "picker": {
+    "searchPlaceholder": "Buscar anuncios…",
+    "category": "Categoría",
+    "allCategories": "Todas las categorías",
+    "subcategory": "Subcategoría",
+    "allSubcategories": "Todas",
+    "priceFrom": "Precio mín.",
+    "priceTo": "Precio máx.",
+    "select": "Elegir",
+    "featured": "Destacado",
+    "views": "{{count}} vistas",
+    "resultsCount": "{{count}} anuncios",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "empty": "Ningún anuncio coincide con los filtros.",
+    "error": "No pudimos cargar el catálogo."
+  },
   "actions": { "edit": "Editar", "view": "Ver detalle", "enable": "Activar", "disable": "Pausar" },
   "toggle": { "enabled": "Alarma activada", "disabled": "Alarma pausada" },
   "delete": {

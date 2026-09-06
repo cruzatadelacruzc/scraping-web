@@ -1,11 +1,18 @@
 import { CONDITION_FIELD, type AlarmViewModel, type CreateAlarmInput } from '../types';
 import type { AlarmFormValues } from '../schemas/alarm-schemas';
 
-/** Maps an existing alarm (edit) or nothing (create) to the form's default values. */
-export function alarmToFormValues(a?: AlarmViewModel | null): AlarmFormValues {
+/**
+ * Maps an existing alarm (edit) or nothing (create) to the form's default values.
+ * On create, `lockedProductUrl` (supplied by the catalog picker wizard) seeds the
+ * hidden `productUrl` field so the value is present without a visible input.
+ */
+export function alarmToFormValues(
+  a?: AlarmViewModel | null,
+  lockedProductUrl?: string
+): AlarmFormValues {
   if (!a) {
     return {
-      productUrl: '',
+      productUrl: lockedProductUrl ?? '',
       name: '',
       condition: 'PRICE_DROPS_BELOW',
       threshold: undefined,
