@@ -29,6 +29,32 @@ vi.mock('sonner', () => ({
   },
 }));
 
+// The shared CodeEditor wraps CodeMirror, which needs DOM APIs jsdom lacks.
+// Render a plain textarea that surfaces the resolved `preset` for assertions.
+vi.mock('@shared/ui/code-editor', () => ({
+  CodeEditor: ({
+    value,
+    onChange,
+    preset,
+    ariaLabel,
+    placeholder,
+  }: {
+    value: string;
+    onChange?: (v: string) => void;
+    preset: string;
+    ariaLabel?: string;
+    placeholder?: string;
+  }) => (
+    <textarea
+      data-testid="code-editor"
+      data-preset={preset}
+      aria-label={ariaLabel ?? placeholder ?? 'code-editor'}
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+    />
+  ),
+}));
+
 const mockUseGetScraperConfigs = vi.fn();
 const mockUseGetScraperConfig = vi.fn();
 const mockCreateScraperConfig = vi.fn();
@@ -78,11 +104,23 @@ const mockConfigs = [
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-02'),
   },
+  {
+    id: '3',
+    storeKey: 'llm:enrich',
+    expression: 'Extract the brand from the title.',
+    enabled: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-02'),
+  },
 ];
 
 // Helper to select a storeKey in the component
 async function selectConfigKey(user: ReturnType<typeof userEvent.setup>, key: string) {
   await user.selectOptions(screen.getByLabelText('scrapers.revolico.config.selectStoreKey'), key);
+}
+
+function getEditor(): HTMLTextAreaElement {
+  return screen.getByTestId('code-editor');
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -210,7 +248,7 @@ describe('ScraperConfigEditor', () => {
     expect(screen.getByText('revolico:detail')).toBeInTheDocument();
   });
 
-  it('renders expression textarea after selecting a storeKey', async () => {
+  it('renders the code editor after selecting a storeKey', async () => {
     setupLoadedState();
     const user = userEvent.setup();
     renderWithProviders(<ScraperConfigEditor />);
@@ -220,6 +258,65 @@ describe('ScraperConfigEditor', () => {
     // Wait for RHF reset to propagate the expression value
     await screen.findByDisplayValue('$.items.*');
     expect(screen.getByText('scrapers.revolico.config.expression')).toBeInTheDocument();
+    expect(getEditor()).toBeInTheDocument();
+  });
+
+  it('gives the editor an accessible name matching the field label', async () => {
+    setupLoadedState();
+    const user = userEvent.setup();
+    renderWithProviders(<ScraperConfigEditor />);
+
+    await selectConfigKey(user, 'revolico:listing');
+    await screen.findByDisplayValue('$.items.*');
+
+    expect(
+      screen.getByRole('textbox', { name: 'scrapers.revolico.config.expression' }),
+    ).toBeInTheDocument();
+  });
+
+  // ---- Editor preset by config type ----
+
+  it('uses the jsonata preset for a non-llm config key', async () => {
+    setupLoadedState();
+    const user = userEvent.setup();
+    renderWithProviders(<ScraperConfigEditor />);
+
+    await selectConfigKey(user, 'revolico:listing');
+    await screen.findByDisplayValue('$.items.*');
+
+    expect(getEditor()).toHaveAttribute('data-preset', 'jsonata');
+  });
+
+  it('uses the markdown preset for an llm: config key', async () => {
+    mockUseGetScraperConfigs.mockReturnValue({
+      data: mockConfigs,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseGetScraperConfig.mockReturnValue({
+      data: {
+        id: '3',
+        storeKey: 'llm:enrich',
+        expression: 'Extract the brand from the title.',
+        enabled: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-02'),
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<ScraperConfigEditor />);
+
+    await selectConfigKey(user, 'llm:enrich');
+    await screen.findByDisplayValue('Extract the brand from the title.');
+
+    expect(getEditor()).toHaveAttribute('data-preset', 'markdown');
+    expect(screen.getByText('scrapers.revolico.config.promptExpression')).toBeInTheDocument();
   });
 
   it('shows save button after selecting a storeKey', async () => {
@@ -257,7 +354,7 @@ describe('ScraperConfigEditor', () => {
 
   // ---- Validation ----
 
-  it('shows expression required error when expression is empty', async () => {
+  it('disables save when the expression is empty', async () => {
     setupLoadedState();
     const user = userEvent.setup();
     renderWithProviders(<ScraperConfigEditor />);
@@ -265,11 +362,8 @@ describe('ScraperConfigEditor', () => {
     await selectConfigKey(user, 'revolico:listing');
     await screen.findByDisplayValue('$.items.*');
 
-    // Clear the expression and click save
-    const textarea = screen.getByRole('textbox', { name: 'scrapers.revolico.config.expression' });
-    await user.clear(textarea);
+    await user.clear(getEditor());
 
-    // Button should be disabled when expression is empty
     const saveButton = screen.getByText('scrapers.revolico.config.save').closest('button');
     expect(saveButton).toBeDisabled();
   });
@@ -284,15 +378,11 @@ describe('ScraperConfigEditor', () => {
     await selectConfigKey(user, 'revolico:listing');
     await screen.findByDisplayValue('$.items.*');
 
-    // Type something different to enable save
-    const textarea = screen.getByRole('textbox', { name: 'scrapers.revolico.config.expression' });
-    await user.clear(textarea);
-    await user.type(textarea, '$.new.*');
+    await user.clear(getEditor());
+    await user.type(getEditor(), '$.new.*');
 
-    // Click save
     await user.click(screen.getByText('scrapers.revolico.config.save'));
 
-    // Confirm dialog should show
     expect(screen.getByText('scrapers.revolico.config.confirmTitle')).toBeInTheDocument();
     expect(screen.getByText('scrapers.revolico.config.confirmDescription')).toBeInTheDocument();
   });
@@ -305,14 +395,11 @@ describe('ScraperConfigEditor', () => {
     await selectConfigKey(user, 'revolico:listing');
     await screen.findByDisplayValue('$.items.*');
 
-    // Type to change expression and enable save
-    const textarea = screen.getByRole('textbox', { name: 'scrapers.revolico.config.expression' });
-    await user.clear(textarea);
-    await user.type(textarea, '$.new.*');
+    await user.clear(getEditor());
+    await user.type(getEditor(), '$.new.*');
 
     await user.click(screen.getByText('scrapers.revolico.config.save'));
 
-    // Confirm
     const confirmButton = screen.getByText('scrapers.revolico.config.confirmSave');
     await user.click(confirmButton);
 
@@ -343,13 +430,10 @@ describe('ScraperConfigEditor', () => {
     await selectConfigKey(user, 'revolico:listing');
     await screen.findByText('scrapers.revolico.config.create');
 
-    // Type an expression
-    const textarea = screen.getByRole('textbox', { name: 'scrapers.revolico.config.expression' });
-    await user.type(textarea, '$.new.*');
+    await user.type(getEditor(), '$.new.*');
 
     await user.click(screen.getByText('scrapers.revolico.config.create'));
 
-    // Confirm
     const confirmButton = screen.getByText('scrapers.revolico.config.confirmSave');
     await user.click(confirmButton);
 
@@ -367,15 +451,12 @@ describe('ScraperConfigEditor', () => {
     await selectConfigKey(user, 'revolico:listing');
     await screen.findByDisplayValue('$.items.*');
 
-    const textarea = screen.getByRole('textbox', { name: 'scrapers.revolico.config.expression' });
-    await user.clear(textarea);
-    await user.type(textarea, '$.new.*');
+    await user.clear(getEditor());
+    await user.type(getEditor(), '$.new.*');
     await user.click(screen.getByText('scrapers.revolico.config.save'));
 
-    // Cancel
     await user.click(screen.getByText('scrapers.revolico.config.cancel'));
 
-    // Dialog should close
     expect(screen.queryByText('scrapers.revolico.config.confirmTitle')).not.toBeInTheDocument();
   });
 });

@@ -161,4 +161,5 @@ Consistent component styling ensures the technical integrity of the system:
 - **Chips/Tags**: Small, rectangular, using a subtle background tint of the status color (e.g., dark green background for a "Success" tag).
 - **Lists/Tables**: High-density rows (32px-40px height). Use zebra-striping with a 2% luminance difference between rows.
 - **Cards**: Flat containers with 1px borders. No shadows. Use "Internal Headers" (a 1px bottom border separating the card title from content).
+- **Code Editor**: `CodeEditor` (`shared/ui/code-editor`) wraps CodeMirror 6 — dark theme, 1px `outline-variant` border, `rounded-sm`, `overflow-hidden`. Presets: `json`, `jsonata` (JavaScript grammar, highlight-only — no linter), `markdown`. Pass `resizable` for a textarea-style drag handle on the bottom edge; `height` / `minHeight` set the initial and floor sizes. Always pass `ariaLabel` — CodeMirror has no bound `<label>`, so a plain heading above it is decorative only.
 - **Status Indicators**: Small 8px circles. Pulsing animation allowed for "Live" or "Critical" monitoring states.
