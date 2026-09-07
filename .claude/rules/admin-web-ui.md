@@ -120,6 +120,8 @@ Every list, table, and chart MUST handle the empty case:
 
 - During `isFetching && !isLoading`, show a 2px progress bar at the top of the table or card.
 - DO NOT clear the existing data when refetching. Replace it atomically when the new data arrives.
+- `refetchOnWindowFocus` is **off** app-wide (`shared/api/query-client.ts`) — the console does not refetch every query when the operator alt-tabs back. Freshness comes from per-tier `staleTime`; realtime data (`useGetQueues`, health, enrichment) polls via `refetchInterval`.
+- Do NOT set `refetchOnMount: false` on individual hooks. It does not stop React StrictMode's dev double-mount (TanStack Query already dedupes the in-flight request), and it degrades freshness on real remounts. See `apps/admin-web/CLAUDE.md` → State Strategy → QueryClient defaults.
 
 ---
 

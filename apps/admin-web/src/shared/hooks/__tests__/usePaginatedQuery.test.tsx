@@ -10,12 +10,9 @@ import { usePaginatedQuery } from '../usePaginatedQuery';
 // Wrapper
 // ---------------------------------------------------------------------------
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
+function createWrapper(
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return React.createElement(QueryClientProvider, {
       client: queryClient,
@@ -100,6 +97,35 @@ describe('usePaginatedQuery', () => {
     await waitFor(() => {
       expect(queryFn).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('does not refetch on remount while the cached page is still fresh', async () => {
+    const queryFn = vi.fn().mockResolvedValue({ items: [], total: 0 });
+    const sharedClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const params = {
+      page: 1,
+      limit: 20,
+      filters: { search: 'foo' },
+      queryKeyBase: 'test-remount',
+      queryFn,
+      staleTime: 300_000,
+    };
+
+    const first = renderHook(() => usePaginatedQuery(params), {
+      wrapper: createWrapper(sharedClient),
+    });
+    await waitFor(() => {
+      expect(queryFn).toHaveBeenCalledTimes(1);
+    });
+    first.unmount();
+
+    // A fresh mount of the same query (e.g. navigating away and back). The page
+    // is still within staleTime, so no network call — this must hold whether or
+    // not `refetchOnMount` is set on the hook.
+    renderHook(() => usePaginatedQuery(params), { wrapper: createWrapper(sharedClient) });
+
+    await new Promise((r) => setTimeout(r, 20));
+    expect(queryFn).toHaveBeenCalledTimes(1);
   });
 
   it('keeps previous data while fetching next page with placeholderData opt-in', async () => {
