@@ -1,0 +1,122 @@
+{
+  "title": "Alarmas",
+  "subtitle": "Vigila anuncios y te avisamos cuando se cumpla tu condición.",
+  "create": "Crear alarma",
+  "usage": "{{used}} / {{max}} alarmas",
+  "usageUnlimited": "{{used}} alarmas · ilimitado",
+  "atLimit": "Has alcanzado el límite de alarmas de tu plan",
+  "search": "Buscar por nombre o URL",
+  "filters": {
+    "condition": "Condición",
+    "allConditions": "Todas las condiciones",
+    "state": "Estado",
+    "allStates": "Todos",
+    "enabled": "Activas",
+    "disabled": "Pausadas"
+  },
+  "columns": {
+    "name": "Nombre",
+    "condition": "Condición",
+    "value": "Valor",
+    "state": "Estado",
+    "lastMatch": "Última coincidencia"
+  },
+  "state": { "enabled": "Activa", "disabled": "Pausada" },
+  "empty": {
+    "title": "Aún no tienes alarmas",
+    "description": "Crea tu primera alarma para vigilar un anuncio.",
+    "cta": "Crear tu primera alarma"
+  },
+  "noResults": "Ninguna alarma coincide con los filtros.",
+  "conditions": {
+    "PRICE_DROPS_BELOW": "Precio baja de",
+    "PRICE_RISES_ABOVE": "Precio sube de",
+    "PRICE_CHANGES_BY_PERCENT": "Precio cambia un %",
+    "VIEWS_EXCEED": "Vistas superan",
+    "IS_OUTSTANDING": "Es destacado",
+    "SELLER_CHANGED": "Cambia el vendedor"
+  },
+  "form": {
+    "createTitle": "Crear alarma",
+    "editTitle": "Editar alarma",
+    "productUrl": "URL del producto",
+    "productUrlHelp": "Pega la URL de un anuncio (p. ej. de Revolico) que ya estemos vigilando.",
+    "productUrlLocked": "La URL no se puede cambiar después de crear la alarma.",
+    "name": "Nombre de la alarma",
+    "namePlaceholder": "Ej. iPhone 13 barato",
+    "condition": "Condición",
+    "searchCondition": "Buscar condición…",
+    "conditionLocked": "Disponible en un plan superior",
+    "price": "Precio umbral",
+    "views": "Número de vistas",
+    "percentage": "Porcentaje de cambio",
+    "urlInvalid": "Introduce una URL válida",
+    "percentRange": "Debe estar entre 0 y 100",
+    "enabled": "Activar la alarma",
+    "submitCreate": "Crear alarma",
+    "submitEdit": "Guardar cambios"
+  },
+  "detail": {
+    "back": "Volver a alarmas",
+    "config": "Configuración",
+    "status": "Estado",
+    "lastEvaluated": "Última evaluación",
+    "lastEvaluatedPrice": "Último precio evaluado",
+    "lastMatched": "Última coincidencia",
+    "lastNotified": "Última notificación",
+    "never": "Nunca",
+    "notFound": "Alarma no encontrada",
+    "loadError": "No pudimos cargar esta alarma.",
+    "timeline": "Historial de disparos",
+    "timelineEmptyTitle": "Aún no hay disparos",
+    "timelineEmptyDescription": "Cuando esta alarma coincida, sus notificaciones aparecerán aquí."
+  },
+  "wizard": {
+    "titleCreate": "Nueva alarma",
+    "step1": "1. Elige un anuncio",
+    "step2": "2. Configura la alarma",
+    "selectedProduct": "Anuncio seleccionado",
+    "changeProduct": "Cambiar anuncio"
+  },
+  "picker": {
+    "searchPlaceholder": "Buscar anuncios…",
+    "category": "Categoría",
+    "allCategories": "Todas las categorías",
+    "subcategory": "Subcategoría",
+    "allSubcategories": "Todas",
+    "priceFrom": "Precio mín.",
+    "priceTo": "Precio máx.",
+    "select": "Elegir",
+    "featured": "Destacado",
+    "views": "{{count}} vistas",
+    "resultsCount": "{{count}} anuncios",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "empty": "Ningún anuncio coincide con los filtros.",
+    "error": "No pudimos cargar el catálogo."
+  },
+  "actions": {
+    "edit": "Editar",
+    "editNamed": "Editar alarma {{name}}",
+    "rowActions": "Acciones de la alarma",
+    "view": "Ver detalle",
+    "enable": "Activar",
+    "disable": "Pausar"
+  },
+  "toggle": { "enabled": "Alarma activada", "disabled": "Alarma pausada" },
+  "delete": {
+    "title": "¿Borrar alarma?",
+    "description": "Esta acción es permanente y no se puede deshacer.",
+    "confirm": "Borrar permanentemente"
+  },
+  "toasts": {
+    "created": "Alarma creada",
+    "updated": "Alarma actualizada",
+    "deleted": "Alarma borrada"
+  },
+  "plan": {
+    "limitReached": "Has alcanzado el límite de alarmas de tu plan",
+    "upgradeHint": "Mejora tu plan para crear más alarmas."
+  },
+  "errors": { "generic": "No se pudo completar la acción. Inténtalo de nuevo." }
+}

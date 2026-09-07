@@ -172,4 +172,6 @@ Run before `git commit` — see @.claude/rules/compliance-checklist.md for the f
 | DB utility scripts                          | `scripts/`                                          |
 | Environment setup                           | `.env.example`                                      |
 | Super Admin SPA module guide                | `apps/admin-web/CLAUDE.md`                          |
+| Customer Dashboard (PWA) module guide       | `apps/customer-dashboard/CLAUDE.md`                 |
+| Product catalog (customer-facing, read-only)| `src/main/products/README.md`                       |
 | Account management (passwords, tokens, deactivation, email) | `src/main/users/` (account-management.controller, services/email/) |

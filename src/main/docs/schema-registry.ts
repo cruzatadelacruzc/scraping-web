@@ -38,6 +38,7 @@ import { ProductListQuerySchema } from '@admin/services/dto/product-list-query.d
 import { DashboardMetricsSchema, HealthResponseSchema } from '@admin/services/dto/dashboard-metrics.dto';
 import { QueueStatsSchema, JobDetailSchema } from '@admin/services/dto/queue-stats.dto';
 import { CreateRoleSchema, RoleResponseSchema } from '@admin/services/dto/role.dto';
+import { ProductCatalogItemSchema, ProductCategoryGroupSchema } from '@products/services/dto/product-catalog-item.dto';
 // Account Management DTOs
 import { ForgotPasswordSchema } from '@users/services/dto/forgot-password.dto';
 import { ResetPasswordSchema } from '@users/services/dto/reset-password.dto';
@@ -206,6 +207,8 @@ export function registerAllSchemas(registry: OpenAPIRegistry): void {
   Schemas.ProductStatsDTO = registry.register('ProductStatsDTO', ProductStatsSchema);
   Schemas.DashboardMetricsDTO = registry.register('DashboardMetricsDTO', DashboardMetricsSchema);
   Schemas.HealthResponseDTO = registry.register('HealthResponseDTO', HealthResponseSchema);
+  Schemas.ProductCatalogItemDTO = registry.register('ProductCatalogItemDTO', ProductCatalogItemSchema);
+  Schemas.ProductCategoryGroupDTO = registry.register('ProductCategoryGroupDTO', ProductCategoryGroupSchema);
 
   // Inline schema for enrichment metrics — no standalone DTO file.
   const EnrichmentMetricsSchema = z.object({

@@ -49,6 +49,8 @@ import { AccountRepository } from '@users/repositories/account.repository';
 import { AdminController } from '@admin/controllers/admin.controller';
 import { ProductAdminController } from '@admin/controllers/product-admin.controller';
 import { ProductAdminService } from '@admin/services/product-admin.service';
+import { ProductCatalogController } from '@products/controllers/product-catalog.controller';
+import { ProductCatalogService } from '@products/services/product-catalog.service';
 import { QueueAdminController } from '@admin/controllers/queue-admin.controller';
 import { QueueAdminService } from '@admin/services/queue-admin.service';
 import { DashboardController } from '@admin/controllers/dashboard.controller';
@@ -193,6 +195,7 @@ container.bind(TYPES.ProductMapper).to(ProductMapper);
 
 //services
 container.bind<ProductAdminService>(TYPES.ProductAdminService).to(ProductAdminService);
+container.bind<ProductCatalogService>(TYPES.ProductCatalogService).to(ProductCatalogService);
 container.bind<QueueAdminService>(TYPES.QueueAdminService).to(QueueAdminService);
 container.bind<DashboardService>(TYPES.DashboardService).to(DashboardService);
 container.bind<AccountAdminService>(TYPES.AccountAdminService).to(AccountAdminService);
@@ -201,6 +204,7 @@ container.bind<RoleService>(TYPES.RoleService).to(RoleService);
 //controllers
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<ProductAdminController>(TYPES.ProductAdminController).to(ProductAdminController);
+container.bind<ProductCatalogController>(TYPES.ProductCatalogController).to(ProductCatalogController);
 container.bind<QueueAdminController>(TYPES.QueueAdminController).to(QueueAdminController);
 container.bind<DashboardController>(TYPES.DashboardController).to(DashboardController);
 container.bind<AccountAdminController>(TYPES.AccountAdminController).to(AccountAdminController);

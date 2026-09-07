@@ -6,18 +6,20 @@ import enCommon from './locales/en/common.json';
 import enAuth from './locales/en/auth.json';
 import enLanding from './locales/en/landing.json';
 import enProfile from './locales/en/profile.json';
+import enAlarms from './locales/en/alarms.json';
 import esCommon from './locales/es/common.json';
 import esAuth from './locales/es/auth.json';
 import esLanding from './locales/es/landing.json';
 import esProfile from './locales/es/profile.json';
+import esAlarms from './locales/es/alarms.json';
 
 export const supportedLngs = ['es', 'en'] as const;
 export type AppLanguage = (typeof supportedLngs)[number];
 export const defaultNS = 'common';
 
 export const resources = {
-  en: { common: enCommon, auth: enAuth, landing: enLanding, profile: enProfile },
-  es: { common: esCommon, auth: esAuth, landing: esLanding, profile: esProfile },
+  en: { common: enCommon, auth: enAuth, landing: enLanding, profile: enProfile, alarms: enAlarms },
+  es: { common: esCommon, auth: esAuth, landing: esLanding, profile: esProfile, alarms: esAlarms },
 };
 
 void i18n
@@ -30,7 +32,7 @@ void i18n
     load: 'languageOnly',
     nonExplicitSupportedLngs: true,
     defaultNS,
-    ns: ['common', 'auth', 'landing', 'profile'],
+    ns: ['common', 'auth', 'landing', 'profile', 'alarms'],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
     detection: {
