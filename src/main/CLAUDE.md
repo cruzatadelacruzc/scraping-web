@@ -38,7 +38,7 @@ applyTo: 'src/main/**'
 - Report progress: `ctx.progress(value)` (0-100 or structured object)
 - Log errors with job context before throwing
 - Active adapter selected by `QUEUE_BACKEND` env var (`bullmq` | `sqs` | `mock`); see `src/main/shared/queue/`
-- Queue Dashboard (`@bull-board/api`) mounted at `/queue` (configurable via `BULL_AREANA_URL`)
+- Queue Dashboard (`@bull-board/api`) mounted at `BULL_AREANA_URL` (default `/arena`), behind basic auth
 
 ## Development Standards
 
@@ -100,6 +100,15 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 - **DI**: 6 symbols in `types.container.ts` + bindings in `container.ts` (`StoreRegistry`, `CronSchedulerService`, `ScheduleService`, `ScheduleRepository`, `ScheduleController`, `StoreInfoController`).
 - **Adding a store**: create `scrapers/<store>/index.ts` with a `register<Store>Store(container)` function that calls `storeRegistry.register(key, config)`. Call it in `app.ts` before `scheduler.initialize()`.
 
+### Products Module
+
+- `src/main/products/` — customer-facing **read-only** catalog over the scraped MongoDB product data. Powers the alarm-creation product picker in `apps/customer-dashboard`.
+- Endpoints (`ACCOUNT_OWNER` only): `GET /api/products` (paginated search — text/category/price filters, sortable) and `GET /api/products/categories` (category → subcategory groups). Tag `Products` in `swagger.json`.
+- **No tenant isolation** — Mongo product data is shared. The service reuses `@scrapers/revolico/repositories/ProductRepository` directly instead of owning a repository (so no `repositories/` folder).
+- Layers: `ProductCatalogController` → `ProductCatalogService` (builds Mongo filter / aggregation) → `ProductRepository`. Mapper `toProductCatalogItem` is pure and strips internal flags + seller contact data.
+- **DI**: `TYPES.ProductCatalogService` + `TYPES.ProductCatalogController` in `types.container.ts`, bound in `container.ts`.
+- See `src/main/products/README.md` for the full query-param table and test layout.
+
 ## Creating New Components
 
 1. Add Symbol to `types.container.ts`
@@ -118,7 +127,7 @@ Include `tenantId`, `requestId`, and operation details in log calls.
 
 ## Debugging & Monitoring
 
-- Queue Dashboard (`@bull-board`) at `/queue` for monitoring BullMQ queues
+- Queue Dashboard (`@bull-board`) at `BULL_AREANA_URL` (default `/arena`) for monitoring BullMQ queues
 - Structured logging with request/tenant context
 - OpenAPI/Swagger docs at `/api-docs`
 
@@ -152,7 +161,7 @@ After developing and passing tests, ALWAYS run `npm run docs:generate`. This reg
 
 ### Path aliases
 
-`@users/*`, `@alarms/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@config/*`, `@utils/*`, `@cron/*`
+`@users/*`, `@alarms/*`, `@products/*`, `@shared/*`, `@admin/*`, `@scrapers/*`, `@bots/*`, `@config/*`, `@utils/*`, `@cron/*`
 
 ### Email Service
 

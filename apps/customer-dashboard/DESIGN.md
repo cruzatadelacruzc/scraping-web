@@ -204,4 +204,33 @@ Zero-scroll, viewport-locked on desktop; reflows on mobile. Three zones:
 - **Feedback** = `sonner` toasts on mutations (success + error); never toast field validation (inline via `FormMessage`).
 - **i18n** = every string via `t()` (`react-i18next`, EN + ES, browser-detected, Spanish fallback). A compact `LanguageSwitcher` sits in the landing header, the auth shell, and the app sidebar.
 - **Auth tokens are in-memory only** (Zustand, non-persisted) — reload is unauthenticated by design until the backend issues an httpOnly refresh cookie.
+
+---
+
+## Phase 2 — Alarms (built surfaces)
+
+> Documented after implementation. Extends the brand book; where they differ, these win for the alarms feature.
+
+### Selection surfaces (picker, not `<select>`)
+
+Choices that will grow, or that carry more than a label, render as a **card grid with a filter box**, never a native `<select>`:
+
+- **`ProductPicker`** (`features/alarms/components/`) — the create wizard's step 1. Search (300ms debounce) + category / subcategory / price filters, a `sm:grid-cols-2 lg:grid-cols-3` grid of listing cards (thumbnail, description, `font-mono` price + currency, location, `Featured` chip, views), prev/next cursor pagination. Loading = 6 shape-matched `Skeleton` cards.
+- **`ConditionPicker`** (`features/alarms/components/`) — replaces the alarm-condition `<select>`. Filter box + `role="radiogroup"` of condition cards (lucide icon + label). The **selected** card is `border-success bg-success/10 text-on-surface`; unselected is `border-outline-variant text-on-surface-variant` with a hover lift to `border-outline`. Plan-locked conditions render `opacity-50 cursor-not-allowed` with a `Lock` glyph and a `text-warning` "available on a higher plan" line.
+
+Selected-state token across both: emerald (`success`) fill at 10%, emerald border — the same data-signal emerald used on the leaderboard.
+
+### Data table — the row is the primary action
+
+`AlarmsTable` rows navigate to **edit** on click of any cell **except** the last (actions) cell, which `stopPropagation`s so its view / pause-resume controls act independently. The row carries `role="link"`, `tabIndex={0}`, an `aria-label` naming the alarm, and Enter/Space keyboard activation; focus shows `ring-2 ring-inset ring-ring`. Row hover = `surface-container-high`; the action icon-buttons hover one tonal step higher (`surface-container-highest`).
+
+### Plan gating is structural, not decorative
+
+When the account is at its alarm limit the **primary "Create alarm" action is removed**, not just disabled — only the `font-mono` usage counter and a `text-warning` limit line remain. `AlarmCreatePage` still renders a full `EmptyState` (ShieldAlert + upgrade copy + back link) for anyone who reaches `/alarms/new` directly.
+
+### Other Phase 2 primitives
+
+- **`Modal` / `ConfirmDialog`** (`src/shared/ui/`) — dependency-free overlay (Esc + backdrop close, `shadow-elevation-3`, `bg-surface-container`). Destructive confirms keep the dialog open while the mutation is pending; the confirm button is `variant="destructive"` and its label carries "permanently".
+- **`OfflineBanner`** (`features/alarms/components/alarm-list/`) — `role="status"`, `border-warning/40 bg-warning/10 text-warning`, shown above the list while `navigator.onLine` is false. The list keeps rendering from the IndexedDB-persisted query cache underneath.
+- **Detail page** (`/alarms/:id`) — two tonal cards (`Configuración`, `Estado`) in a `md:grid-cols-2`, then a full-width trigger-history timeline; `font-mono` for every date and price value.
 - **Metric Cards:** Large technical-weight numbers (Geist Mono) with a small trend indicator (Arrow + Percentage) positioned in the top right.

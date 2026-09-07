@@ -6,6 +6,7 @@ import { registerPlansPaths } from './modules/plans.paths';
 import { registerSubscriptionsPaths } from './modules/subscriptions.paths';
 import { registerAlarmsPaths } from './modules/alarms.paths';
 import { registerNotificationsPaths } from './modules/notifications.paths';
+import { registerProductsPaths } from './modules/products.paths';
 import { registerScrapingPaths } from './modules/scraping.paths';
 import { registerAdminPaths } from './modules/admin.paths';
 import { registerScraperConfigsPaths } from './modules/scraper-configs.paths';
@@ -21,6 +22,7 @@ export function registerAllPaths(registry: OpenAPIRegistry): void {
   registerSubscriptionsPaths(registry);
   registerAlarmsPaths(registry);
   registerNotificationsPaths(registry);
+  registerProductsPaths(registry);
   registerScrapingPaths(registry);
   registerAdminPaths(registry);
   registerScraperConfigsPaths(registry);

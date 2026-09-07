@@ -65,16 +65,24 @@ src/
 │   ├── providers.tsx        # Context providers
 │   └── layout/              # AuthLayout, AppLayout
 ├── features/
-│   └── auth/
-│       ├── context/         # AuthContext
-│       ├── services/        # auth-api.ts, token-storage.ts
-│       ├── types/           # branded types, interfaces
-│       ├── validation/      # Zod schemas
-│       ├── pages/           # LoginPage, RegisterPage, etc.
-│       └── hooks/           # useAuth hook
+│   ├── auth/
+│   │   ├── context/         # AuthContext
+│   │   ├── services/        # auth-api.ts, token-storage.ts
+│   │   ├── types/           # branded types, interfaces
+│   │   ├── validation/      # Zod schemas
+│   │   ├── pages/           # LoginPage, RegisterPage, etc.
+│   │   └── hooks/           # useAuth hook
+│   └── alarms/              # Phase 2
+│       ├── components/      # AlarmForm, AlarmsTable, ProductPicker, ConditionPicker
+│       ├── hooks/           # useAlarms, useAlarmMutations, usePlanLimits, useProducts
+│       ├── mappers/         # DTO → ViewModel
+│       ├── schemas/         # Zod form schemas
+│       ├── services/        # alarms/plan/products/notifications services
+│       └── pages/           # AlarmsPage, AlarmCreatePage (wizard), AlarmDetailPage
 ├── shared/
 │   ├── api/                 # client.ts, endpoints.ts
-│   ├── ui/                  # ThemeProvider, ui-store
+│   ├── ui/                  # ThemeProvider, ui-store, modal, confirm-dialog
+│   ├── offline/             # query-persister (IndexedDB read cache)
 │   ├── pwa/                 # push-manager, preferences
 │   └── mocking/             # MSW handlers + browser
 └── styles/
@@ -105,7 +113,7 @@ src/
 |------|-------------|--------|
 | **Phase 0** | Infraestructura: Vite, PWA, rutas, placeholders | ✅ Completada |
 | **Phase 1** | Auth real + landing: login, register, forgot/reset, verify, self-management | ✅ Completada |
-| **Phase 2** | Alarmas: CRUD, filtros, detalle | Pendiente |
+| **Phase 2** | Alarmas: CRUD, filtros, detalle con historial de disparos, selector de catálogo (`GET /api/products`), condiciones tipo picker, gating estructural por plan, caché de lectura offline (IndexedDB) | ✅ Completada |
 | **Phase 3** | Notificaciones: lista, push, realtime | Pendiente |
 | **Phase 4** | Bots: integración WhatsApp/Telegram | Pendiente |
 | **Phase 5** | Cuenta: perfil, suscripción, facturación | Pendiente |

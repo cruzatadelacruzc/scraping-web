@@ -88,6 +88,8 @@ export const TYPES = {
   ProductAdminController: Symbol.for('ProductAdminController'),
   ProductAdminService: Symbol.for('ProductAdminService'),
   ProductMapper: Symbol.for('ProductMapper'),
+  ProductCatalogController: Symbol.for('ProductCatalogController'),
+  ProductCatalogService: Symbol.for('ProductCatalogService'),
   DashboardController: Symbol.for('DashboardController'),
   DashboardService: Symbol.for('DashboardService'),
   QueueAdminController: Symbol.for('QueueAdminController'),

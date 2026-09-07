@@ -6,7 +6,7 @@ export const CreateAlarmSchema = z.object({
   productUrl: z.string().min(1, 'Product URL is required'),
   name: z.string().min(1, 'Name is required'),
   condition: z.nativeEnum(AlarmConditionType),
-  threshold: z.number().positive('Threshold must be positive'),
+  threshold: z.number().min(0, 'Threshold cannot be negative'),
   percentage: z.number().min(0).max(100).optional(),
   params: z.record(z.unknown()).optional(),
   enabled: z.boolean().optional(),

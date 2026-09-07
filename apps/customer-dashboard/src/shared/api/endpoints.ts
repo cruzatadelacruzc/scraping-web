@@ -21,6 +21,13 @@ export const ENDPOINTS = {
   PUBLIC: {
     HIGHLIGHTS: '/api/public/highlights',
   },
+  PRODUCTS: {
+    LIST: '/api/products',
+    CATEGORIES: '/api/products/categories',
+  },
+  PLANS: {
+    GET: (id: string) => `/api/plans/${id}`,
+  },
   ALARMS: {
     LIST: '/api/alarms',
     CREATE: '/api/alarms',
@@ -53,5 +60,6 @@ export const ENDPOINTS = {
   SUBSCRIPTION: {
     LIST: '/api/subscriptions',
     CANCEL: (id: string) => `/api/subscriptions/${id}`,
+    BY_ACCOUNT: (accountId: string) => `/api/accounts/${accountId}/subscriptions`,
   },
 } as const;
