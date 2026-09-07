@@ -88,6 +88,21 @@ only once it has a file (no empty dirs):
 - **Auth tokens are in-memory only** (non-persisted Zustand) — a full page reload logs the user out. Dev/manual testing navigates via in-app clicks, not `location` navigation.
 - **No `axios`/`@tanstack/react-query` imports in components** — only in `hooks/`.
 - **No `useEffect` for data fetching** — use TanStack Query.
+- **No `renderHook`/`render` test for a hook that reads the zustand auth store**
+  (or anything else pulling `useSyncExternalStore` from a root-hoisted package).
+  `zustand` / `react-i18next` resolve the monorepo root's React 18 while the test
+  env is React 19 → dispatcher mismatch. Extract the logic to a pure module and
+  test that instead — e.g. `hooks/plan-limits.ts` (`derivePlanLimits`) is the
+  testable core of `usePlanLimits`; `format-alarm-value.ts`, `notification-timeline.ts`,
+  `product-search-params.ts` follow the same split.
+
+### CI
+
+`.github/workflows/customer-dashboard-ci.yml` — runs on PRs / pushes to `develop`
+that touch `apps/customer-dashboard/**` or `package-lock.json`: lint → typecheck →
+`vitest run` → `tsc && vite build`. No DB services or secrets (MSW in-process,
+build falls back to `VITE_API_URL || http://localhost:3000`). The suite must be
+fully green — see the pure-module convention above, don't `.skip` render tests.
 
 ### PWA Features
 
