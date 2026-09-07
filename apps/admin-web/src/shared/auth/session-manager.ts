@@ -12,6 +12,7 @@ export class SessionManager {
   private _session: AuthSession | null = null;
   private _refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private _onSessionLost: (() => void) | null = null;
+  private _refreshInFlight: Promise<void> | null = null;
 
   public constructor(private readonly _authService: AuthService) {}
 
@@ -51,8 +52,22 @@ export class SessionManager {
     this._onSessionLost?.();
   }
 
-  /** Refreshes the session using the AuthService. */
-  public async refresh(): Promise<void> {
+  /**
+   * Refreshes the session using the AuthService.
+   *
+   * Concurrent calls share a single in-flight request: React StrictMode's
+   * double-invoked mount effect, the expiry timer, and the 401 interceptor
+   * all funnel through here, so the refresh endpoint (which rotates the
+   * refresh token with theft detection) is hit exactly once.
+   */
+  public refresh(): Promise<void> {
+    this._refreshInFlight ??= this._runRefresh().finally(() => {
+      this._refreshInFlight = null;
+    });
+    return this._refreshInFlight;
+  }
+
+  private async _runRefresh(): Promise<void> {
     try {
       const newSession = await this._authService.refresh();
       this._session = newSession;

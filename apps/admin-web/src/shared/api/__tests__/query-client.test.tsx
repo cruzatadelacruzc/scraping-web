@@ -8,6 +8,22 @@ import { QueryClientProvider, useMutation } from '@tanstack/react-query';
 import { createAppQueryClient } from '../query-client';
 
 describe('createAppQueryClient', () => {
+  it('applies the standard query defaults', () => {
+    const queries = createAppQueryClient().getDefaultOptions().queries;
+
+    expect(queries).toMatchObject({
+      staleTime: 30_000,
+      retry: 1,
+      // The one that changes observable behaviour: no surprise refetch when an
+      // admin alt-tabs back to the console. `refetchOnMount` stays at the
+      // TanStack default (already deduped) — the real freshness knob is per-tier
+      // `staleTime`.
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+    });
+  });
+
   it('publishes an error notification when any mutation fails', async () => {
     const received: NotificationInput[] = [];
     const unsubscribe = subscribeToNotifications((n) => {

@@ -4,9 +4,15 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 const apiClient = axios.create({ baseURL: ENV.API_BASE_URL });
 
 interface AuthHandlers {
+  /** Current access token, or `null` when unauthenticated. */
   getAccessToken: () => string | null;
-  getRefreshToken: () => string | null;
-  onRefreshSuccess: (tokens: { accessToken: string; refreshToken: string }) => void;
+  /**
+   * Performs a single-flight token refresh. Resolves once storage holds a
+   * fresh access token; rejects when the session cannot be recovered.
+   * Backed by `SessionManager.refresh()` so every refresh path is deduplicated.
+   */
+  refresh: () => Promise<void>;
+  /** Invoked when the session is unrecoverable (redirect to login). */
   onRefreshFail: () => void;
 }
 
@@ -49,28 +55,21 @@ export function configureAuthHandlers(handlers: AuthHandlers): void {
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = handlers.getRefreshToken();
-      if (!refreshToken) {
-        handlers.onRefreshFail();
-        return Promise.reject(new Error('No refresh token available'));
-      }
-
       try {
-        const res = await axios.post<{ data: { token: string; refreshToken: string } }>(
-          `${ENV.API_BASE_URL}/auth/refresh`,
-          { refreshToken },
-        );
-        const tokens = res.data.data;
-        handlers.onRefreshSuccess({
-          accessToken: tokens.token,
-          refreshToken: tokens.refreshToken,
-        });
-        originalRequest.headers.Authorization = `Bearer ${tokens.token}`;
-        return await apiClient(originalRequest);
+        await handlers.refresh();
       } catch {
         handlers.onRefreshFail();
         return Promise.reject(new Error('Session expired'));
       }
+
+      const token = handlers.getAccessToken();
+      if (!token) {
+        handlers.onRefreshFail();
+        return Promise.reject(new Error('Session expired'));
+      }
+
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      return await apiClient(originalRequest);
     }
     return Promise.reject(error);
   });

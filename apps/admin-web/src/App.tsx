@@ -61,11 +61,7 @@ const sessionManager = new SessionManager(authService);
 
 configureAuthHandlers({
   getAccessToken: () => storage.getAccessToken(),
-  getRefreshToken: () => storage.getRefreshToken(),
-  onRefreshSuccess: ({ accessToken, refreshToken }) => {
-    storage.setAccessToken(accessToken);
-    storage.setRefreshToken(refreshToken);
-  },
+  refresh: () => sessionManager.refresh(),
   onRefreshFail: () => {
     storage.clear();
     window.location.href = ROUTES.LOGIN;

@@ -97,10 +97,20 @@ Local State   → useState/useReducer (forms via React Hook Form, filters, dialo
 
 **Decision rule**: if the backend serves it → TanStack Query. If 3+ unrelated features need it → Context. Otherwise → local state.
 
-**Stale time tiers**:
+**QueryClient defaults** (`shared/api/query-client.ts`) — the app-wide standard, applied to every query:
+
+| Option | Value | Why |
+|---|---|---|
+| `staleTime` | `30_000` (floor) | Hooks raise it per tier below. Governs freshness — this, not `refetchOnMount`, is the knob. |
+| `retry` | `1` | One retry on failure. A failed request shows as 2 calls in the Network tab — not a StrictMode double-fetch. |
+| `refetchOnWindowFocus` | `false` | Admin console: no surprise refetch when the operator alt-tabs back. |
+| `refetchOnReconnect` | `true` | Recover after the network drops. |
+| `refetchOnMount` | `true` (TanStack default) | Left alone on purpose. StrictMode's double mount is already deduped by the in-flight request cache + `staleTime`; `refetchOnMount: false` is a **no-op** for that and only hurts freshness on genuine remounts. Do not add it per-hook. |
+
+**Stale time tiers** (per-hook `staleTime` override):
 | Tier | Stale Time | Applies to |
 |---|---|---|
-| `realtime` | 30s | Queue stats, health, enrichment metrics |
+| `realtime` | 30s | Queue stats, health, enrichment metrics — pair with `refetchInterval` for live polling |
 | `standard` | 5 min | Products, users, accounts, dashboard KPIs |
 | `static` | 30 min | Roles, stores, feature flags |
 
@@ -181,13 +191,14 @@ interface AuthSession {
 ### Token Strategy
 
 - **Access Token**: JWT, in-memory via `ITokenStorage`. TTL: 1 day (configurable via `JWT_EXPIRATION`).
-- **Refresh Token**: opaque 96-hex-char string, in-memory via `ITokenStorage`. TTL: 30 days. Rotation with theft detection (token family).
-- **Why in-memory**: eliminates XSS attack surface. Trade-off: page refresh forces re-login — acceptable for an admin operations console (desktop, long sessions).
+- **Refresh Token**: opaque 96-hex-char string. `InMemoryStorage` persists it in `sessionStorage` (survives F5, cleared on tab close); the access token stays in memory only. TTL: 30 days. Rotation with theft detection (token family) — so the refresh endpoint must be hit **once** per cycle.
+- **Single-flight refresh**: every refresh path — the `AuthProvider` bootstrap effect (double-invoked by StrictMode in dev), the `SessionManager` expiry timer, and the axios 401 interceptor — funnels through `SessionManager.refresh()`, which shares one in-flight request. Concurrent 401s do not stampede the endpoint, and StrictMode's double mount hits it once.
+- **Why in-memory access token**: eliminates XSS attack surface. Trade-off: page refresh forces a silent re-auth via the refresh token — acceptable for an admin operations console (desktop, long sessions).
 - **Future HttpOnly cookies**: if the backend migrates, only `ITokenStorage` changes. `SessionManager` and `AuthService` are unaffected.
 
 ### Prerequisite
 
-`POST /api/auth/refresh` in the backend currently returns 400 instead of a refreshed session. Until the backend endpoint is fixed to return user context alongside new tokens, the refresh-on-401 flow cannot complete.
+The client side of the refresh-on-401 flow is complete (`configureAuthHandlers({ refresh })` → `SessionManager.refresh()` → `AuthService.refresh()` → retry). It depends on `POST /api/auth/refresh` returning `{ token, refreshToken, user }` in the backend envelope. Verify the backend contract before relying on the flow end-to-end.
 
 ## Permissions
 
@@ -256,7 +267,8 @@ Toasts (sonner, bottom-right, max 3)
 Located at `src/shared/api/`. Single axios instance with:
 
 - **Request interceptor**: attaches `Authorization: Bearer <token>` from `ITokenStorage`
-- **Response interceptor**: on 401 → `AuthService.refresh()` → retry original request. On refresh failure → `SessionManager.clear()` → redirect `/login`
+- **Envelope interceptor**: unwraps `{ status, message, data }` → `data`
+- **Response interceptor**: on 401 (once per request, guarded by `_retry`) → `handlers.refresh()` (single-flight `SessionManager.refresh()`) → re-read the access token → retry the original request. If the refresh rejects or leaves no token → `handlers.onRefreshFail()` → clear storage + redirect `/login`
 - **AbortSignal**: every request accepts an optional `AbortSignal`. TanStack Query's `signal` is threaded through
 - **Error normalization**: transforms axios errors into typed `ApiError` objects
 

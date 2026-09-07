@@ -23,8 +23,19 @@ export function createAppQueryClient(): QueryClient {
     }),
     defaultOptions: {
       queries: {
+        // Floor stale time. Hooks raise it per tier: realtime 30s / standard
+        // 5min / static 30min (see `apps/admin-web/CLAUDE.md` → State Strategy).
         staleTime: 30_000,
         retry: 1,
+        // Admin console: don't refetch every query when the operator alt-tabs
+        // back. Freshness is governed by per-tier `staleTime`, not by focus.
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+        // Left at the TanStack default. React StrictMode's double mount is
+        // already deduped by the in-flight request cache + `staleTime`; setting
+        // this to `false` is a no-op for that and only hurts freshness on
+        // genuine remounts. Realtime hooks use `refetchInterval` instead.
+        refetchOnMount: true,
       },
     },
   });
