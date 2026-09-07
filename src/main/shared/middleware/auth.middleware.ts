@@ -125,13 +125,23 @@ export class AuthMiddleware extends BaseMiddleware {
           return false;
         }
 
+        // Normalize roles to string[] from DB for consistent role checking
+        const roles = (found.roles || []).map(r => r.name);
+
         // Attach user data to request — single source of truth for downstream code
         req.user = {
           ...payload,
           user: found,
-          // Normalize roles to string[] from DB for consistent role checking
-          roles: (found.roles || []).map(r => r.name),
+          roles,
         };
+
+        // SUPER_ADMIN operates across every tenant. Clearing tenantId from the
+        // ALS store turns the Prisma tenant-filter extension into a no-op, so
+        // admin reads/writes target the account named in the request instead of
+        // the admin's own "System" account. userId is kept for audit logging.
+        if (roles.includes('SUPER_ADMIN')) {
+          store.tenantId = undefined;
+        }
 
         return true;
       };
