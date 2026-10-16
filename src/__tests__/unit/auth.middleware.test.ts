@@ -225,6 +225,33 @@ describe('AuthMiddleware', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(next).not.toHaveBeenCalled();
     });
+
+    it('clears tenantId from the ALS store for SUPER_ADMIN so the tenant filter is bypassed', async () => {
+      const store: any = { tenantId: undefined, userId: undefined };
+      mockGetRequestContext.mockReturnValue(store);
+      mockPrisma.user.findFirst.mockResolvedValue({
+        ...dbUser,
+        roles: [{ id: 'role-sa', name: 'SUPER_ADMIN' }],
+      });
+
+      await authMiddleware.handler(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(store.userId).toBe('test-user-id');
+      expect(store.tenantId).toBeUndefined();
+    });
+
+    it('keeps tenantId in the ALS store for non-admin users', async () => {
+      const store: any = { tenantId: undefined, userId: undefined };
+      mockGetRequestContext.mockReturnValue(store);
+      mockPrisma.user.findFirst.mockResolvedValue(dbUser);
+
+      await authMiddleware.handler(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(store.tenantId).toBe('test-tenant-id');
+      expect(store.userId).toBe('test-user-id');
+    });
   });
 
   // -----------------------------------------------------------------------
